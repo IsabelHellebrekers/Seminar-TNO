@@ -13,10 +13,16 @@ import Objects.CCLpackage;
 import Objects.instance;
 
 public class ReadDataFile {
-    // ---------- Parser ----------
-    private enum Section { NONE, OPERATING_UNITS, SOURCE_CAPACITIES, CCL_CONTENTS }
+    private enum Section {
+        NONE,
+        OPERATING_UNITS,
+        CENTRES,
+        CCL_CONTENTS,
+        INITIAL_STORAGE_FSC1,
+        INITIAL_STORAGE_FSC2
+    }
 
-    // split on tabs OR 2+ spaces (to tolerate pasted text)
+    // split on tabs OR 2+ spaces
     private static final Pattern SPLIT_PATTERN = Pattern.compile("\\t+|\\s{2,}");
 
     public static instance read(Path file) throws IOException {
@@ -29,51 +35,46 @@ public class ReadDataFile {
             String line = rawLine.strip();
             if (line.isEmpty()) continue;
 
-            // Detect section headers
-            if (line.startsWith("Operating unit")) {
-                section = Section.OPERATING_UNITS;
-                continue; // skip header line
-            }
-            if (line.startsWith("CCLs content")) {
-                section = Section.CCL_CONTENTS;
+            // Detect section headers like [OPERATING_UNITS]
+            if (line.startsWith("[") && line.endsWith("]")) {
+                String tag = line.substring(1, line.length() - 1).trim();
+                section = switch (tag) {
+                    case "OPERATING_UNITS" -> Section.OPERATING_UNITS;
+                    case "CENTRES" -> Section.CENTRES;
+                    case "CCL_CONTENTS_IN_KG" -> Section.CCL_CONTENTS;
+                    case "INITIAL_STORAGE_LEVELS_FSC1" -> Section.INITIAL_STORAGE_FSC1;
+                    case "INITIAL_STORAGE_LEVELS_FSC2" -> Section.INITIAL_STORAGE_FSC2;
+                    default -> Section.NONE;
+                };
                 continue;
             }
-            // The second table doesn't have a clean title line in your paste,
-            // but the real data rows start with "MSC" / "FSC 1" / "FSC 2"
-            // and contain "infinity" or numbers in 3 capacity columns.
-            if (isCentre(line)) {
-                // If we were not already parsing it, switch to SOURCE_CAPACITIES.
-                // This will also correctly parse MSC/FSC lines.
-                section = Section.SOURCE_CAPACITIES;
-            }
-            if (line.startsWith("Type") && line.contains("Food&water") && line.contains("Ammunition")) {
-                section = Section.CCL_CONTENTS;
-                continue; // skip header line for CCL table
-            }
+
+            // Skip section headers inside tables
+            if (line.startsWith("OperatingUnit")) continue;
+            if (line.startsWith("Centre")) continue;
+            if (line.startsWith("Type")) continue;
 
             String[] parts = split(line);
             if (parts.length == 0) continue;
 
             switch (section) {
                 case OPERATING_UNITS -> {
-                    // Expect 11 columns:
-                    // Operating unit | daily FW | daily Fuel | daily Ammo | max FW | max Fuel | max Ammo | Source | Order time | Time Window | Driving time
                     if (parts.length < 11) break; // ignore malformed lines
 
                     String operatingUnit = parts[0];
 
-                    long dailyFW = parseLong(parts[1]);
-                    long dailyFuel = parseLong(parts[2]);
-                    long dailyAmmo = parseLong(parts[3]);
+                    int dailyFW = Integer.parseInt(parts[1]);
+                    int dailyFuel = Integer.parseInt(parts[2]);
+                    int dailyAmmo = Integer.parseInt(parts[3]);
 
-                    long maxFW = parseLong(parts[4]);
-                    long maxFuel = parseLong(parts[5]);
-                    long maxAmmo = parseLong(parts[6]);
+                    int maxFW = Integer.parseInt(parts[4]);
+                    int maxFuel = Integer.parseInt(parts[5]);
+                    int maxAmmo = Integer.parseInt(parts[6]);
 
                     String source = parts[7];
                     LocalTime orderTime = LocalTime.parse(parts[8]); // "18:00"
                     String timeWindow = parts[9];
-                    int drivingSec = parseInt(parts[10]);
+                    int drivingSec = Integer.parseInt(parts[10]);
 
                     data.operatingUnits.add(new OperatingUnit(
                             operatingUnit,
@@ -82,36 +83,43 @@ public class ReadDataFile {
                             source, orderTime, timeWindow, drivingSec
                     ));
                 }
-                case SOURCE_CAPACITIES -> {
-                    // Expect:
-                    // Source | max FW | max Fuel | max Ammo | driving time (may be NA)
-                    if (parts.length < 4) break;
+                case CENTRES -> {
+                    if (parts.length < 2) break;
 
-                    String source = parts[0];
-                    Double maxFW = parseDoubleOrInfinity(parts[1]);
-                    Double maxFuel = parseDoubleOrInfinity(parts[2]);
-                    Double maxAmmo = parseDoubleOrInfinity(parts[3]);
+                    String centre = parts[0];
+                    Integer maxStorageCapCcls = parseIntOrNull(parts[1]);
+                    String source = (parts.length >= 3) ? parseNullableString(parts[2]) : null;
+                    LocalTime orderTime = (parts.length >= 4) ? parseTimeOrNull(parts[3]) : null;
+                    String timeWindow = (parts.length >= 5) ? parseNullableString(parts[4]) : null;
+                    Integer dtSourceSec = (parts.length >= 6) ? parseIntOrNull(parts[5]) : null;
 
-                    Integer drivingSec = null;
-                    if (parts.length >= 5 && !parts[4].equalsIgnoreCase("NA")) {
-                        drivingSec = parseInt(parts[4]);
-                    }
-
-                    data.sourceCapacities.put(source, new Centre(source, maxFW, maxFuel, maxAmmo, drivingSec));
+                    data.sourceCapacities.put(centre, new Centre(
+                            centre, maxStorageCapCcls, source, orderTime, timeWindow, dtSourceSec
+                    ));
                 }
                 case CCL_CONTENTS -> {
-                    // Expect: Type | Food&water | Fuel | Ammunition
                     if (parts.length < 4) break;
 
-                    String type = parts[0]; // "Type 1"
-                    long fw = parseLong(parts[1]);
-                    long fuel = parseLong(parts[2]);
-                    long ammo = parseLong(parts[3]);
+                    String type = parts[0];
+                    long fw = Integer.parseInt(parts[1]);
+                    long fuel = Integer.parseInt(parts[2]);
+                    long ammo = Integer.parseInt(parts[3]);
 
                     data.cclContents.put(type, new CCLpackage(type, fw, fuel, ammo));
                 }
+                case INITIAL_STORAGE_FSC1, INITIAL_STORAGE_FSC2 -> {
+                    if (parts.length < 4) break;
+
+                    String operatingUnit = parts[0];
+                    int type1 = Integer.parseInt(parts[1]);
+                    int type2 = Integer.parseInt(parts[2]);
+                    int type3 = Integer.parseInt(parts[3]);
+
+                    String centre = (section == Section.INITIAL_STORAGE_FSC1) ? "FSC 1" : "FSC 2";
+                    data.initialStorageLevels.computeIfAbsent(centre, k -> new HashMap<>()).put(operatingUnit, new int[]{type1, type2, type3});
+                }
                 default -> {
-                    // ignore lines outside sections
+                    // ignore lines outside section
                 }
             }
         }
@@ -119,14 +127,8 @@ public class ReadDataFile {
         return data;
     }
 
-    private static boolean isCentre(String line) {
-        String l = line.strip();
-        return (l.startsWith("MSC") || l.startsWith("FSC"));
-    }
-
     private static String[] split(String line) {
         String[] parts = SPLIT_PATTERN.split(line.strip());
-        // remove empty tokens
         List<String> cleaned = new ArrayList<>();
         for (String p : parts) {
             String c = p.strip();
@@ -135,17 +137,21 @@ public class ReadDataFile {
         return cleaned.toArray(new String[0]);
     }
 
-    private static long parseLong(String s) {
-        return Long.parseLong(s.replace(",", "").trim());
-    }
-
-    private static int parseInt(String s) {
-        return Integer.parseInt(s.replace(",", "").trim());
-    }
-
-    private static Double parseDoubleOrInfinity(String s) {
+    private static Integer parseIntOrNull(String s) {
         String t = s.trim();
-        if (t.equalsIgnoreCase("infinity") || t.equalsIgnoreCase("inf")) return Double.POSITIVE_INFINITY;
-        return Double.valueOf(t.replace(",", ""));
+        if (t.equals("-")) return null;
+        return Integer.valueOf(t);
+    }
+
+    private static String parseNullableString(String s) {
+        String t = s.trim();
+        if (t.equals("-")) return null;
+        return t;
+    }
+
+    private static LocalTime parseTimeOrNull(String s) {
+        String t = s.trim();
+        if (t.equals("-")) return null;
+        return LocalTime.parse(t);
     }
 }

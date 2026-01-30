@@ -13,16 +13,16 @@ AT cie 2	2484	7898	18618	7452	23694	55854	FSC 1	16:00	20:00-02:00	14078
 AT cie 3	3033	9628	16339	9099	28884	49017	FSC 2	16:00	20:00-02:00	15071
 
 [CENTRES]
-Centre  MaxStorageCap (in CCLs) Source  OrderTime   TimeWindow  DTSource
-MSC     -                       -       -           -           -
-FSC 1   126                     MSC     18:00       20:00-02:00 21934
-FSC 2   87                      MSC     18:00       20:00-02:00 22165
+Centre  MaxStorageCap (in CCLs) Source  OrderTime   TimeWindow      DTSource
+MSC     -                       -       -           -               -
+FSC 1   126                     MSC     18:00       20:00-02:00     21934
+FSC 2   87                      MSC     18:00       20:00-02:00     22165
 
 [CCL_CONTENTS_IN_KG]
 Type    FW      Fuel    Ammo
 1       3000    3000    4000
 2       1000    4000    5000
-3`      0       2000    8000
+3       0       2000    8000
 
 [INITIAL_STORAGE_LEVELS_FSC1]
 OperatingUnit   CCLType1    CCLType2    CCLType3
