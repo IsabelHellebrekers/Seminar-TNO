@@ -7,12 +7,15 @@ import java.nio.file.Path;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.regex.Pattern;
+
 import Objects.OperatingUnit;
 import Objects.Centre;
 import Objects.CCLpackage;
 import Objects.instance;
+import Objects.OuType;
 
 public class ReadDataFile {
+
     private enum Section {
         NONE,
         OPERATING_UNITS,
@@ -22,8 +25,24 @@ public class ReadDataFile {
         INITIAL_STORAGE_FSC2
     }
 
-    // split on tabs OR 2+ spaces
     private static final Pattern SPLIT_PATTERN = Pattern.compile("\\t+|\\s{2,}");
+
+    private static final Map<String, OuType> OU_TYPE_MAP = Map.ofEntries(
+            Map.entry("Vust", OuType.VUST),
+
+            Map.entry("Gn cie 1", OuType.GN_CIE),
+            Map.entry("Gn cie 2", OuType.GN_CIE),
+
+            Map.entry("Painf cie 1", OuType.PAINF_CIE),
+            Map.entry("Painf cie 2", OuType.PAINF_CIE),
+            Map.entry("Painf cie 3", OuType.PAINF_CIE),
+            Map.entry("Painf cie 4", OuType.PAINF_CIE),
+            Map.entry("Painf cie 5", OuType.PAINF_CIE),
+
+            Map.entry("AT cie 1", OuType.AT_CIE),
+            Map.entry("AT cie 2", OuType.AT_CIE),
+            Map.entry("AT cie 3", OuType.AT_CIE)
+    );
 
     public static instance read(Path file) throws IOException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
@@ -35,7 +54,6 @@ public class ReadDataFile {
             String line = rawLine.strip();
             if (line.isEmpty()) continue;
 
-            // Detect section headers like [OPERATING_UNITS]
             if (line.startsWith("[") && line.endsWith("]")) {
                 String tag = line.substring(1, line.length() - 1).trim();
                 section = switch (tag) {
@@ -49,7 +67,6 @@ public class ReadDataFile {
                 continue;
             }
 
-            // Skip section headers inside tables
             if (line.startsWith("OperatingUnit")) continue;
             if (line.startsWith("Centre")) continue;
             if (line.startsWith("Type")) continue;
@@ -59,25 +76,31 @@ public class ReadDataFile {
 
             switch (section) {
                 case OPERATING_UNITS -> {
-                    if (parts.length < 11) break; // ignore malformed lines
+                    if (parts.length < 11) break;
 
                     String operatingUnit = parts[0];
 
-                    int dailyFW = Integer.parseInt(parts[1]);
-                    int dailyFuel = Integer.parseInt(parts[2]);
-                    int dailyAmmo = Integer.parseInt(parts[3]);
+                    long dailyFW = Long.parseLong(parts[1]);
+                    long dailyFuel = Long.parseLong(parts[2]);
+                    long dailyAmmo = Long.parseLong(parts[3]);
 
-                    int maxFW = Integer.parseInt(parts[4]);
-                    int maxFuel = Integer.parseInt(parts[5]);
-                    int maxAmmo = Integer.parseInt(parts[6]);
+                    long maxFW = Long.parseLong(parts[4]);
+                    long maxFuel = Long.parseLong(parts[5]);
+                    long maxAmmo = Long.parseLong(parts[6]);
 
                     String source = parts[7];
-                    LocalTime orderTime = LocalTime.parse(parts[8]); // "18:00"
+                    LocalTime orderTime = LocalTime.parse(parts[8]);
                     String timeWindow = parts[9];
                     int drivingSec = Integer.parseInt(parts[10]);
 
+                    OuType ouType = OU_TYPE_MAP.get(operatingUnit);
+                    if (ouType == null) {
+                        throw new IllegalArgumentException("No OuType defined for OperatingUnit: " + operatingUnit);
+                    }
+
                     data.operatingUnits.add(new OperatingUnit(
                             operatingUnit,
+                            ouType,
                             dailyFW, dailyFuel, dailyAmmo,
                             maxFW, maxFuel, maxAmmo,
                             source, orderTime, timeWindow, drivingSec
@@ -101,9 +124,9 @@ public class ReadDataFile {
                     if (parts.length < 4) break;
 
                     String type = parts[0];
-                    long fw = Integer.parseInt(parts[1]);
-                    long fuel = Integer.parseInt(parts[2]);
-                    long ammo = Integer.parseInt(parts[3]);
+                    long fw = Long.parseLong(parts[1]);
+                    long fuel = Long.parseLong(parts[2]);
+                    long ammo = Long.parseLong(parts[3]);
 
                     data.cclContents.put(type, new CCLpackage(type, fw, fuel, ammo));
                 }
@@ -116,10 +139,11 @@ public class ReadDataFile {
                     int type3 = Integer.parseInt(parts[3]);
 
                     String centre = (section == Section.INITIAL_STORAGE_FSC1) ? "FSC 1" : "FSC 2";
-                    data.initialStorageLevels.computeIfAbsent(centre, k -> new HashMap<>()).put(operatingUnit, new int[]{type1, type2, type3});
+                    data.initialStorageLevels
+                            .computeIfAbsent(centre, k -> new HashMap<>())
+                            .put(operatingUnit, new int[]{type1, type2, type3});
                 }
                 default -> {
-                    // ignore lines outside section
                 }
             }
         }

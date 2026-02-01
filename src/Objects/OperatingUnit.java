@@ -3,6 +3,7 @@ import java.time.LocalTime;
 
 public class OperatingUnit {
     public final String operatingUnit;
+    public final OuType ouType;
 
     public final long dailyFoodWaterKg;
     public final long dailyFuelKg;
@@ -19,11 +20,13 @@ public class OperatingUnit {
 
     public OperatingUnit(
             String operatingUnit,
+            OuType ouType,
             long dailyFoodWaterKg, long dailyFuelKg, long dailyAmmoKg,
             long maxFoodWaterKg, long maxFuelKg, long maxAmmoKg,
             String source, LocalTime orderTime, String timeWindow, int drivingTimeToSourceSec
     ) {
         this.operatingUnit = operatingUnit;
+        this.ouType = ouType;
         this.dailyFoodWaterKg = dailyFoodWaterKg;
         this.dailyFuelKg = dailyFuelKg;
         this.dailyAmmoKg = dailyAmmoKg;
@@ -38,6 +41,7 @@ public class OperatingUnit {
 
     @Override public String toString() {
         return "operatingUnit='" + operatingUnit + '\'' +
+                ", ouType=" + ouType +
                 ", daily(FW/Fuel/Ammo)=" + dailyFoodWaterKg + "/" + dailyFuelKg + "/" + dailyAmmoKg +
                 ", max(FW/Fuel/Ammo)=" + maxFoodWaterKg + "/" + maxFuelKg + "/" + maxAmmoKg +
                 ", source='" + source + '\'' +
