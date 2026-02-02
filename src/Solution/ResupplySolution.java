@@ -1,21 +1,39 @@
 package Solution;
 import java.util.*;
 
+/**
+ * Presents a solution to the Capacitated Resupply Problem (CRP). 
+ * This class is intented for post-processing. 
+ */
 public class ResupplySolution {
-
+    // Objective value : minimized number of trucks
     public final double objectiveValue;
+
+    // Number of trucks stationed at the Main Supply Centre (MSC)
     public final int trucksMSC;
+
+    // Number of trucks stationed at each Forward Supply Centre (FSC)
     public final Map<String, Integer> trucksFSC;
 
+    // Total number of CCL departures from the MSC per day
     public final Map<Integer, Integer> dailyMSCDepartures;
+
+    // Total number of CCL departures from each FSC per day
     public final Map<String, Map<Integer, Integer>> dailyFSCDepartures;
 
+    // Operating Unit inventory trajectories across the horizon
+    // OU name -> day -> product -> inventory (kg)
     public final Map<String, Map<Integer, Map<String, Double>>> ouInventory;
 
+    // Total inventory at each FSC per day (in number of CCLs)
+    // FSC name -> day -> total inventory (#CCL)
     public final Map<String, Map<Integer, Double>> fscInventoryTotal;
 
+    // Detailed FSC inventory composition per day
+    // FSC name -> day -> CCL type -> OU type -> quantity (#CCL)
     public final Map<String, Map<Integer, Map<String, Map<String, Integer>>>> fscInventoryByBucket;
 
+    // List of all shipments from the solution
     public final List<Shipment> shipments;
 
     public ResupplySolution(

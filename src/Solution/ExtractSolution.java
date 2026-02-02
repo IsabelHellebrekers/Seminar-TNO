@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
+/**
+ * Extracts a ResupplySolution from a solved Gurobi model and provides CSV files. 
+ */
 public final class ExtractSolution {
 
     private static final String FSC1 = "FSC 1";
@@ -55,7 +58,7 @@ public final class ExtractSolution {
         trucksFSC.put(FSC1, roundInt(getX(model, "K_FSC1")));
         trucksFSC.put(FSC2, roundInt(getX(model, "K_FSC2")));
 
-        // Daily departures
+        // Daily departures (used trucks) at MSC and FSCs
         Map<Integer, Integer> dailyMSC = new LinkedHashMap<>();
         Map<String, Map<Integer, Integer>> dailyFSC = new LinkedHashMap<>();
         dailyFSC.put(FSC1, new LinkedHashMap<>());
@@ -215,6 +218,14 @@ public final class ExtractSolution {
         );
     }
 
+    /**
+     * Writes all CSV files for the extracted solution.
+     * @param sol           solution
+     * @param inst          instance data
+     * @param H             planning horizon (days)
+     * @param outputDir     directory to write the CSV files to
+     * @throws IOException if writing any CSV fails
+     */
     public static void writeCsvs(ResupplySolution sol, Instance inst, int H, Path outputDir) throws IOException {
         writeTrucksCsv(sol, H, outputDir.resolve("trucks.csv"));
         writeInventoryOuCsv(sol, inst, H, outputDir.resolve("inventory_ou.csv"));
@@ -223,7 +234,13 @@ public final class ExtractSolution {
         writeInventoryFscDetailCsv(sol, inst, H, outputDir.resolve("inventory_fsc_detail.csv"));
     }
 
-    // CSV 1: trucks.csv
+    /**
+     * Writes truck usage per location per day (MSC and FSCs)
+     * @param sol           solution
+     * @param H             planning horizon (days)
+     * @param file          output CSV path
+     * @throws IOException if writing fails
+     */
     private static void writeTrucksCsv(ResupplySolution sol, int H, Path file) throws IOException {
         List<String[]> rows = new ArrayList<>();
         String[] header = new String[]{"location", "day", "used", "capacity", "slack"};
@@ -262,7 +279,14 @@ public final class ExtractSolution {
         CsvWriter.writeCsv(file, header, rows);
     }
 
-    // CSV 2: inventory_ou.csv
+    /**
+     * Writes OU inventory per product per day, including demand, capacity, and slack.
+     * @param sol           solution
+     * @param inst          instance data (to lookup demand and capacity)
+     * @param H             planning horizon (days)
+     * @param file          output CSV path
+     * @throws IOException if writing fails
+     */
     private static void writeInventoryOuCsv(ResupplySolution sol, Instance inst, int H, Path file) throws IOException {
         List<String[]> rows = new ArrayList<>();
         String[] header = new String[]{"ou", "product", "day", "inventory", "demand", "capacity", "slack"};
@@ -306,6 +330,16 @@ public final class ExtractSolution {
         CsvWriter.writeCsv(file, header, rows);
     }
 
+    /**
+     * Adds one inventory row to the OU inventory CSV. 
+     * @param rows      target row list
+     * @param ou        operating unit name
+     * @param product   product label (FW / FUEL / AMMO)    
+     * @param day       day index
+     * @param inventory extractted inventory value
+     * @param demand    daily demand
+     * @param cap       storage capacity
+     */
     private static void addInventoryRow(List<String[]> rows, String ou, String product, int day,
                                         Double inventory, double demand, double cap) {
         double inv = (inventory == null) ? Double.NaN : inventory;
@@ -320,7 +354,12 @@ public final class ExtractSolution {
         });
     }
 
-    // CSV 3: shipments.csv
+    /**
+     * Writes the shipment list into a CSV.
+     * @param sol           solution
+     * @param file          output CSV path
+     * @throws IOException if writing fails
+     */
     private static void writeShipmentsCsv(ResupplySolution sol, Path file) throws IOException {
         List<String[]> rows = new ArrayList<>();
         String[] header = new String[]{"from", "to", "cclType", "day", "quantity", "ouType"};
@@ -339,6 +378,14 @@ public final class ExtractSolution {
         CsvWriter.writeCsv(file, header, rows);
     }
 
+    /**
+     * Writes total FSC inventory per day together with FSC capacity and slack.
+     * @param sol           solution
+     * @param inst          instance data (to lookup FSC capacities)
+     * @param H             planning horizon (days)
+     * @param file          output CSV path
+     * @throws IOException if writing fails
+     */
     private static void writeInventoryFscTotalCsv(ResupplySolution sol, Instance inst, int H, Path file) throws IOException {
         List<String[]> rows = new ArrayList<>();
         String[] header = new String[]{"fsc", "day", "total_ccls", "capacity", "slack"};
@@ -363,6 +410,14 @@ public final class ExtractSolution {
         CsvWriter.writeCsv(file, header, rows);
     }
 
+    /**
+     * Writes detailed FSC inventory by CCL type and OU type. 
+     * @param sol           solution
+     * @param inst          instance data
+     * @param H             planning horizon (days)
+     * @param file          output CSV path
+     * @throws IOException if writing fails
+     */
     private static void writeInventoryFscDetailCsv(ResupplySolution sol, Instance inst, int H, Path file) throws IOException {
         List<String[]> rows = new ArrayList<>();
         String[] header = new String[]{"fsc", "day", "cclType", "ouType", "ccls"};
@@ -397,7 +452,13 @@ public final class ExtractSolution {
         CsvWriter.writeCsv(file, header, rows);
     }
 
-    // Helpers: variable naming & extraction
+    /**
+     * Returns the value (X) of a variable by its exact name.
+     * @param model     Gurobi model
+     * @param varName   variable name as created in the MILP
+     * @return variable value (DoubleAttr.X)
+     * @throws GRBException if reading the attribute fails
+     */
     private static double getX(GRBModel model, String varName) throws GRBException {
         GRBVar v = model.getVarByName(varName);
         if (v == null) {
@@ -406,30 +467,77 @@ public final class ExtractSolution {
         return v.get(GRB.DoubleAttr.X);
     }
 
+    /**
+     * Rounds a double to the nearest integer. 
+     * @param x value
+     * @return rounded integer
+     */
     private static int roundInt(double x) {
         return (int) Math.round(x);
     }
 
+    /**
+     * Build the name for x[w,i,c,t] variables : FSC -> OU shipments
+     * @param w FSC
+     * @param i OU
+     * @param c CCL type
+     * @param t day
+     * @return Gurobi variable name
+     */
     private static String nameX(String w, String i, String c, int t) {
         return "x_" + noSpace(w) + "_" + noSpace(i) + "_" + noSpace(c) + "_t" + t;
     }
 
+    /**
+     * Builds the name for y[w,c,o,t] variables : MSC -> FSC shipments
+     * @param w FSC
+     * @param c CCL type
+     * @param o OU type
+     * @param t day
+     * @return Gurobi variable name
+     */
     private static String nameY(String w, String c, OuType o, int t) {
         return "y_" + noSpace(w) + "_" + noSpace(c) + "_" + o + "_t" + t;
     }
 
+    /**
+     * Builds the name for z[c,t] variables : MSC -> VUST shipments
+     * @param c CCL type
+     * @param t day
+     * @return Gurobi variable name
+     */
     private static String nameZ(String c, int t) {
         return "z_" + noSpace(c) + "_t" + t;
     }
 
+    /**
+     * Builds the name for I[i,p,t] variables : OU inventory (kg)
+     * @param ou    OU name
+     * @param prod  product label (FW / FUEL / AMMO)
+     * @param t     day
+     * @return Gurobi variable name
+     */
     private static String nameI(String ou, String prod, int t) {
         return "I_" + noSpace(ou) + "_" + prod + "_t" + t;
     }
 
+    /**
+     * Builds the name for S[w,c,o,t] variables : FSC inventory (#CCL)
+     * @param w FSC
+     * @param c CCL type
+     * @param o OU type
+     * @param t day
+     * @return Gurobi variable name
+     */
     private static String nameS(String w, String c, OuType o, int t) {
         return "S_" + noSpace(w) + "_" + noSpace(c) + "_" + o + "_t" + t;
     }
 
+    /**
+     * Removes spaces from a string to make it safe for use in Gurobi variable names. 
+     * @param s input string
+     * @return string without spaces
+     */
     private static String noSpace(String s) {
         return s == null ? "" : s.replace(" ", "");
     }
