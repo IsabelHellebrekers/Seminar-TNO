@@ -2,6 +2,9 @@ import Objects.CCLpackage;
 import Objects.Centre;
 import Objects.OperatingUnit;
 import Objects.instance;
+import Solution.ExtractSolution;
+import Solution.ResupplySolution;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
@@ -59,6 +62,17 @@ public class Main {
 
             milp.solve();
 
+            for (String w : new String[]{"FSC 1", "FSC 2"}) {
+                double totalT1 = 0.0;
+                for (String c : inst.cclContents.keySet()) {
+                    for (Objects.OuType o : Objects.OuType.values()) {
+                        String vn = "S_" + w.replace(" ", "") + "_" + c.replace(" ", "") + "_" + o + "_t1";
+                        totalT1 += m.getVarByName(vn).get(GRB.DoubleAttr.X);
+                    }
+                }
+                System.out.println("DEBUG: total S at " + w + " day 1 = " + totalT1);
+            }
+
             System.out.println("M  (MSC trucks)  = " + m.getVarByName("M").get(GRB.DoubleAttr.X));
             System.out.println("K_FSC1           = " + m.getVarByName("K_FSC1").get(GRB.DoubleAttr.X));
             System.out.println("K_FSC2           = " + m.getVarByName("K_FSC2").get(GRB.DoubleAttr.X));
@@ -68,6 +82,12 @@ public class Main {
 
             if (status == GRB.Status.OPTIMAL) {
                 System.out.println("  Objective = " + m.get(GRB.DoubleAttr.ObjVal));
+
+                ResupplySolution sol = ExtractSolution.extract(m, inst, H);
+                Path outputDir = Path.of("output");
+                ExtractSolution.writeCsvs(sol, inst, H, outputDir);
+
+                System.out.println("Wrote CSVs to: " + outputDir.toAbsolutePath());
             } else {
                 System.out.println("  Non-optimal status.");
             }

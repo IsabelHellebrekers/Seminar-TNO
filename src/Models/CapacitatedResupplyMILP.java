@@ -283,42 +283,34 @@ public class CapacitatedResupplyMILP {
         Map<String, Integer> cclNameToIndex = buildCclNameToIndexMap();
 
         for (String w : fscs) {
-            Map<String, int[]> initPerOu = data.initialStorageLevels.get(w);
-
-            Map<OuType, long[]> agg = new EnumMap<>(OuType.class);
-            for (OuType o : OuType.values()) {
-                agg.put(o, new long[]{0L, 0L, 0L});
-            }
-
-            for (OperatingUnit ou : ous) {
-                String i = ou.operatingUnit;
-                int[] arr = initPerOu.get(i);
-                if (arr == null) continue;
-
-                OuType o = ou.ouType;
-                long[] bucket = agg.get(o);
-
-                bucket[0] += arr[0];
-                bucket[1] += arr[1];
-                bucket[2] += arr[2];
+            Map<String, int[]> initByType = data.initialStorageLevels.get(w);
+            if (initByType == null) {
+                throw new IllegalStateException("Missing initial storage table for " + w);
             }
 
             for (OuType o : OuType.values()) {
-                long[] bucket = agg.get(o);
+                int[] arr = initByType.get(o.name());
+                if (arr == null) {
+                    arr = new int[]{0, 0, 0};
+                }
 
                 for (String cName : cclTypes) {
                     Integer idx = cclNameToIndex.get(cName);
-                    
+                    if (idx == null) {
+                        throw new IllegalStateException("Unknown CCL type: " + cName);
+                    }
+
                     model.addConstr(
-                        S.get(new SKey(w, cName, o, 1)),
-                        GRB.EQUAL,
-                        bucket[idx],
-                        "FSC_INIT_" + w.replace(" ", "") + "_" + cName.replace(" ", "") + "_" + o
+                            S.get(new SKey(w, cName, o, 1)),
+                            GRB.EQUAL,
+                            arr[idx],
+                            "FSC_INIT_" + w.replace(" ", "") + "_" + cName.replace(" ", "") + "_" + o
                     );
                 }
             }
         }
     }
+
 
     /**
      * Map CCL type names to indices of the int[3] initial storage arrays.

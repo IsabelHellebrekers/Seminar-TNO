@@ -44,6 +44,37 @@ public class ReadDataFile {
             Map.entry("AT cie 3", OuType.AT_CIE)
     );
 
+    private static final Map<String, OuType> INIT_STORAGE_KEY_MAP = Map.ofEntries(
+        // Vust
+        Map.entry("Vust", OuType.VUST),
+        Map.entry("VUST", OuType.VUST),
+
+        // AT
+        Map.entry("AT", OuType.AT_CIE),
+        Map.entry("AT cie", OuType.AT_CIE),
+        Map.entry("AT cie 1", OuType.AT_CIE),
+        Map.entry("AT cie 2", OuType.AT_CIE),
+        Map.entry("AT cie 3", OuType.AT_CIE),
+
+        // GN
+        Map.entry("Gn", OuType.GN_CIE),
+        Map.entry("GN", OuType.GN_CIE),
+        Map.entry("Gn cie", OuType.GN_CIE),
+        Map.entry("Gn cie 1", OuType.GN_CIE),
+        Map.entry("Gn cie 2", OuType.GN_CIE),
+
+        // PAINF
+        Map.entry("Painf", OuType.PAINF_CIE),
+        Map.entry("PAINF", OuType.PAINF_CIE),
+        Map.entry("Painf cie", OuType.PAINF_CIE),
+        Map.entry("Painf cie 1", OuType.PAINF_CIE),
+        Map.entry("Painf cie 2", OuType.PAINF_CIE),
+        Map.entry("Painf cie 3", OuType.PAINF_CIE),
+        Map.entry("Painf cie 4", OuType.PAINF_CIE),
+        Map.entry("Painf cie 5", OuType.PAINF_CIE)
+    );
+
+
     public static instance read(Path file) throws IOException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
         instance data = new instance();
@@ -133,18 +164,26 @@ public class ReadDataFile {
                 case INITIAL_STORAGE_FSC1, INITIAL_STORAGE_FSC2 -> {
                     if (parts.length < 4) break;
 
-                    String operatingUnit = parts[0];
+                    String key = parts[0];
                     int type1 = Integer.parseInt(parts[1]);
                     int type2 = Integer.parseInt(parts[2]);
                     int type3 = Integer.parseInt(parts[3]);
 
                     String centre = (section == Section.INITIAL_STORAGE_FSC1) ? "FSC 1" : "FSC 2";
+
+                    OuType ouType = INIT_STORAGE_KEY_MAP.get(key);
+                    if (ouType == null) {
+                        ouType = OU_TYPE_MAP.get(key);
+                    }
+                    if (ouType == null) {
+                        throw new IllegalArgumentException("Unknown initial storage key '" + key + "' in " + centre);
+                    }
+
                     data.initialStorageLevels
                             .computeIfAbsent(centre, k -> new HashMap<>())
-                            .put(operatingUnit, new int[]{type1, type2, type3});
+                            .put(ouType.name(), new int[]{type1, type2, type3});
                 }
-                default -> {
-                }
+                default -> { }
             }
         }
 
