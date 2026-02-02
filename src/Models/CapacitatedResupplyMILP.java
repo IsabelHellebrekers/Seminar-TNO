@@ -7,7 +7,7 @@ import java.util.*;
  * MILP for the Capacitated Resupply Problem
  */
 public class CapacitatedResupplyMILP {
-    private final instance data;
+    private final Instance data;
     private final GRBModel model;
 
     // Planning horizon length (in days)
@@ -68,7 +68,7 @@ public class CapacitatedResupplyMILP {
     /**
      * Build the MILP model (derive sets, create variables, add constraints and set objective)
      */
-    public CapacitatedResupplyMILP(instance data, GRBEnv env, int horizonDays) throws GRBException {
+    public CapacitatedResupplyMILP(Instance data, GRBEnv env, int horizonDays) throws GRBException {
         this.data = data;
         this.H = horizonDays;
 

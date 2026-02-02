@@ -1,13 +1,25 @@
 package Objects;
 
+/**
+ * Presents a Main Supply Centre (MSC) of Forward Supply Centre (FSC).
+ */
 public class Centre {
-    public final String centre;      // MSC, FSC 1, FSC 2
-    public final Integer maxStorageCapCcls; // may be null/NA
-    public final String source;      // source centre (e.g., MSC), may be null
-    public final java.time.LocalTime orderTime; // may be null
-    public final String timeWindow;  // may be null
-    public final Integer drivingTimeToSourceSec; // may be null/NA
+    public final String centre;     
+    public final Integer maxStorageCapCcls; 
+    public final String source;      
+    public final java.time.LocalTime orderTime; 
+    public final String timeWindow;  
+    public final Integer drivingTimeToSourceSec; 
 
+    /**
+     * Constructor.
+     * @param centre                    centre name
+     * @param maxStorageCapCcls         max storage in number of CCLs
+     * @param source                    source centre
+     * @param orderTime                 order time  
+     * @param timeWindow                time window to deliver supplies
+     * @param drivingTimeToSourceSec    driving time to source in seconds
+     */
     public Centre(String centre, Integer maxStorageCapCcls, String source,
                   java.time.LocalTime orderTime, String timeWindow, Integer drivingTimeToSourceSec) {
         this.centre = centre;
@@ -18,7 +30,8 @@ public class Centre {
         this.drivingTimeToSourceSec = drivingTimeToSourceSec;
     }
 
-    @Override public String toString() {
+    @Override 
+    public String toString() {
         return "centre='" + centre + '\'' +
                 ", maxStorageCapCcls=" + maxStorageCapCcls +
                 ", source='" + source + '\'' +

@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 import Objects.OperatingUnit;
 import Objects.Centre;
 import Objects.CCLpackage;
-import Objects.instance;
+import Objects.Instance;
 import Objects.OuType;
 
 public class ReadDataFile {
@@ -75,9 +75,9 @@ public class ReadDataFile {
     );
 
 
-    public static instance read(Path file) throws IOException {
+    public static Instance read(Path file) throws IOException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
-        instance data = new instance();
+        Instance data = new Instance();
 
         Section section = Section.NONE;
 

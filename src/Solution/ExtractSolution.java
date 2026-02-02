@@ -23,7 +23,7 @@ public final class ExtractSolution {
      * @param inst  instance data (used for OU lists, OU types, CCL types, capacities, etc.)
      * @param H     planning horizon in days
      */
-    public static ResupplySolution extract(GRBModel model, instance inst, int H) throws GRBException {
+    public static ResupplySolution extract(GRBModel model, Instance inst, int H) throws GRBException {
         int status = model.get(GRB.IntAttr.Status);
         if (status != GRB.Status.OPTIMAL && status != GRB.Status.SUBOPTIMAL) {
             throw new IllegalStateException("Model status is not optimal/suboptimal. Status=" + status);
@@ -215,7 +215,7 @@ public final class ExtractSolution {
         );
     }
 
-    public static void writeCsvs(ResupplySolution sol, instance inst, int H, Path outputDir) throws IOException {
+    public static void writeCsvs(ResupplySolution sol, Instance inst, int H, Path outputDir) throws IOException {
         writeTrucksCsv(sol, H, outputDir.resolve("trucks.csv"));
         writeInventoryOuCsv(sol, inst, H, outputDir.resolve("inventory_ou.csv"));
         writeShipmentsCsv(sol, outputDir.resolve("shipments.csv"));
@@ -263,7 +263,7 @@ public final class ExtractSolution {
     }
 
     // CSV 2: inventory_ou.csv
-    private static void writeInventoryOuCsv(ResupplySolution sol, instance inst, int H, Path file) throws IOException {
+    private static void writeInventoryOuCsv(ResupplySolution sol, Instance inst, int H, Path file) throws IOException {
         List<String[]> rows = new ArrayList<>();
         String[] header = new String[]{"ou", "product", "day", "inventory", "demand", "capacity", "slack"};
 
@@ -339,7 +339,7 @@ public final class ExtractSolution {
         CsvWriter.writeCsv(file, header, rows);
     }
 
-    private static void writeInventoryFscTotalCsv(ResupplySolution sol, instance inst, int H, Path file) throws IOException {
+    private static void writeInventoryFscTotalCsv(ResupplySolution sol, Instance inst, int H, Path file) throws IOException {
         List<String[]> rows = new ArrayList<>();
         String[] header = new String[]{"fsc", "day", "total_ccls", "capacity", "slack"};
 
@@ -363,7 +363,7 @@ public final class ExtractSolution {
         CsvWriter.writeCsv(file, header, rows);
     }
 
-    private static void writeInventoryFscDetailCsv(ResupplySolution sol, instance inst, int H, Path file) throws IOException {
+    private static void writeInventoryFscDetailCsv(ResupplySolution sol, Instance inst, int H, Path file) throws IOException {
         List<String[]> rows = new ArrayList<>();
         String[] header = new String[]{"fsc", "day", "cclType", "ouType", "ccls"};
 

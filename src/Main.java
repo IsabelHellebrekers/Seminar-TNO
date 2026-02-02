@@ -1,7 +1,7 @@
 import Objects.CCLpackage;
 import Objects.Centre;
 import Objects.OperatingUnit;
-import Objects.instance;
+import Objects.Instance;
 import Solution.ExtractSolution;
 import Solution.ResupplySolution;
 
@@ -15,7 +15,7 @@ import Models.CapacitatedResupplyMILP;
 public class Main {
     public static void main(String[] args) throws IOException {
         Path path = Path.of("src/Case/TNO_data_Erasmus_case.txt");
-        instance inst = DataUtils.ReadDataFile.read(path);
+        Instance inst = DataUtils.ReadDataFile.read(path);
 
         System.out.println("Operating units: " + inst.operatingUnits.size());
         for (OperatingUnit row : inst.operatingUnits) {
@@ -56,22 +56,7 @@ public class Main {
             milp = new CapacitatedResupplyMILP(inst, env, H);
 
             GRBModel m = milp.getModel();
-            System.out.println("\nMILP built:");
-            System.out.println("  Vars        = " + m.get(GRB.IntAttr.NumVars));
-            System.out.println("  Constraints = " + m.get(GRB.IntAttr.NumConstrs));
-
             milp.solve();
-
-            for (String w : new String[]{"FSC 1", "FSC 2"}) {
-                double totalT1 = 0.0;
-                for (String c : inst.cclContents.keySet()) {
-                    for (Objects.OuType o : Objects.OuType.values()) {
-                        String vn = "S_" + w.replace(" ", "") + "_" + c.replace(" ", "") + "_" + o + "_t1";
-                        totalT1 += m.getVarByName(vn).get(GRB.DoubleAttr.X);
-                    }
-                }
-                System.out.println("DEBUG: total S at " + w + " day 1 = " + totalT1);
-            }
 
             System.out.println("M  (MSC trucks)  = " + m.getVarByName("M").get(GRB.DoubleAttr.X));
             System.out.println("K_FSC1           = " + m.getVarByName("K_FSC1").get(GRB.DoubleAttr.X));

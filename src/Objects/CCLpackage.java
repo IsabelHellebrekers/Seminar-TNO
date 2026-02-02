@@ -1,11 +1,23 @@
 package Objects;
 
+/**
+ * Presents a CCL package. 
+ * A truck can carry at most one CCL. 
+ * A CCL contains Food&Water, Fuel, and Ammunition (in kg).
+ */
 public class CCLpackage {
-    public final String type; // Type 1, Type 2, ...
+    public final String type; 
     public final long foodWaterKg;
     public final long fuelKg;
     public final long ammoKg;
 
+    /**
+     * Constructor. 
+     * @param type          CCL type (1, 2 or 3)
+     * @param foodWaterKg   amount of FW in CCL (kg)
+     * @param fuelKg        amount of FUEL in CCL (kg)
+     * @param ammoKg        amount of AMMO in CCL (kg)
+     */
     public CCLpackage(String type, long foodWaterKg, long fuelKg, long ammoKg) {
         this.type = type;
         this.foodWaterKg = foodWaterKg;
