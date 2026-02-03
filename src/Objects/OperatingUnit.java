@@ -7,7 +7,7 @@ import java.time.LocalTime;
  */
 public class OperatingUnit {
     public final String operatingUnitName;
-    public final OuType ouType;
+    public final String ouType;
 
     // Daily demand (kg)
     public final long dailyFoodWaterKg;
@@ -36,7 +36,7 @@ public class OperatingUnit {
      */
     public OperatingUnit(
             String operatingUnitName,
-            OuType ouType,
+            String ouType,
             long dailyFoodWaterKg, long dailyFuelKg, long dailyAmmoKg,
             long maxFoodWaterKg, long maxFuelKg, long maxAmmoKg,
             String source
