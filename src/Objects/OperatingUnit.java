@@ -6,7 +6,7 @@ import java.time.LocalTime;
  * Quantities (except for time values) are expressed in kg.
  */
 public class OperatingUnit {
-    public final String operatingUnit;
+    public final String operatingUnitName;
     public final OuType ouType;
 
     // Daily demand (kg)
@@ -20,15 +20,11 @@ public class OperatingUnit {
     public final long maxAmmoKg;
 
     // Assigned resupply source
-    public final String source;   
-
-    public final LocalTime orderTime;        
-    public final String timeWindow;          
-    public final int drivingTimeToSourceSec; 
+    public final String source;
 
     /**
      * Constructor.
-     * @param operatingUnit             name of the OU
+     * @param operatingUnitName         name of the OU
      * @param ouType                    type of the OU
      * @param dailyFoodWaterKg          daily FW demand (kg)
      * @param dailyFuelKg               daily FUEL demand (kg)
@@ -37,18 +33,15 @@ public class OperatingUnit {
      * @param maxFuelKg                 max storage capacity FUEL (kg)
      * @param maxAmmoKg                 max storage capacity AMMO (kg)
      * @param source                    assigned resupply source
-     * @param orderTime                 order time
-     * @param timeWindow                time window to deliver supplies
-     * @param drivingTimeToSourceSec    time in minuts to go from source to OU
      */
     public OperatingUnit(
-            String operatingUnit,
+            String operatingUnitName,
             OuType ouType,
             long dailyFoodWaterKg, long dailyFuelKg, long dailyAmmoKg,
             long maxFoodWaterKg, long maxFuelKg, long maxAmmoKg,
-            String source, LocalTime orderTime, String timeWindow, int drivingTimeToSourceSec
+            String source
     ) {
-        this.operatingUnit = operatingUnit;
+        this.operatingUnitName = operatingUnitName;
         this.ouType = ouType;
         this.dailyFoodWaterKg = dailyFoodWaterKg;
         this.dailyFuelKg = dailyFuelKg;
@@ -57,21 +50,14 @@ public class OperatingUnit {
         this.maxFuelKg = maxFuelKg;
         this.maxAmmoKg = maxAmmoKg;
         this.source = source;
-        this.orderTime = orderTime;
-        this.timeWindow = timeWindow;
-        this.drivingTimeToSourceSec = drivingTimeToSourceSec;
     }
 
     @Override 
     public String toString() {
-        return "operatingUnit='" + operatingUnit + '\'' +
+        return "operatingUnit='" + operatingUnitName + '\'' +
                 ", ouType=" + ouType +
                 ", daily(FW/Fuel/Ammo)=" + dailyFoodWaterKg + "/" + dailyFuelKg + "/" + dailyAmmoKg +
                 ", max(FW/Fuel/Ammo)=" + maxFoodWaterKg + "/" + maxFuelKg + "/" + maxAmmoKg +
-                ", source='" + source + '\'' +
-                ", orderTime=" + orderTime +
-                ", timeWindow='" + timeWindow + '\'' +
-                ", drivingTimeSec=" + drivingTimeToSourceSec +
-                '}';
+                ", source='" + source + '}';
     }
 }

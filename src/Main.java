@@ -27,7 +27,7 @@ public class Main {
         // printDataSummary(inst);
 
         // 3) Solve + export
-        // solveAndExport(inst, DEFAULT_H, DEFAULT_OUTPUT_DIR);
+         solveAndExport(inst, DEFAULT_H, DEFAULT_OUTPUT_DIR);
     }
 
     /**
