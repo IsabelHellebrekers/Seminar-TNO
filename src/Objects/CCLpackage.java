@@ -6,7 +6,7 @@ package Objects;
  * A CCL contains Food&Water, Fuel, and Ammunition (in kg).
  */
 public class CCLpackage {
-    public final String type; 
+    public final int type;
     public final long foodWaterKg;
     public final long fuelKg;
     public final long ammoKg;
@@ -18,7 +18,7 @@ public class CCLpackage {
      * @param fuelKg        amount of FUEL in CCL (kg)
      * @param ammoKg        amount of AMMO in CCL (kg)
      */
-    public CCLpackage(String type, long foodWaterKg, long fuelKg, long ammoKg) {
+    public CCLpackage(int type, long foodWaterKg, long fuelKg, long ammoKg) {
         this.type = type;
         this.foodWaterKg = foodWaterKg;
         this.fuelKg = fuelKg;
