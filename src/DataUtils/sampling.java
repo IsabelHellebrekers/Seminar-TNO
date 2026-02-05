@@ -26,6 +26,15 @@ public final class sampling {
         return minUni + rng.nextDouble() * (maxUni - minUni);
     }
 
+    public long[] stochasticFW(int dailyFoodWaterKg) {
+        long[] FW = new long[10];
+        for (int i = 0; i < FW.length; i++) {
+            FW[i] = (long) (dailyFoodWaterKg * uniform());
+        }
+
+        return FW;
+    }
+
     /**
      * Binomial(n, p) via n Bernoulli trials
      */
@@ -35,6 +44,15 @@ public final class sampling {
             if (rng.nextDouble() < p) successes++;
         }
         return successes*1.0/10;
+    }
+
+    public long[] stochasticFUEL(int dailyFuelKg) {
+        long[] FUEL = new long[10];
+        for (int i = 0; i < FUEL.length; i++) {
+            FUEL[i] = (long) (dailyFuelKg * binomial());
+        }
+
+        return FUEL;
     }
 
     /**
@@ -52,6 +70,14 @@ public final class sampling {
         }
     }
 
+    public long[] stochasticAMMO(int dailyAmmoKg) {
+        long[] AMMO = new long[10];
+        for (int i = 0; i < AMMO.length; i++) {
+            AMMO[i] = (long) (dailyAmmoKg * triangular());
+        }
+
+        return AMMO;
+    }
     public double uniformQuantile(double epsilon) {
         double alpha = 1.0 - epsilon;
 

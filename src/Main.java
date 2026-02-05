@@ -1,4 +1,5 @@
 import DataUtils.InstanceCreator;
+import Deterministic.CapacitatedResupplyMILP;
 import Objects.CCLpackage;
 import Objects.OperatingUnit;
 import Objects.Instance;
@@ -10,13 +11,13 @@ import java.util.Map;
 
 import com.gurobi.gurobi.*;
 
-import Models.CapacitatedResupplyMILP;
-
 public class Main {
     public static void main(String[] args) throws IOException {
         InstanceCreator ic = new InstanceCreator();
         Instance instance = ic.createFDInstance();
         solve(instance);
+
+        // ic.generateInstances();
     }
     /**
      * Builds and solves the MILP and exports CSV outputs if the solution is optimal.
