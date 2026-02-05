@@ -1,3 +1,4 @@
+package Stochastic;
 import java.io.IOException;
 import java.util.Random;
 
@@ -24,6 +25,15 @@ public final class sampling {
         return minUni + rng.nextDouble() * (maxUni - minUni);
     }
 
+    public long[] stochasticFW(int dailyFoodWaterKg) {
+        long[] FW = new long[10];
+        for (int i = 0; i < FW.length; i++) {
+            FW[i] = (long) (dailyFoodWaterKg * uniform());
+        }
+
+        return FW;
+    }
+
     /**
      * Binomial(n, p) via n Bernoulli trials
      */
@@ -33,6 +43,15 @@ public final class sampling {
             if (rng.nextDouble() < p) successes++;
         }
         return successes*1.0/10;
+    }
+
+    public long[] stochasticFUEL(int dailyFuelKg) {
+        long[] FUEL = new long[10];
+        for (int i = 0; i < FUEL.length; i++) {
+            FUEL[i] = (long) (dailyFuelKg * binomial());
+        }
+
+        return FUEL;
     }
 
     /**
@@ -48,6 +67,15 @@ public final class sampling {
         } else {
             return maxTri - Math.sqrt((1.0 - u) * (maxTri - minTri) * (maxTri - modeTri));
         }
+    }
+
+    public long[] stochasticAMMO(int dailyAmmoKg) {
+        long[] AMMO = new long[10];
+        for (int i = 0; i < AMMO.length; i++) {
+            AMMO[i] = (long) (dailyAmmoKg * triangular());
+        }
+
+        return AMMO;
     }
 
     public static void main(String[] args) throws IOException {
