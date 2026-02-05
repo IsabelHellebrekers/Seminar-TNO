@@ -1,4 +1,5 @@
 import DataUtils.InstanceCreator;
+import Deterministic.CapacitatedResupplyMILP;
 import Objects.CCLpackage;
 import Objects.OperatingUnit;
 import Objects.Instance;
@@ -10,13 +11,11 @@ import java.util.Map;
 
 import com.gurobi.gurobi.*;
 
-import Models.CapacitatedResupplyMILP;
-
 public class Main {
     public static void main(String[] args) throws IOException {
         InstanceCreator ic = new InstanceCreator();
-       Instance instance = ic.createFDInstance();
-       solve(instance);
+        Instance instance = ic.createFDInstance();
+        solve(instance);
 
         // ic.generateInstances();
     }
