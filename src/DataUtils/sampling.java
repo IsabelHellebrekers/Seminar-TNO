@@ -1,3 +1,5 @@
+package DataUtils;
+
 import java.io.IOException;
 import java.util.Random;
 
@@ -50,8 +52,47 @@ public final class sampling {
         }
     }
 
+    public double uniformQuantile(double epsilon) {
+        double alpha = 1.0 - epsilon;
+
+        return minUni + alpha * (maxUni - minUni);
+    }
+
+    public double binomialQuantile(double epsilon) {
+        double alpha = 1.0 - epsilon;
+        if (alpha <= 0.0) return 0;
+        if (alpha >= 1.0) return n / 10;
+
+        // P(X = 0)
+        double pmf = Math.pow(1.0 - p, n);
+        double cdf = pmf;
+
+        for (int k = 0; k < n; k++) {
+            if (cdf >= alpha) {
+                return (double) k / 10;
+            } // if
+            // Recurrence P(X = k+1)
+            pmf *= (n-k) / (k + 1) * p / (1.0 - p);
+            cdf += pmf;
+        } // for k
+        return n / 10;
+    }
+
+    public double triangularQuantile(double epsilon) {
+        double alpha = 1.0 - epsilon;
+
+        double fc = (modeTri - minTri) / (maxTri - minTri);
+
+        if (alpha <= fc) {
+            return minTri + Math.sqrt(alpha * (maxTri - minTri) * (modeTri - minTri));
+        } // if
+        else {
+            return maxTri - Math.sqrt(epsilon * (maxTri - minTri) * (maxTri - modeTri));
+        } // else
+    }
+
     public static void main(String[] args) throws IOException {
         sampling x = new sampling();
-        System.out.println(x.triangular());
+        System.out.println(x.triangularQuantile(0.05/330));
     }
 }
