@@ -9,7 +9,7 @@ import java.util.Map;
 
 import com.gurobi.gurobi.*;
 
-import Models.CapacitatedResupplyMILP;
+import Deterministic.CapacitatedResupplyMILP;
 
 public class Main {
     public static void main(String[] args) throws IOException {
