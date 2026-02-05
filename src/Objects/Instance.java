@@ -27,4 +27,16 @@ public class Instance {
         this.ouTypes = List.of("VUST", "GN_CIE", "PAINF_CIE", "AT_CIE");
         this.timeHorizon = 10;
     }
+
+    public void addOperatingUnit(String operatingUnitName,
+                                  String ouType,
+                                  long dailyFoodWaterKg, long dailyFuelKg, long dailyAmmoKg,
+                                  long maxFoodWaterKg, long maxFuelKg, long maxAmmoKg,
+                                  String source) {
+        this.operatingUnits.add(new OperatingUnit(operatingUnitName, ouType, dailyFoodWaterKg, dailyFuelKg, dailyAmmoKg, maxFoodWaterKg, maxFuelKg, maxAmmoKg, source));
+    }
+
+    public void addFSC(String name, int maxStorageCapCcls, Map<String, int[]> initialStorageLevels) {
+        this.FSCs.add(new FSC(name, maxStorageCapCcls, initialStorageLevels));
+    }
 }

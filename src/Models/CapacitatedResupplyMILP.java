@@ -55,7 +55,7 @@ public class CapacitatedResupplyMILP {
     /**
      * Build the MILP model (derive sets, create variables, add constraints and set objective)
      */
-    public CapacitatedResupplyMILP(Instance data, GRBEnv env) throws GRBException {
+    public CapacitatedResupplyMILP(Instance data, GRBEnv env, boolean verbose) throws GRBException {
         this.data = data;
         this.fscs = this.data.FSCs;
         this.ous = this.data.operatingUnits;
@@ -65,6 +65,7 @@ public class CapacitatedResupplyMILP {
 
         buildArcs();
 
+        env.set(GRB.IntParam.OutputFlag, verbose ? 1 : 0);
         this.model = new GRBModel(env);
 
         buildVariables();
@@ -550,4 +551,108 @@ public class CapacitatedResupplyMILP {
     public GRBModel getModel() {
         return model;
     }
+
+    /**
+     * Solves 1 or more instances and returns a Result per instance.
+     * One shared GRBEnv is used for efficiency.
+     */
+    public static List<Result> solveInstances(List<Instance> instances) {
+        if (instances == null || instances.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Result> results = new ArrayList<>();
+        GRBEnv env = null;
+
+        try {
+            env = new GRBEnv(true);
+            env.set("logFile", "gurobi_batch.log");
+            env.start();
+
+            for (int idx = 0; idx < instances.size(); idx++) {
+                int total = instances.size();
+                int percent = (int) Math.round(100.0 * (idx + 1) / total);
+
+                System.out.printf(
+                        "\rProgress: %3d%% (%d / %d instances)",
+                        percent, idx + 1, total
+                );
+                System.out.flush();
+
+                Instance inst = instances.get(idx);
+                String instanceName = "Instance " + (idx + 1);
+
+                CapacitatedResupplyMILP milp = null;
+                try {
+                    milp = new CapacitatedResupplyMILP(inst, env, false);
+                    milp.solve();
+
+                    int status = milp.model.get(GRB.IntAttr.Status);
+                    boolean optimal = (status == GRB.Status.OPTIMAL);
+                    Double objVal = optimal ? milp.model.get(GRB.DoubleAttr.ObjVal) : null;
+
+                    // Trucks: M and K_FSC_1..K_FSC_10 (missing -> 0)
+                    int trucksAtMsc = (milp.M == null) ? 0 : (int) Math.round(milp.M.get(GRB.DoubleAttr.X));
+
+                    int[] trucksAtFsc = new int[10];
+                    for (int f = 1; f <= 10; f++) {
+                        String fscName = "FSC_" + f;
+                        GRBVar kv = milp.K.get(fscName);
+                        trucksAtFsc[f - 1] = (kv == null) ? 0 : (int) Math.round(kv.get(GRB.DoubleAttr.X));
+                    }
+
+                    // For each FSC_1..FSC_10, list OUs actually supplied (x>0 anywhere)
+                    List<Set<String>> suppliedSets = new ArrayList<>();
+                    for (int i = 0; i < 10; i++) suppliedSets.add(new HashSet<>());
+
+                    for (Map.Entry<XKey, GRBVar> e : milp.x.entrySet()) {
+                        double val = e.getValue().get(GRB.DoubleAttr.X);
+                        if (val <= 1e-9) continue;
+
+                        XKey key = e.getKey();
+                        String w = key.w(); // FSC name
+                        String ou = key.i(); // OU name
+
+                        // Map FSC_1..FSC_10 -> index 0..9
+                        if (w != null && w.startsWith("FSC_")) {
+                            try {
+                                int num = Integer.parseInt(w.substring(4));
+                                if (num >= 1 && num <= 10) {
+                                    suppliedSets.get(num - 1).add(ou);
+                                }
+                            } catch (NumberFormatException ignored) {
+                                // not in FSC_1..FSC_10 format
+                            }
+                        }
+                    }
+
+                    List<List<String>> ouLists = new ArrayList<>();
+                    for (int i = 0; i < 10; i++) {
+                        List<String> list = new ArrayList<>(suppliedSets.get(i));
+                        Collections.sort(list);
+                        ouLists.add(list);
+                    }
+
+                    results.add(new Result(instanceName, status, optimal, objVal, trucksAtMsc, trucksAtFsc, ouLists));
+
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed solving " + instanceName + ": " + e.getMessage(), e);
+                } finally {
+                    if (milp != null) {
+                        try { milp.dispose(); } catch (Exception ignored) {}
+                    }
+                }
+            }
+
+            return results;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed in solveInstances(): " + e.getMessage(), e);
+        } finally {
+            if (env != null) {
+                try { env.dispose(); } catch (Exception ignored) {}
+            }
+        }
+    }
+
 }

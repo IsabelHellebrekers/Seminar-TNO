@@ -1,11 +1,10 @@
 package Objects;
 
-import java.util.List;
 import java.util.Map;
 
 public class FSC {
     public final String FSCname;
-    public final Integer maxStorageCapCcls;
+    public final int maxStorageCapCcls;
     public final Map<String, int[]> initialStorageLevels;
 
 
