@@ -15,8 +15,10 @@ import Models.CapacitatedResupplyMILP;
 public class Main {
     public static void main(String[] args) throws IOException {
         InstanceCreator ic = new InstanceCreator();
-        Instance instance = ic.createFDInstance();
-        solve(instance);
+//        Instance instance = ic.createFDInstance();
+//        solve(instance);
+
+        ic.generateInstances();
     }
     /**
      * Builds and solves the MILP and exports CSV outputs if the solution is optimal.
