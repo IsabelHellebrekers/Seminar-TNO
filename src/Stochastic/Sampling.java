@@ -25,6 +25,10 @@ public final class Sampling {
         return minUni + rng.nextDouble() * (maxUni - minUni);
     }
 
+    public double uniformQuantile(double epsilon) {
+        return 0.0;
+    }
+
     public long[] stochasticFW(int dailyFoodWaterKg) {
         long[] FW = new long[10];
         for (int i = 0; i < FW.length; i++) {
@@ -43,6 +47,10 @@ public final class Sampling {
             if (rng.nextDouble() < p) successes++;
         }
         return successes*1.0/10;
+    }
+
+    public double binomialQuantile(double epsilon) {
+        return 0.0;
     }
 
     public long[] stochasticFUEL(int dailyFuelKg) {
@@ -67,6 +75,10 @@ public final class Sampling {
         } else {
             return maxTri - Math.sqrt((1.0 - u) * (maxTri - minTri) * (maxTri - modeTri));
         }
+    }
+
+    public double triangularQuantile(double epsilon) {
+        return 0.0;
     }
 
     public long[] stochasticAMMO(int dailyAmmoKg) {
