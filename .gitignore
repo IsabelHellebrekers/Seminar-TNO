@@ -1,3 +1,6 @@
+# Gurobi settings
+.idea/libraries/gurobi.xml
+
 # Compiled class file
 *.class
 
