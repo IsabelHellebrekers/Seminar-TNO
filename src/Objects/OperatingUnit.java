@@ -26,7 +26,7 @@ public class OperatingUnit {
     public final long maxAmmoKg;
 
     // Assigned resupply source
-    public final String source;
+    public String source;
 
     /**
      * Constructor.
@@ -128,6 +128,9 @@ public class OperatingUnit {
         this.source = source;
     }
 
+    public void changeSource(String newSourceName) {
+        this.source = newSourceName;
+    }
     @Override 
     public String toString() {
         return "operatingUnit='" + operatingUnitName + '\'' +
