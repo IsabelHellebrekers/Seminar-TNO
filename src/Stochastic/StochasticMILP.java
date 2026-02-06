@@ -1,8 +1,7 @@
-package Deterministic;
+package Stochastic;
 
 import com.gurobi.gurobi.*;
 import Objects.*;
-import DataUtils.sampling;
 
 import java.util.*;
 
@@ -70,7 +69,7 @@ public class StochasticMILP {
         this.ouTypes = this.data.ouTypes;
 
         double epsilon = 0.05; // infeasible if 0.05 / 330??
-        sampling quant = new sampling();
+        Sampling quant = new Sampling();
         this.FWquant = quant.uniformQuantile(epsilon);
         this.FUELquant = quant.binomialQuantile(epsilon);
         this.AMMOquant = quant.triangularQuantile(epsilon);
