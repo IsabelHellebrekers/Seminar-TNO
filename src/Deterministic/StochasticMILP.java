@@ -1,4 +1,4 @@
-package Models;
+package Deterministic;
 
 import com.gurobi.gurobi.*;
 import Objects.*;
