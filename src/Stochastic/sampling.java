@@ -2,7 +2,7 @@ package Stochastic;
 import java.io.IOException;
 import java.util.Random;
 
-public final class sampling {
+public final class Sampling {
 
     private final Random rng;
 
@@ -14,7 +14,7 @@ public final class sampling {
     private final double maxTri = 2.0;
     private final double modeTri = 0.8;
 
-    public sampling() {
+    public Sampling() {
         this.rng = new Random(); // non-deterministic seed
     }
 
@@ -79,7 +79,7 @@ public final class sampling {
     }
 
     public static void main(String[] args) throws IOException {
-        sampling x = new sampling();
+        Sampling x = new Sampling();
         System.out.println(x.triangular());
     }
 }

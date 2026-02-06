@@ -3,7 +3,7 @@ package DataUtils;
 import Objects.FSC;
 import Objects.Instance;
 import Objects.OperatingUnit;
-import Stochastic.sampling;
+import Stochastic.Sampling;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,7 +48,7 @@ public class InstanceCreator {
 
     // Stochastic method after merge conflict
     public Instance createStochasticInstanceFD() {
-        sampling sampler = new sampling();
+        Sampling sampler = new Sampling();
         List<OperatingUnit> operatingUnits = new ArrayList<>();
 
         operatingUnits.add(new OperatingUnit("VUST","VUST",sampler.stochasticFW(13018),sampler.stochasticFUEL(42842),sampler.stochasticAMMO(67140),39054,128526,201420,"MSC"));
