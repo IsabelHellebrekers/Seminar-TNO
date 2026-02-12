@@ -11,19 +11,19 @@ public class OperatingUnit {
     public final String ouType;
 
     // Daily demand (kg)
-    public final long dailyFoodWaterKg;
-    public final long dailyFuelKg;
-    public final long dailyAmmoKg;
+    public final double dailyFoodWaterKg;
+    public final double dailyFuelKg;
+    public final double dailyAmmoKg;
 
     // Stochastic demand (kg)
-    public final long[] stochasticFoodWaterKg;
-    public final long[] stochasticFuelKg;
-    public final long[] stochasticAmmoKg;
+    public final double[] stochasticFoodWaterKg;
+    public final double[] stochasticFuelKg;
+    public final double[] stochasticAmmoKg;
 
     // Maximum storage capacities at the OU (kg)
-    public final long maxFoodWaterKg;
-    public final long maxFuelKg;
-    public final long maxAmmoKg;
+    public final double maxFoodWaterKg;
+    public final double maxFuelKg;
+    public final double maxAmmoKg;
 
     // Assigned resupply source
     public String source;
@@ -43,9 +43,9 @@ public class OperatingUnit {
     private OperatingUnit(
             String operatingUnitName,
             String ouType,
-            long dailyFoodWaterKg, long dailyFuelKg, long dailyAmmoKg,
-            long[] stochasticFoodWaterKg, long[] stochasticFuelKg, long[] stochasticAmmoKg,
-            long maxFoodWaterKg, long maxFuelKg, long maxAmmoKg,
+            double dailyFoodWaterKg, double dailyFuelKg, double dailyAmmoKg,
+            double[] stochasticFoodWaterKg, double[] stochasticFuelKg, double[] stochasticAmmoKg,
+            double maxFoodWaterKg, double maxFuelKg, double maxAmmoKg,
             String source
     ) {
         this.operatingUnitName = operatingUnitName;
@@ -77,8 +77,8 @@ public class OperatingUnit {
     public OperatingUnit(
             String operatingUnitName,
             String ouType,
-            long dailyFoodWaterKg, long dailyFuelKg, long dailyAmmoKg,
-            long maxFoodWaterKg, long maxFuelKg, long maxAmmoKg,
+            double dailyFoodWaterKg, double dailyFuelKg, double dailyAmmoKg,
+            double maxFoodWaterKg, double maxFuelKg, double maxAmmoKg,
             String source
     ) {
         this.operatingUnitName = operatingUnitName;
@@ -110,8 +110,8 @@ public class OperatingUnit {
     public OperatingUnit(
             String operatingUnitName,
             String ouType,
-            long[] stochasticFoodWaterKg, long[] stochasticFuelKg, long[] stochasticAmmoKg,
-            long maxFoodWaterKg, long maxFuelKg, long maxAmmoKg,
+            double[] stochasticFoodWaterKg, double[] stochasticFuelKg, double[] stochasticAmmoKg,
+            double maxFoodWaterKg, double maxFuelKg, double maxAmmoKg,
             String source
     ) {
         this.operatingUnitName = operatingUnitName;

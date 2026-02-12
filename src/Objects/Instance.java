@@ -30,8 +30,8 @@ public class Instance {
 
     public void addOperatingUnit(String operatingUnitName,
                                   String ouType,
-                                  long dailyFoodWaterKg, long dailyFuelKg, long dailyAmmoKg,
-                                  long maxFoodWaterKg, long maxFuelKg, long maxAmmoKg,
+                                  double dailyFoodWaterKg, double dailyFuelKg, double dailyAmmoKg,
+                                  double maxFoodWaterKg, double maxFuelKg, double maxAmmoKg,
                                   String source) {
         this.operatingUnits.add(new OperatingUnit(operatingUnitName, ouType, dailyFoodWaterKg, dailyFuelKg, dailyAmmoKg, maxFoodWaterKg, maxFuelKg, maxAmmoKg, source));
     }
