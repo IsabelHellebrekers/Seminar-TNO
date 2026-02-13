@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 public class InstanceCreator {
-    public List<Instance> createFDInstance() {
+    public static List<Instance> createFDInstance() {
         List<OperatingUnit> operatingUnits = new ArrayList<>();
         operatingUnits.add(new OperatingUnit("VUST", "VUST", 13018, 42842, 67140, 39054, 128526, 201420, "MSC"));
         operatingUnits.add(new OperatingUnit("GN_CIE_1", "GN_CIE", 6209, 21072, 43718, 18627, 63216, 131154, "FSC_1"));
@@ -82,8 +82,9 @@ public class InstanceCreator {
     }
 
     // MAKE CONTIGUOUS PARTITIONS
-    public List<Instance> contiguousPartitions() {
-        Instance base = createFDInstance().getFirst();
+    //TODO: Vust moet nog correct toegevoegd worden
+    public static List<Instance> contiguousPartitions() {
+        Instance base = createFDInstance().get(0);
 
         // Make list of OUs based on base
         List<OperatingUnit> remainingOUs = new ArrayList<>();
@@ -99,7 +100,7 @@ public class InstanceCreator {
         return makePartition(remainingOUs, initialDepth);
     }
 
-    public ArrayList<Instance> makePartition(List<OperatingUnit> remainingOUs, int depth) {
+    public static ArrayList<Instance> makePartition(List<OperatingUnit> remainingOUs, int depth) {
         // if remainingOUs = 0 --> return ArrayList<Instance>
         if (remainingOUs.isEmpty()) {
             ArrayList<Instance> base = new ArrayList<>();
@@ -129,13 +130,13 @@ public class InstanceCreator {
         return instancesAtNode;
     }
 
-    public void addOperatingUnitsToNode(Instance inst, List<OperatingUnit> subList, String sourceName) {
+    public static void addOperatingUnitsToNode(Instance inst, List<OperatingUnit> subList, String sourceName) {
         for (OperatingUnit ou : subList) {
             inst.addOperatingUnit(ou.operatingUnitName, ou.ouType, ou.dailyFoodWaterKg, ou.dailyFuelKg, ou.dailyAmmoKg, ou.maxFoodWaterKg, ou.maxFuelKg, ou.maxAmmoKg, sourceName);
         }
     }
 
-    public void addFSCToNode(Instance inst, int depth, List<OperatingUnit> subList) {
+    public static void addFSCToNode(Instance inst, int depth, List<OperatingUnit> subList) {
         // Calculate initialStorageLevels
         Map<String, int[]> initialStorageLevelsFSC = new HashMap<String, int[]>();
 

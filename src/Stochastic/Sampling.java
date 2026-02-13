@@ -30,10 +30,10 @@ public final class Sampling {
         return minUni + alpha * (maxUni - minUni);
     }
 
-    public long[] stochasticFW(int dailyFoodWaterKg) {
-        long[] FW = new long[10];
+    public double[] stochasticFW(int dailyFoodWaterKg) {
+        double[] FW = new double[10];
         for (int i = 0; i < FW.length; i++) {
-            FW[i] = (long) (dailyFoodWaterKg * uniform());
+            FW[i] = (dailyFoodWaterKg * uniform());
         }
 
         return FW;
@@ -63,10 +63,10 @@ public final class Sampling {
         return i / 10;
     }
 
-    public long[] stochasticFUEL(int dailyFuelKg) {
-        long[] FUEL = new long[10];
+    public double[] stochasticFUEL(int dailyFuelKg) {
+        double[] FUEL = new double[10];
         for (int i = 0; i < FUEL.length; i++) {
-            FUEL[i] = (long) (dailyFuelKg * binomial());
+            FUEL[i] = (dailyFuelKg * binomial());
         }
 
         return FUEL;
@@ -97,10 +97,10 @@ public final class Sampling {
         }
     }
 
-    public long[] stochasticAMMO(int dailyAmmoKg) {
-        long[] AMMO = new long[10];
+    public double[] stochasticAMMO(int dailyAmmoKg) {
+        double[] AMMO = new double[10];
         for (int i = 0; i < AMMO.length; i++) {
-            AMMO[i] = (long) (dailyAmmoKg * triangular());
+            AMMO[i] = (dailyAmmoKg * triangular());
         }
 
         return AMMO;

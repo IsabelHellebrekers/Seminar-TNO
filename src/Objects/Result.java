@@ -3,6 +3,7 @@ package Objects;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Holds all outputs for one solved instance.
@@ -21,7 +22,35 @@ public class Result {
     // For each FSC_1..FSC_10, list of OUs it supplies
     private final List<List<String>> ousSuppliedByFsc;
 
-    public Result(String instanceName, int gurobiStatus, boolean optimal, Double objectiveValue, int trucksAtMsc, int[] trucksAtFsc, List<List<String>> ousSuppliedByFsc) {
+    // Visualisation
+    public record XKey(String fsc, String ou, int cclType, int t) {}
+    public record YKey(String fsc, int cclType, String ouType, int t) {}
+    public record ZKey(int cclType, int t) {}
+    public record IKey(String ou, String product, int t) {}
+    public record SKey(String fsc, int cclType, String ouType, int t) {}
+
+    private final int M_value;
+    private final Map<String, Integer> K_value;               // K[w]
+    private final Map<XKey, Integer> x_value;                 // x[w,i,c,t]
+    private final Map<YKey, Integer> y_value;                 // y[w,c,o,t] (optional)
+    private final Map<ZKey, Integer> z_value;                 // z[c,t] (optional)
+    private final Map<IKey, Double> I_value;                  // I[i,p,t]
+    private final Map<SKey, Integer> S_value;                 // S[w,c,o,t] (optional)
+
+    public Result(String instanceName,
+                  int gurobiStatus,
+                  boolean optimal,
+                  Double objectiveValue,
+                  int trucksAtMsc,
+                  int[] trucksAtFsc,
+                  List<List<String>> ousSuppliedByFsc,
+                  int M_value,
+                  Map<String, Integer> K_value,
+                  Map<XKey, Integer> x_value,
+                  Map<YKey, Integer> y_value,
+                  Map<ZKey, Integer> z_value,
+                  Map<IKey, Double> I_value,
+                  Map<SKey, Integer> S_value){
         this.instanceName = instanceName;
         this.gurobiStatus = gurobiStatus;
         this.optimal = optimal;
@@ -29,6 +58,14 @@ public class Result {
         this.trucksAtMsc = trucksAtMsc;
         this.trucksAtFsc = trucksAtFsc.clone();
         this.ousSuppliedByFsc = ousSuppliedByFsc;
+
+        this.M_value = M_value;
+        this.K_value = K_value;
+        this.x_value = x_value;
+        this.y_value = y_value;
+        this.z_value = z_value;
+        this.I_value = I_value;
+        this.S_value = S_value;
     }
 
     private static List<List<String>> emptyOuLists() {
@@ -65,4 +102,14 @@ public class Result {
         for (int i = 0; i < 10; i++) instanceResult.add(this.trucksAtFsc[i]);
         return instanceResult;
     }
+
+    // For simulation
+    public Map<XKey, Integer> getXValue() { return Collections.unmodifiableMap(x_value); }
+    public Map<YKey, Integer> getYValue() { return Collections.unmodifiableMap(y_value); }
+    public Map<ZKey, Integer> getZValue() { return Collections.unmodifiableMap(z_value); }
+    public Map<IKey, Double> getIValue() { return Collections.unmodifiableMap(I_value); }
+    public Map<SKey, Integer> getSValue() { return Collections.unmodifiableMap(S_value); }
+    public Map<String, Integer> getKValue() { return Collections.unmodifiableMap(K_value); }
+    public int getMValue() { return M_value; }
+
 }
