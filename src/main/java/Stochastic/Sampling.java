@@ -26,7 +26,8 @@ public final class Sampling {
     }
 
     public double uniformQuantile(double epsilon) {
-        return 0.0;
+        double alpha = 1.0 - epsilon;
+        return minUni + alpha * (maxUni - minUni);
     }
 
     public double[] stochasticFW(int dailyFoodWaterKg) {
@@ -50,7 +51,16 @@ public final class Sampling {
     }
 
     public double binomialQuantile(double epsilon) {
-        return 0.0;
+        double alpha = 1.0 - epsilon;
+        double prob = Math.pow(1-p, n);
+        double cdf = prob;
+        double i = 0.0;
+        while (cdf < alpha) {
+            prob = prob * (n - i) / (i + 1.0) * p / (1.0 - p);
+            cdf += prob;
+            i += 1.0;
+        }
+        return i / 10;
     }
 
     public double[] stochasticFUEL(int dailyFuelKg) {
@@ -78,7 +88,13 @@ public final class Sampling {
     }
 
     public double triangularQuantile(double epsilon) {
-        return 0.0;
+        double alpha = 1.0 - epsilon;
+        if (alpha <= (modeTri - minTri) / (maxTri - minTri)) {
+            return minTri + Math.sqrt((maxTri - minTri) * (modeTri - minTri));
+        }
+        else {
+            return maxTri - Math.sqrt(epsilon * (maxTri - minTri) * (maxTri - modeTri));
+        }
     }
 
     public double[] stochasticAMMO(int dailyAmmoKg) {
