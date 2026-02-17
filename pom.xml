@@ -10,9 +10,12 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.release>17</maven.compiler.release>
         <javafx.version>21.0.4</javafx.version>
+        <gurobi.version>13.0.1</gurobi.version>
+        <gurobi.home>${env.GUROBI_HOME}</gurobi.home>
+        <gurobi.jar.path>${gurobi.home}/lib/gurobi.jar</gurobi.jar.path>
+        <gurobi.native.path>${gurobi.home}/bin${path.separator}${gurobi.home}/lib</gurobi.native.path>
     </properties>
 
     <dependencies>
@@ -32,11 +35,9 @@
         <dependency>
             <groupId>com.gurobi</groupId>
             <artifactId>gurobi</artifactId>
-            <version>13.0</version>
+            <version>${gurobi.version}</version>
             <scope>system</scope>
-            <systemPath>
-                C:/gurobi1301/win64/lib/gurobi.jar
-            </systemPath>
+            <systemPath>${gurobi.jar.path}</systemPath>
         </dependency>
 
     </dependencies>
@@ -44,11 +45,54 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>validate-gurobi-setup</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireProperty>
+                                    <property>env.GUROBI_HOME</property>
+                                    <message>
+                                        GUROBI_HOME is not set. Set GUROBI_HOME to your Gurobi installation directory (for example: C:\gurobi1301\win64).
+                                    </message>
+                                </requireProperty>
+                                <requireFilesExist>
+                                    <files>
+                                        <file>${gurobi.jar.path}</file>
+                                    </files>
+                                    <message>
+                                        Could not find ${gurobi.jar.path}. Install Gurobi and ensure GUROBI_HOME points to the correct folder.
+                                    </message>
+                                </requireFilesExist>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.14.0</version>
+                <configuration>
+                    <release>${maven.compiler.release}</release>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
                     <mainClass>Visualisation.VisualiserApp</mainClass>
+                    <jvmArgs>
+                        <jvmArg>-Djava.library.path=${gurobi.native.path}</jvmArg>
+                    </jvmArgs>
                 </configuration>
             </plugin>
         </plugins>

@@ -231,13 +231,13 @@ public class OutOfSampleMILP {
             for (int t = 1; t <= data.timeHorizon; t++) {
 
                 demand.put(new DemandKey(i, "FW", t),
-                        (double) ou.dailyFoodWaterKg);
+                        ou.dailyFoodWaterKg);
 
                 demand.put(new DemandKey(i, "FUEL", t),
-                        (double) ou.dailyFuelKg);
+                        ou.dailyFuelKg);
 
                 demand.put(new DemandKey(i, "AMMO", t),
-                        (double) ou.dailyAmmoKg);
+                        ou.dailyAmmoKg);
             }
         }
     }
