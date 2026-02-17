@@ -906,7 +906,7 @@ public class OutOfSampleMILP {
     }
 
     public static void main(String[] args) {
-        OutOfSampleMILP.solveInstances(new InstanceCreator().createFDInstance(), 200.0, Map.of("FSC_1", 200.0, "FSC_2", 200.0));
+        OutOfSampleMILP.solveInstances(InstanceCreator.createFDInstance(), 200.0, Map.of("FSC_1", 200.0, "FSC_2", 200.0));
     }
 
 }

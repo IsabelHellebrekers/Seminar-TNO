@@ -68,11 +68,6 @@ public class Result {
         this.S_value = S_value;
     }
 
-    private static List<List<String>> emptyOuLists() {
-        List<List<String>> lists = new ArrayList<>(10);
-        for (int i = 0; i < 10; i++) lists.add(new ArrayList<>());
-        return lists;
-    }
 
     public String getInstanceName() { return this.instanceName; }
     public int getGurobiStatus() { return this.gurobiStatus; }

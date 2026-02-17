@@ -39,7 +39,7 @@ public class VisualiserApp extends Application {
 
         // Make instance and result object
 //        Instance inst = InstanceCreator.createFDInstance().get(0);
-        Instance inst = new InstanceCreator().contiguousPartitions().get(30); // 25 is een mooie visualisatie
+        Instance inst = InstanceCreator.contiguousPartitions().get(30); // 25 is een mooie visualisatie
         Result res = solveInstance(inst);
 
         // Make initial state and upcoming events

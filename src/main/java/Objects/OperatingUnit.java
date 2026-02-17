@@ -1,6 +1,4 @@
 package Objects;
-import java.time.LocalTime;
-import java.util.Arrays;
 
 /**
  * Presents an Operating Unit (OU).
@@ -27,40 +25,6 @@ public class OperatingUnit {
 
     // Assigned resupply source
     public String source;
-
-    /**
-     * Constructor.
-     * @param operatingUnitName         name of the OU
-     * @param ouType                    type of the OU
-     * @param dailyFoodWaterKg          daily FW demand (kg)
-     * @param dailyFuelKg               daily FUEL demand (kg)
-     * @param dailyAmmoKg               daily AMMO demand (kg)
-     * @param maxFoodWaterKg            max storage capacity FW (kg)
-     * @param maxFuelKg                 max storage capacity FUEL (kg)
-     * @param maxAmmoKg                 max storage capacity AMMO (kg)
-     * @param source                    assigned resupply source
-     */
-    private OperatingUnit(
-            String operatingUnitName,
-            String ouType,
-            double dailyFoodWaterKg, double dailyFuelKg, double dailyAmmoKg,
-            double[] stochasticFoodWaterKg, double[] stochasticFuelKg, double[] stochasticAmmoKg,
-            double maxFoodWaterKg, double maxFuelKg, double maxAmmoKg,
-            String source
-    ) {
-        this.operatingUnitName = operatingUnitName;
-        this.ouType = ouType;
-        this.dailyFoodWaterKg = dailyFoodWaterKg;
-        this.dailyFuelKg = dailyFuelKg;
-        this.dailyAmmoKg = dailyAmmoKg;
-        this.stochasticFoodWaterKg = (stochasticFoodWaterKg == null) ? null : Arrays.copyOf(stochasticFoodWaterKg, stochasticFoodWaterKg.length);
-        this.stochasticFuelKg     = (stochasticFuelKg == null) ? null : Arrays.copyOf(stochasticFuelKg, stochasticFuelKg.length);
-        this.stochasticAmmoKg     = (stochasticAmmoKg == null) ? null : Arrays.copyOf(stochasticAmmoKg, stochasticAmmoKg.length);
-        this.maxFoodWaterKg = maxFoodWaterKg;
-        this.maxFuelKg = maxFuelKg;
-        this.maxAmmoKg = maxAmmoKg;
-        this.source = source;
-    }
 
     /**
      * Deterministic constructor.
