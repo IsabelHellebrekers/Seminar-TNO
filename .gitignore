@@ -38,3 +38,7 @@ replay_pid*
 
 # IntelliJ / Java build output
 out/
+target/
+
+# VS Code
+.vscode/

@@ -31,51 +31,40 @@
             <version>${javafx.version}</version>
         </dependency>
 
-        <!-- Gurobi -->
+        <!-- Gurobi (installed to local Maven repo) -->
         <dependency>
             <groupId>com.gurobi</groupId>
             <artifactId>gurobi</artifactId>
             <version>${gurobi.version}</version>
-            <scope>system</scope>
-            <systemPath>${gurobi.jar.path}</systemPath>
         </dependency>
+
+                <!--
+                    Alternative: if you install the Gurobi JAR into your local Maven repository,
+                    you can switch to this normal-scoped dependency and remove the `system` entry above.
+
+                    Install locally (example):
+                        mvn install:install-file \
+                            -DgroupId=com.gurobi \
+                            -DartifactId=gurobi \
+                            -Dversion=${gurobi.version} \
+                            -Dpackaging=jar \
+                            -Dfile=/path/to/gurobi.jar \
+                            -DgeneratePom=true
+
+                    Then use the dependency below (uncomment and remove the `system`-scoped dependency):
+
+                <dependency>
+                        <groupId>com.gurobi</groupId>
+                        <artifactId>gurobi</artifactId>
+                        <version>${gurobi.version}</version>
+                </dependency>
+                -->
 
     </dependencies>
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.5.0</version>
-                <executions>
-                    <execution>
-                        <id>validate-gurobi-setup</id>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
-                        <configuration>
-                            <rules>
-                                <requireProperty>
-                                    <property>env.GUROBI_HOME</property>
-                                    <message>
-                                        GUROBI_HOME is not set. Set GUROBI_HOME to your Gurobi installation directory (for example: C:\gurobi1301\win64).
-                                    </message>
-                                </requireProperty>
-                                <requireFilesExist>
-                                    <files>
-                                        <file>${gurobi.jar.path}</file>
-                                    </files>
-                                    <message>
-                                        Could not find ${gurobi.jar.path}. Install Gurobi and ensure GUROBI_HOME points to the correct folder.
-                                    </message>
-                                </requireFilesExist>
-                            </rules>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+            <!-- maven-enforcer-plugin removed: Gurobi is provided via local repo now -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
