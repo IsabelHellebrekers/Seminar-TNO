@@ -12,7 +12,7 @@ public class Instance {
     public final List<String> products;
     public final List<CCLpackage> cclTypes;
     public final List<String> ouTypes;
-    public final int timeHorizon;
+    public int timeHorizon;
 
     public Instance(List<OperatingUnit> operatingUnits, List<FSC> fscs) {
         this.operatingUnits = operatingUnits;
@@ -36,5 +36,9 @@ public class Instance {
 
     public void addFSC(String name, int maxStorageCapCcls, Map<String, int[]> initialStorageLevels) {
         this.FSCs.add(new FSC(name, maxStorageCapCcls, initialStorageLevels));
+    }
+
+    public void updateTimeHorizon() {
+        this.timeHorizon--;
     }
 }

@@ -835,7 +835,7 @@ public class OutOfSampleMILP {
         for (OperatingUnit ou : ous) {
             for (int t = 1; t <= data.timeHorizon; t++) {
                 // Generate random demand
-                Sampling rand = new Sampling();
+                Sampling rand = new Sampling(0);
                 double dFW = rand.uniform() * ou.dailyFoodWaterKg;
                 realizedDemands.put(new DemandKey(ou.operatingUnitName, "FW", t), dFW);
 

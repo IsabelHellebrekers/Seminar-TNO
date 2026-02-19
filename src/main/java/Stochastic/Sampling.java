@@ -14,8 +14,8 @@ public final class Sampling {
     private final double maxTri = 2.0;
     private final double modeTri = 0.8;
 
-    public Sampling() {
-        this.rng = new Random(); // non-deterministic seed
+    public Sampling(long seed) {
+        this.rng = new Random(seed); // non-deterministic seed
     }
 
     /**
@@ -107,7 +107,7 @@ public final class Sampling {
     }
 
     public static void main(String[] args) throws IOException {
-        Sampling x = new Sampling();
+        Sampling x = new Sampling(42);
         System.out.println(x.triangular());
     }
 }

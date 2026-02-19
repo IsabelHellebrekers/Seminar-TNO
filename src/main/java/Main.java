@@ -1,26 +1,21 @@
 import DataUtils.InstanceCreator;
-import DataUtils.OutputCreator;
-import Deterministic.CapacitatedResupplyMILP;
-import Objects.*;
-import java.util.*;
+import Objects.Instance;
 
 import java.io.IOException;
-import java.util.Map;
 
-import Stochastic.OutOfSampleMILP;
+import Stochastic.general_approach.OutOfSampleSolver;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-       InstanceCreator ic = new InstanceCreator();
 
-    // Solve FD Concept (Deterministic MILP)
-//        List<Result> results = CapacitatedResupplyMILP.solveInstances(new InstanceCreator().createFDInstance());
+        InstanceCreator ic = new InstanceCreator();
+        Instance base = ic.createFDInstance().get(0);
 
-    // Solve Dispersed Concept (Deterministic MILP for contiguous partitions)
-    //    List<Result> results = CapacitatedResupplyMILP.solveInstances(new InstanceCreator().contiguousPartitions());
-    //    new OutputCreator().createCSV(results);
+        // Run out-of-sample evaluation
+        int nSamples = 100;
+        long baseSeed = 12345L;
 
-        // Out of Sample testing
-        // OutOfSampleMILP.solveInstances(InstanceCreator.createFDInstance(), 200.0, Map.of("FSC_1", 50.0, "FSC_2", 50.0));
+        OutOfSampleSolver oos = new OutOfSampleSolver(nSamples, baseSeed);
+        oos.run(base);
     }
 }

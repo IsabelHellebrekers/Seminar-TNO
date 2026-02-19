@@ -13,10 +13,10 @@ public class OperatingUnit {
     public final double dailyFuelKg;
     public final double dailyAmmoKg;
 
-    // Stochastic demand (kg)
-    public final double[] stochasticFoodWaterKg;
-    public final double[] stochasticFuelKg;
-    public final double[] stochasticAmmoKg;
+    // Storage levels (kg)
+    public double storageLevelFWKg;
+    public double storageLevelFuelKg;
+    public double storageLevelAmmoKg;
 
     // Maximum storage capacities at the OU (kg)
     public final double maxFoodWaterKg;
@@ -47,15 +47,19 @@ public class OperatingUnit {
     ) {
         this.operatingUnitName = operatingUnitName;
         this.ouType = ouType;
+
         this.dailyFoodWaterKg = dailyFoodWaterKg;
         this.dailyFuelKg = dailyFuelKg;
         this.dailyAmmoKg = dailyAmmoKg;
-        this.stochasticFoodWaterKg = null;
-        this.stochasticFuelKg = null;
-        this.stochasticAmmoKg = null;
+
+        this.storageLevelFWKg = dailyFoodWaterKg;
+        this.storageLevelFuelKg = dailyFuelKg;
+        this.storageLevelAmmoKg = dailyAmmoKg;
+
         this.maxFoodWaterKg = maxFoodWaterKg;
         this.maxFuelKg = maxFuelKg;
         this.maxAmmoKg = maxAmmoKg;
+
         this.source = source;
     }
 
@@ -80,15 +84,19 @@ public class OperatingUnit {
     ) {
         this.operatingUnitName = operatingUnitName;
         this.ouType = ouType;
+
         this.dailyFoodWaterKg = 0L;
         this.dailyFuelKg = 0L;
         this.dailyAmmoKg = 0L;
-        this.stochasticFoodWaterKg = stochasticFoodWaterKg;
-        this.stochasticFuelKg = stochasticFuelKg;
-        this.stochasticAmmoKg = stochasticAmmoKg;
+
+        this.storageLevelFWKg = dailyFoodWaterKg;
+        this.storageLevelFuelKg = dailyFuelKg;
+        this.storageLevelAmmoKg = dailyAmmoKg;
+
         this.maxFoodWaterKg = maxFoodWaterKg;
         this.maxFuelKg = maxFuelKg;
         this.maxAmmoKg = maxAmmoKg;
+
         this.source = source;
     }
 

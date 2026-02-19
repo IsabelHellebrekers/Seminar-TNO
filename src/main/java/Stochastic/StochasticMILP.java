@@ -69,7 +69,7 @@ public class StochasticMILP {
         this.ouTypes = this.data.ouTypes;
 
         double epsilon = 0.05; // infeasible if 0.05 / 330??
-        Sampling quant = new Sampling();
+        Sampling quant = new Sampling(0);
         this.FWquant = quant.uniformQuantile(epsilon);
         this.FUELquant = quant.binomialQuantile(epsilon);
         this.AMMOquant = quant.triangularQuantile(epsilon);
