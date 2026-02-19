@@ -18,6 +18,10 @@ public final class Sampling {
         this.rng = new Random(); // non-deterministic seed
     }
 
+    public Sampling(long seed) {
+        this.rng = new Random(seed);
+    }
+
     /**
      * Uniform(min, max)
      */
