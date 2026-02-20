@@ -37,4 +37,16 @@ public class Instance {
     public void addFSC(String name, int maxStorageCapCcls, Map<String, int[]> initialStorageLevels) {
         this.FSCs.add(new FSC(name, maxStorageCapCcls, initialStorageLevels));
     }
+
+    public List<FSC> getFSCs() {
+        return this.FSCs;
+    }
+
+    public List<OperatingUnit> getOperatingUnits() {
+        return this.operatingUnits;
+    }
+
+    public List<CCLpackage> getCCLtypes() {
+        return this.cclTypes;
+    }
 }
