@@ -16,6 +16,7 @@
         <gurobi.home>${env.GUROBI_HOME}</gurobi.home>
         <gurobi.jar.path>${gurobi.home}/lib/gurobi.jar</gurobi.jar.path>
         <gurobi.native.path>${gurobi.home}/bin${path.separator}${gurobi.home}/lib</gurobi.native.path>
+        <djl.version>0.30.0</djl.version>
     </properties>
 
     <dependencies>
@@ -38,28 +39,24 @@
             <version>${gurobi.version}</version>
         </dependency>
 
-                <!--
-                    Alternative: if you install the Gurobi JAR into your local Maven repository,
-                    you can switch to this normal-scoped dependency and remove the `system` entry above.
+        <!-- DJL core -->
+        <dependency>
+            <groupId>ai.djl</groupId>
+            <artifactId>api</artifactId>
+            <version>${djl.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ai.djl</groupId>
+            <artifactId>model-zoo</artifactId>
+            <version>${djl.version}</version>
+        </dependency>
 
-                    Install locally (example):
-                        mvn install:install-file \
-                            -DgroupId=com.gurobi \
-                            -DartifactId=gurobi \
-                            -Dversion=${gurobi.version} \
-                            -Dpackaging=jar \
-                            -Dfile=/path/to/gurobi.jar \
-                            -DgeneratePom=true
-
-                    Then use the dependency below (uncomment and remove the `system`-scoped dependency):
-
-                <dependency>
-                        <groupId>com.gurobi</groupId>
-                        <artifactId>gurobi</artifactId>
-                        <version>${gurobi.version}</version>
-                </dependency>
-                -->
-
+        <!-- DJL engine: PyTorch -->
+        <dependency>
+            <groupId>ai.djl.pytorch</groupId>
+            <artifactId>pytorch-engine</artifactId>
+            <version>${djl.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
