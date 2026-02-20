@@ -47,7 +47,8 @@ public final class StochasticFleetSizerCorrected {
      */
     public static FleetSizingResult estimateFleetSizes(Instance instance,
                                                        int numScenarios,
-                                                       double serviceLevel) throws GRBException {
+                                                       double serviceLevel,
+                                                       long baseSeed) throws GRBException {
 
         if (numScenarios <= 0) throw new IllegalArgumentException("numScenarios must be > 0");
         if (serviceLevel <= 0.0 || serviceLevel > 1.0)
@@ -76,7 +77,7 @@ public final class StochasticFleetSizerCorrected {
 
             // Scenario loop
             for (int s = 0; s < numScenarios; s++) {
-                Sampling sampler = new Sampling();
+                Sampling sampler = new Sampling(baseSeed + s); // TODO: base seed
 
                 // Daily FSC workloads (FSC->OU)
                 Map<String, int[]> dailyWorkloadFsc = new HashMap<>();
@@ -383,10 +384,10 @@ public final class StochasticFleetSizerCorrected {
         public static void main(String[] args) throws Exception {
             Instance inst = InstanceCreator.createFDInstance().get(0);
 
-            int S = 100;
+            int S = 1000;
             double service = 0.95;
 
-            FleetSizingResult r = StochasticFleetSizerCorrected.estimateFleetSizes(inst, S, service);
+            FleetSizingResult r = StochasticFleetSizerCorrected.estimateFleetSizes(inst, S, service, 42);
 
             System.out.println("TOTAL trucks = " + r.totalTrucks);
             System.out.println("  MSC->VUST = " + r.trucksMSCtoVUST);
