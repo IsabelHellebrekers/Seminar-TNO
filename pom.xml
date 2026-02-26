@@ -17,6 +17,7 @@
         <gurobi.jar.path>${gurobi.home}/lib/gurobi.jar</gurobi.jar.path>
         <gurobi.native.path>${gurobi.home}/bin${path.separator}${gurobi.home}/lib</gurobi.native.path>
         <djl.version>0.30.0</djl.version>
+        <dl4j.version>1.0.0-M1.1</dl4j.version>
     </properties>
 
     <dependencies>
@@ -56,6 +57,46 @@
             <groupId>ai.djl.pytorch</groupId>
             <artifactId>pytorch-engine</artifactId>
             <version>${djl.version}</version>
+        </dependency>
+
+        <!-- Deeplearning4j neural-network API (OptimizationAlgorithm) -->
+        <dependency>
+            <groupId>org.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-nn</artifactId>
+            <version>${dl4j.version}</version>
+        </dependency>
+
+        <!-- RL4J training utilities for DQN -->
+        <dependency>
+            <groupId>org.deeplearning4j</groupId>
+            <artifactId>rl4j-core</artifactId>
+            <version>${dl4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.deeplearning4j</groupId>
+            <artifactId>rl4j-api</artifactId>
+            <version>${dl4j.version}</version>
+        </dependency>
+
+        <!-- ND4J native backend required by RL4J/DQN -->
+        <dependency>
+            <groupId>org.nd4j</groupId>
+            <artifactId>nd4j-native-platform</artifactId>
+            <version>${dl4j.version}</version>
+        </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.9</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.9</version>
+            <scope>runtime</scope>
         </dependency>
     </dependencies>
 

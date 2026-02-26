@@ -16,11 +16,9 @@ public final class State {
     private int mscTrucksRemaining;
     private int[] fscTrucksRemaining;
 
-    // STRICT inventory structure
-    // [fscId][ouId][cclType]
-    private int[][][] fscCcl;
+    // [fscId][ouType][cclType]
+    private int[][][] fscCclByType;
 
-    // OU inventory in kg
     // [ouId][productIndex]
     private double[][] ouKg;
 
@@ -28,14 +26,14 @@ public final class State {
                  Phase phase,
                  int mscTrucksRemaining,
                  int[] fscTrucksRemaining,
-                 int[][][] fscCcl,
+                 int[][][] fscCclByType,
                  double[][] ouKg) {
 
         this.day = day;
         this.phase = phase;
         this.mscTrucksRemaining = mscTrucksRemaining;
         this.fscTrucksRemaining = fscTrucksRemaining;
-        this.fscCcl = fscCcl;
+        this.fscCclByType = fscCclByType;
         this.ouKg = ouKg;
     }
 
@@ -51,26 +49,31 @@ public final class State {
     }
 
     public int[] getFscTrucksRemaining() { return fscTrucksRemaining; }
-    public int[][][] getFscCcl() { return fscCcl; }
+
+    public int[][][] getFscCclByType() { return fscCclByType; }
     public double[][] getOuKg() { return ouKg; }
 
-    public int numFsc() { return fscCcl.length; }
-    public int numOu() { return fscCcl[0].length; }
-    public int numCclTypes() { return fscCcl[0][0].length; }
+    public int numFsc() { return fscCclByType.length; }
+    public int numOuTypes() { return fscCclByType[0].length; }
+    public int numCclTypes() { return fscCclByType[0][0].length; }
+    public int numOu() { return ouKg.length; }
 
     // Observation encoding
-    public float[] toObservationVector() {
+    public float[] toObservationVector(int horizonDays) {
+
+        int remainingDays = Math.max(0, horizonDays - day);
 
         int len =
-                1 + 3 +
-                        1 + fscTrucksRemaining.length +
-                        (numFsc() * numOu() * numCclTypes()) +
+                1 + 1 + 3 + // day, remainingDays, phase one-hot
+                        1 + fscTrucksRemaining.length + // msc trucks + each fsc trucks
+                        (numFsc() * numOuTypes() * numCclTypes()) +
                         (numOu() * 3);
 
         float[] obs = new float[len];
         int k = 0;
 
         obs[k++] = day;
+        obs[k++] = remainingDays;
 
         obs[k++] = (phase == Phase.DEMAND) ? 1f : 0f;
         obs[k++] = (phase == Phase.FSC_TO_OU) ? 1f : 0f;
@@ -81,16 +84,14 @@ public final class State {
         for (int v : fscTrucksRemaining)
             obs[k++] = v;
 
-        // 3D FSC inventory
         for (int f = 0; f < numFsc(); f++) {
-            for (int ou = 0; ou < numOu(); ou++) {
+            for (int t = 0; t < numOuTypes(); t++) {
                 for (int c = 0; c < numCclTypes(); c++) {
-                    obs[k++] = fscCcl[f][ou][c];
+                    obs[k++] = fscCclByType[f][t][c];
                 }
             }
         }
 
-        // OU kg inventory
         for (int ou = 0; ou < numOu(); ou++) {
             obs[k++] = (float) ouKg[ou][0];
             obs[k++] = (float) ouKg[ou][1];
@@ -105,14 +106,11 @@ public final class State {
         int[] fscTrucksCopy =
                 Arrays.copyOf(fscTrucksRemaining, fscTrucksRemaining.length);
 
-        int[][][] fscCclCopy =
-                new int[fscCcl.length][][];
-
-        for (int f = 0; f < fscCcl.length; f++) {
-            fscCclCopy[f] = new int[fscCcl[f].length][];
-            for (int ou = 0; ou < fscCcl[f].length; ou++) {
-                fscCclCopy[f][ou] =
-                        Arrays.copyOf(fscCcl[f][ou], fscCcl[f][ou].length);
+        int[][][] fscCopy = new int[fscCclByType.length][][];
+        for (int f = 0; f < fscCclByType.length; f++) {
+            fscCopy[f] = new int[fscCclByType[f].length][];
+            for (int t = 0; t < fscCclByType[f].length; t++) {
+                fscCopy[f][t] = Arrays.copyOf(fscCclByType[f][t], fscCclByType[f][t].length);
             }
         }
 
@@ -127,7 +125,7 @@ public final class State {
         return new State(day, phase,
                 mscTrucksRemaining,
                 fscTrucksCopy,
-                fscCclCopy,
+                fscCopy,
                 ouKgCopy);
     }
 }

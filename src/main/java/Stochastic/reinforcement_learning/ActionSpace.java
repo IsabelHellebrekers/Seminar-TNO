@@ -15,7 +15,6 @@ public final class ActionSpace {
     private final int numFsc;
     private final int numOu;
     private final int numCclTypes;
-
     private final int vustOuId;
 
     public ActionSpace(Instance instance) {
@@ -24,37 +23,36 @@ public final class ActionSpace {
         this.numFsc = instance.getFSCs().size();
         this.numOu = instance.getOperatingUnits().size();
         this.numCclTypes = instance.getCCLtypes().size();
-
         this.vustOuId = findVustOuId(instance);
 
-        // FSC->OU actions
+        // FSC -> OU (all OUs; feasibility will reject wrong combos)
         for (int ouId = 0; ouId < numOu; ouId++) {
             for (int c = 0; c < numCclTypes; c++) {
                 add(Action.fscToOu(ouId, c));
             }
         }
 
-        // MSC->FSC actions
+        // MSC -> FSC (by OU TYPE bucket)
         for (int fscId = 0; fscId < numFsc; fscId++) {
-            for (int c = 0; c < numCclTypes; c++) {
-                add(Action.mscToFsc(fscId, c));
+            for (int ouType = 0; ouType < OuType.COUNT; ouType++) {
+                for (int c = 0; c < numCclTypes; c++) {
+                    add(Action.mscToFsc(fscId, ouType, c));
+                }
             }
         }
 
-        // MSC->VUST actions
+        // MSC -> VUST
         for (int c = 0; c < numCclTypes; c++) {
             add(Action.mscToOu(vustOuId, c));
         }
 
-        // STOP action
         this.stopIndex = add(Action.stop());
     }
 
     private int findVustOuId(Instance instance) {
         List<OperatingUnit> ous = instance.getOperatingUnits();
         for (int i = 0; i < ous.size(); i++) {
-            OperatingUnit ou = ous.get(i);
-            if (ou.operatingUnitName.equals("VUST")) {
+            if ("VUST".equalsIgnoreCase(ous.get(i).operatingUnitName)) {
                 return i;
             }
         }
@@ -63,51 +61,31 @@ public final class ActionSpace {
 
     private int add(Action action) {
         ActionKey key = ActionKey.from(action);
-
         int idx = actions.size();
         actions.add(action);
         indexByKey.put(key, idx);
         return idx;
     }
 
-    public int size() {
-        return actions.size();
-    }
-
-    public Action decode(int actionIndex) {
-        return actions.get(actionIndex);
-    }
+    public int size() { return actions.size(); }
+    public Action decode(int actionIndex) { return actions.get(actionIndex); }
 
     public int encode(Action action) {
         Integer idx = indexByKey.get(ActionKey.from(action));
-        if (idx == null)
-            throw new IllegalArgumentException("Action not in ActionSpace: " + action);
+        if (idx == null) throw new IllegalArgumentException("Action not in ActionSpace: " + action);
         return idx;
     }
 
-    public int getStopIndex() {
-        return stopIndex;
-    }
+    public int getStopIndex() { return stopIndex; }
 
-    public int getNumFsc() {
-        return numFsc;
-    }
+    public int getNumFsc() { return numFsc; }
+    public int getNumOu() { return numOu; }
+    public int getNumCclTypes() { return numCclTypes; }
+    public int getVustOuId() { return vustOuId; }
 
-    public int getNumOu() {
-        return numOu;
-    }
-
-    public int getNumCclTypes() {
-        return numCclTypes;
-    }
-
-    public int getVustOuId() {
-        return vustOuId;
-    }
-
-    private record ActionKey(Action.ActionType type, int fscId, int ouId, int cclType) {
+    private record ActionKey(Action.ActionType type, int fscId, int ouId, int ouType, int cclType) {
         static ActionKey from(Action a) {
-            return new ActionKey(a.getType(), a.getFscId(), a.getOuId(), a.getCclType());
+            return new ActionKey(a.getType(), a.getFscId(), a.getOuId(), a.getOuType(), a.getCclType());
         }
     }
 }
