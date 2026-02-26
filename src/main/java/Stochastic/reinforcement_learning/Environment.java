@@ -8,8 +8,7 @@ import Objects.OperatingUnit;
 import java.util.*;
 
 /**
- * Simulates the supply game as a MDP with phases:
- * DEMAND -> FSC_SEND -> MSC_SEND -> DEMAND ...
+ * Environment for RL.
  */
 public final class Environment {
 
@@ -22,14 +21,10 @@ public final class Environment {
     private final int maxMscTrucksPerDay;
     private final int maxFscTrucksPerDay;
 
-    // OU -> parent FSC index (or -1 for VUST)
-    private final int[] parentFscOfOu;
-
-    // name->fscIndex for resolving OU.source
-    private final Map<String, Integer> fscIndexByName;
-
-    // VUST ouId (the only OU directly supplied by MSC)
     private final int vustOuId;
+
+    // For non-VUST OUs: parent FSC index
+    private final int[] parentFscOfOu;
 
     private State state;
     private Random rng;
@@ -40,311 +35,301 @@ public final class Environment {
                        int maxMscTrucksPerDay,
                        int maxFscTrucksPerDay) {
 
-        this.instance = Objects.requireNonNull(instance);
-        this.actionSpace = Objects.requireNonNull(actionSpace);
-        this.demandModel = Objects.requireNonNull(demandModel);
+        this.instance = instance;
+        this.actionSpace = actionSpace;
+        this.demandModel = demandModel;
 
         this.horizon = instance.timeHorizon;
-
         this.maxMscTrucksPerDay = maxMscTrucksPerDay;
         this.maxFscTrucksPerDay = maxFscTrucksPerDay;
 
         this.vustOuId = actionSpace.getVustOuId();
 
-        this.fscIndexByName = new HashMap<>();
+        // Map OU -> parent FSC
+        parentFscOfOu = new int[instance.operatingUnits.size()];
+
+        Map<String, Integer> fscIndexByName = new HashMap<>();
         for (int f = 0; f < instance.FSCs.size(); f++) {
             fscIndexByName.put(instance.FSCs.get(f).FSCname, f);
         }
 
-        this.parentFscOfOu = new int[instance.operatingUnits.size()];
         for (int ou = 0; ou < instance.operatingUnits.size(); ou++) {
-            if (ou == vustOuId) {
-                parentFscOfOu[ou] = -1; // MSC supplied
+
+            if (ou == this.vustOuId) {
+                this.parentFscOfOu[ou] = -1;
                 continue;
             }
-            String src = instance.operatingUnits.get(ou).source;
-            Integer idx = fscIndexByName.get(src);
-            if (idx == null) {
-                throw new IllegalStateException("OU " + instance.operatingUnits.get(ou).operatingUnitName +
-                        " has unknown source FSC: " + src);
-            }
-            parentFscOfOu[ou] = idx;
+
+            String source = instance.operatingUnits.get(ou).source;
+            Integer fscIdx = fscIndexByName.get(source);
+            this.parentFscOfOu[ou] = fscIdx;
         }
     }
 
     public State reset(long seed) {
+
         this.rng = new Random(seed);
 
-        int numFsc = instance.FSCs.size();
-        int numOu = instance.operatingUnits.size();
-        int numCcl = instance.cclTypes.size();
+        int numFsc = this.instance.FSCs.size();
+        int numOu = this.instance.operatingUnits.size();
+        int numCcl = this.instance.cclTypes.size();
 
-        // Trucks: start at DEMAND phase, so trucks not yet allocated for the day
-        int mscTrucks = 0;
-        int[] fscTrucks = new int[numFsc];
-        Arrays.fill(fscTrucks, 0);
+        int[][][] fscCcl = new int[numFsc][numOu][numCcl];
 
-        // FSC initial inventory: sum all initialStorageLevels across ouTypes (simple fungible inventory)
-        int[][] fscCcl = new int[numFsc][numCcl];
+        // Initialize FSC inventory
         for (int f = 0; f < numFsc; f++) {
-            FSC fsc = instance.FSCs.get(f);
+            FSC fsc = this.instance.FSCs.get(f);
+
             for (Map.Entry<String, int[]> e : fsc.initialStorageLevels.entrySet()) {
+
+                String ouName = e.getKey();
                 int[] counts = e.getValue();
+
+                int ouId = findOuIdByName(ouName);
+
                 for (int c = 0; c < numCcl; c++) {
-                    fscCcl[f][c] += counts[c];
+                    fscCcl[f][ouId][c] = counts[c];
                 }
             }
         }
 
-        // OU initial inventory: start full at max capacity
+        // Initialize OU inventory
         double[][] ouKg = new double[numOu][3];
         for (int ou = 0; ou < numOu; ou++) {
-            OperatingUnit u = instance.operatingUnits.get(ou);
+            OperatingUnit u = this.instance.operatingUnits.get(ou);
             ouKg[ou][0] = u.maxFoodWaterKg;
             ouKg[ou][1] = u.maxFuelKg;
             ouKg[ou][2] = u.maxAmmoKg;
         }
 
-        this.state = new State(
+        int[] fscTrucks = new int[numFsc];
+
+        state = new State(
                 1,
                 State.Phase.DEMAND,
-                mscTrucks,
+                0,
                 fscTrucks,
                 fscCcl,
                 ouKg
         );
+
         return state.deepCopy();
     }
 
-    public State getState() {
-        return state;
-    }
-
-    /** Returns a mask of feasible actions for the current state. */
-    public boolean[] actionMask(State s) {
-        boolean[] mask = new boolean[actionSpace.size()];
-        for (int i = 0; i < mask.length; i++) {
-            mask[i] = isFeasible(s, actionSpace.decode(i));
-        }
-        return mask;
-    }
-
-    /** One step = either (a) apply demand (if phase=DEMAND) or (b) apply one shipment/STOP action. */
     public StepResult step(int actionIndex) {
-        if (state == null) throw new IllegalStateException("Call reset(seed) before step().");
-        Action action = actionSpace.decode(actionIndex);
-
-        // DEMAND phase: ignore the provided actionIndex (trainer can pass STOP always)
-        if (state.getPhase() == State.Phase.DEMAND) {
+        // Demand phase
+        if (this.state.getPhase() == State.Phase.DEMAND) {
             return stepDemand();
         }
 
-        // Allocation phases: action must be feasible
-        if (!isFeasible(state, action)) {
-            throw new IllegalArgumentException("Infeasible action attempted: " + action +
-                    " in phase " + state.getPhase());
-        }
+        // Action phase
+        Action action = this.actionSpace.decode(actionIndex);
 
-        if (action.getType() == Action.ActionType.STOP) {
+        if (!isFeasible(action))
+            throw new IllegalArgumentException("Infeasible action: " + action);
+
+        if (action.getType() == Action.ActionType.STOP)
             return stepStop();
-        }
 
-        applyShipment(state, action);
+        applyShipment(action);
 
-        // reward is 0 on shipment micro-steps
-        return new StepResult(state.deepCopy(), 0.0, false);
+        return new StepResult(this.state.deepCopy(), 0.0, false);
     }
 
-    // ---------------- Phase logic ----------------
+    // ============================================================
+    // DEMAND
+    // ============================================================
 
     private StepResult stepDemand() {
-        // Apply demand for the current day
-        int day = state.getDay();
 
-        // Subtract demand OU-by-OU
         boolean stockout = false;
 
-        for (int ouId = 0; ouId < instance.operatingUnits.size(); ouId++) {
-            OperatingUnit ou = instance.operatingUnits.get(ouId);
+        int day = state.getDay();
+
+        for (int ou = 0; ou < instance.operatingUnits.size(); ou++) {
 
             // TODO: Demand model class schrijven
-            // DemandModel.Demand d = demandModel.sampleDemand(ou, day, rng);
-
-            // consume inventory
-            // stockout |= consumeOu(ouId, d);
+//            DemandModel.Demand d = this.demandModel.sampleDemand(instance.operatingUnits.get(ou), day, rng);
+//
+//            double[][] inv = state.getOuKg();
+//
+//            inv[ou][0] -= d.foodWaterKg();
+//            inv[ou][1] -= d.fuelKg();
+//            inv[ou][2] -= d.ammoKg();
+//
+//            if (inv[ou][0] < 0 || inv[ou][1] < 0 || inv[ou][2] < 0)
+//                stockout = true;
         }
 
-        if (stockout) {
-            // terminal failure
+        if (stockout)
             return new StepResult(state.deepCopy(), 0.0, true);
-        }
 
-        // Survived this day => reward +1
         double reward = 1.0;
 
-        // If we just survived day=10, end episode successfully immediately
-        if (day >= horizon) {
+        if (day >= horizon)
             return new StepResult(state.deepCopy(), reward, true);
-        }
 
-        // Move to FSC allocation phase for same day (post-demand planning)
-        state.setPhase(State.Phase.FSC_SEND);
-        // Reset FSC trucks for this day
-        int[] fscTrucks = state.getFscTrucksRemaining();
-        Arrays.fill(fscTrucks, maxFscTrucksPerDay);
-        // MSC trucks are unused in this phase
-        state.setMscTrucksRemaining(0);
+        // Move to FSC phase
+        state.setPhase(State.Phase.FSC_TO_OU);
+        Arrays.fill(state.getFscTrucksRemaining(), maxFscTrucksPerDay);
 
         return new StepResult(state.deepCopy(), reward, false);
     }
 
-    private StepResult stepStop() {
-        State.Phase phase = state.getPhase();
+    // ============================================================
+    // STOP TRANSITIONS
+    // ============================================================
 
-        if (phase == State.Phase.FSC_SEND) {
-            // switch to MSC phase, reset MSC trucks
-            state.setPhase(State.Phase.MSC_SEND);
+    private StepResult stepStop() {
+
+        if (state.getPhase() == State.Phase.FSC_TO_OU) {
+
+            state.setPhase(State.Phase.MSC_TO_FSC);
             state.setMscTrucksRemaining(maxMscTrucksPerDay);
-            // FSC trucks no longer relevant; keep as-is
+
             return new StepResult(state.deepCopy(), 0.0, false);
         }
 
-        if (phase == State.Phase.MSC_SEND) {
-            // end of day planning -> next day demand
+        if (state.getPhase() == State.Phase.MSC_TO_FSC) {
+
             state.setDay(state.getDay() + 1);
             state.setPhase(State.Phase.DEMAND);
-            // clear trucks until phases reset
-            state.setMscTrucksRemaining(0);
-            Arrays.fill(state.getFscTrucksRemaining(), 0);
+
             return new StepResult(state.deepCopy(), 0.0, false);
         }
 
-        throw new IllegalStateException("STOP encountered in unsupported phase: " + phase);
+        throw new IllegalStateException("STOP in wrong phase");
     }
 
-    // ---------------- Feasibility & dynamics ----------------
+    // ============================================================
+    // FEASIBILITY
+    // ============================================================
 
-    private boolean isFeasible(State s, Action a) {
-        // STOP always feasible in allocation phases, and also allowed in DEMAND (ignored)
-        if (a.getType() == Action.ActionType.STOP) {
+    private boolean isFeasible(Action a) {
+
+        if (a.getType() == Action.ActionType.STOP)
             return true;
+
+        if (state.getPhase() == State.Phase.FSC_TO_OU) {
+
+            if (a.getType() != Action.ActionType.FSC_TO_OU)
+                return false;
+
+            int ou = a.getOuId();
+            int fsc = parentFscOfOu[ou];
+
+            if (ou == vustOuId)
+                return false;
+
+            if (state.getFscTrucksRemaining()[fsc] <= 0)
+                return false;
+
+            if (state.getFscCcl()[fsc][ou][a.getCclType()] <= 0)
+                return false;
+
+            return ouHasCapacity(ou, a.getCclType());
         }
 
-        State.Phase phase = s.getPhase();
+        if (state.getPhase() == State.Phase.MSC_TO_FSC) {
 
-        // Demand phase: no shipment actions allowed (they are ignored anyway)
-        if (phase == State.Phase.DEMAND) {
-            return false;
-        }
-
-        // FSC->OU phase: only FSC_TO_OU allowed AND not VUST
-        if (phase == State.Phase.FSC_SEND) {
-            if (a.getType() != Action.ActionType.FSC_TO_OU) return false;
-            if (a.getOuId() == vustOuId) return false; // VUST cannot be supplied by FSC
-            return canShipFscToOu(s, a.getOuId(), a.getCclType());
-        }
-
-        // MSC phase: allow MSC_TO_FSC and MSC_TO_OU (only VUST)
-        if (phase == State.Phase.MSC_SEND) {
             if (a.getType() == Action.ActionType.MSC_TO_FSC) {
-                return canShipMscToFsc(s, a.getFscId(), a.getCclType());
+
+                if (state.getMscTrucksRemaining() <= 0)
+                    return false;
+
+                int fsc = a.getFscId();
+
+                int total = 0;
+                for (int ou = 0; ou < state.numOu(); ou++)
+                    for (int c = 0; c < state.numCclTypes(); c++)
+                        total += state.getFscCcl()[fsc][ou][c];
+
+                return total < instance.FSCs.get(fsc).maxStorageCapCcls;
             }
+
             if (a.getType() == Action.ActionType.MSC_TO_OU) {
-                return (a.getOuId() == vustOuId) && canShipMscToOu(s, a.getOuId(), a.getCclType());
+
+                if (state.getMscTrucksRemaining() <= 0)
+                    return false;
+
+                return a.getOuId() == vustOuId
+                        && ouHasCapacity(vustOuId, a.getCclType());
             }
-            return false;
         }
 
         return false;
     }
 
-    private boolean canShipFscToOu(State s, int ouId, int cclIdx) {
-        int fscId = parentFscOfOu[ouId];
-        if (fscId < 0) return false;
+    private boolean ouHasCapacity(int ou, int cclIdx) {
 
-        // trucks available at that FSC
-        if (s.getFscTrucksRemaining()[fscId] <= 0) return false;
-
-        // FSC has the package
-        if (s.getFscCcl()[fscId][cclIdx] <= 0) return false;
-
-        // OU capacity allows adding this package contents
-        return ouHasCapacityForCcl(ouId, cclIdx);
-    }
-
-    private boolean canShipMscToFsc(State s, int fscId, int cclIdx) {
-        if (s.getMscTrucksRemaining() <= 0) return false;
-
-        // FSC CCL storage capacity
-        int total = 0;
-        for (int c = 0; c < instance.cclTypes.size(); c++) total += s.getFscCcl()[fscId][c];
-        int cap = instance.FSCs.get(fscId).maxStorageCapCcls;
-        if (total + 1 > cap) return false;
-
-        return true;
-    }
-
-    private boolean canShipMscToOu(State s, int ouId, int cclIdx) {
-        if (s.getMscTrucksRemaining() <= 0) return false;
-        return ouHasCapacityForCcl(ouId, cclIdx);
-    }
-
-    private boolean ouHasCapacityForCcl(int ouId, int cclIdx) {
-        OperatingUnit ou = instance.operatingUnits.get(ouId);
+        OperatingUnit u = instance.operatingUnits.get(ou);
         CCLpackage ccl = instance.cclTypes.get(cclIdx);
 
-        double fw = state.getOuKg()[ouId][0];
-        double fuel = state.getOuKg()[ouId][1];
-        double ammo = state.getOuKg()[ouId][2];
+        double[][] inv = state.getOuKg();
 
-        if (fw + ccl.foodWaterKg > ou.maxFoodWaterKg) return false;
-        if (fuel + ccl.fuelKg > ou.maxFuelKg) return false;
-        if (ammo + ccl.ammoKg > ou.maxAmmoKg) return false;
+        if (inv[ou][0] + ccl.foodWaterKg > u.maxFoodWaterKg)
+            return false;
+        if (inv[ou][1] + ccl.fuelKg > u.maxFuelKg)
+            return false;
+        if (inv[ou][2] + ccl.ammoKg > u.maxAmmoKg)
+            return false;
 
         return true;
     }
 
-    private void applyShipment(State s, Action a) {
+    // ============================================================
+    // APPLY SHIPMENT
+    // ============================================================
+
+    private void applyShipment(Action a) {
         switch (a.getType()) {
-            case FSC_TO_OU -> applyFscToOu(s, a.getOuId(), a.getCclType());
-            case MSC_TO_FSC -> applyMscToFsc(s, a.getFscId(), a.getCclType());
-            case MSC_TO_OU -> applyMscToOu(s, a.getOuId(), a.getCclType());
-            default -> throw new IllegalStateException("Unexpected shipment type: " + a.getType());
+            case FSC_TO_OU -> {
+                int ou = a.getOuId();
+                int fsc = this.parentFscOfOu[ou];
+                int ccl = a.getCclType();
+
+                this.state.getFscTrucksRemaining()[fsc]--;
+                this.state.getFscCcl()[fsc][ou][ccl]--;
+
+                addCclToOu(ou, ccl);
+            }
+
+            case MSC_TO_FSC -> {
+                this.state.setMscTrucksRemaining(this.state.getMscTrucksRemaining() - 1);
+
+                int ou = a.getOuId();
+                int fsc = a.getFscId();
+                int ccl = a.getCclType();
+
+                this.state.getFscCcl()[fsc][ou][ccl]++;
+            }
+
+            case MSC_TO_OU -> {
+                this.state.setMscTrucksRemaining(this.state.getMscTrucksRemaining() - 1);
+
+                addCclToOu(this.vustOuId, a.getCclType());
+            }
         }
     }
 
-    private void applyFscToOu(State s, int ouId, int cclIdx) {
-        int fscId = parentFscOfOu[ouId];
-        s.getFscTrucksRemaining()[fscId]--;
-        s.getFscCcl()[fscId][cclIdx]--;
+    private void addCclToOu(int ou, int cclIdx) {
 
         CCLpackage ccl = instance.cclTypes.get(cclIdx);
-        s.getOuKg()[ouId][0] += ccl.foodWaterKg;
-        s.getOuKg()[ouId][1] += ccl.fuelKg;
-        s.getOuKg()[ouId][2] += ccl.ammoKg;
+
+        double[][] inv = state.getOuKg();
+
+        inv[ou][0] += ccl.foodWaterKg;
+        inv[ou][1] += ccl.fuelKg;
+        inv[ou][2] += ccl.ammoKg;
     }
 
-    private void applyMscToFsc(State s, int fscId, int cclIdx) {
-        s.setMscTrucksRemaining(s.getMscTrucksRemaining() - 1);
-        s.getFscCcl()[fscId][cclIdx]++;
+    // ============================================================
+
+    private int findOuIdByName(String name) {
+        for (int i = 0; i < instance.operatingUnits.size(); i++) {
+            if (instance.operatingUnits.get(i).operatingUnitName.equalsIgnoreCase(name))
+                return i;
+        }
+        throw new IllegalStateException("OU not found: " + name);
     }
-
-    private void applyMscToOu(State s, int ouId, int cclIdx) {
-        s.setMscTrucksRemaining(s.getMscTrucksRemaining() - 1);
-
-        CCLpackage ccl = instance.cclTypes.get(cclIdx);
-        s.getOuKg()[ouId][0] += ccl.foodWaterKg;
-        s.getOuKg()[ouId][1] += ccl.fuelKg;
-        s.getOuKg()[ouId][2] += ccl.ammoKg;
-    }
-    // TODO: Demand model class schrijven
-    // private boolean consumeOu(int ouId, DemandModel.Demand d) {
-    //     double[][] ouKg = state.getOuKg();
-
-    //     ouKg[ouId][0] -= d.foodWaterKg();
-    //     ouKg[ouId][1] -= d.fuelKg();
-    //     ouKg[ouId][2] -= d.ammoKg();
-
-    //     return (ouKg[ouId][0] < 0.0) || (ouKg[ouId][1] < 0.0) || (ouKg[ouId][2] < 0.0);
-    // }
 }
