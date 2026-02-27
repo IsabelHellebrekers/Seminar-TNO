@@ -26,12 +26,22 @@ public class Instance {
         this.timeHorizon = 10;
     }
 
+    public Instance(List<OperatingUnit> operatingUnits, List<FSC> fscs, List<CCLpackage> cclTypes) {
+        this.operatingUnits = operatingUnits;
+        this.FSCs = fscs;
+        this.products = List.of("FW", "FUEL", "AMMO");
+        this.cclTypes = cclTypes;
+        this.ouTypes = List.of("VUST", "GN_CIE", "PAINF_CIE", "AT_CIE");
+        this.timeHorizon = 10;
+    }
+
     public void addOperatingUnit(String operatingUnitName,
-                                  String ouType,
-                                  double dailyFoodWaterKg, double dailyFuelKg, double dailyAmmoKg,
-                                  double maxFoodWaterKg, double maxFuelKg, double maxAmmoKg,
-                                  String source) {
-        this.operatingUnits.add(new OperatingUnit(operatingUnitName, ouType, dailyFoodWaterKg, dailyFuelKg, dailyAmmoKg, maxFoodWaterKg, maxFuelKg, maxAmmoKg, source));
+            String ouType,
+            double dailyFoodWaterKg, double dailyFuelKg, double dailyAmmoKg,
+            double maxFoodWaterKg, double maxFuelKg, double maxAmmoKg,
+            String source) {
+        this.operatingUnits.add(new OperatingUnit(operatingUnitName, ouType, dailyFoodWaterKg, dailyFuelKg, dailyAmmoKg,
+                maxFoodWaterKg, maxFuelKg, maxAmmoKg, source));
     }
 
     public void addFSC(String name, int maxStorageCapCcls, Map<String, int[]> initialStorageLevels) {
