@@ -3,9 +3,6 @@ package Stochastic.reinforcement_learning;
 /**
  * One decision: assign ONE truck to a legal arc,
  * or STOP to end the current allocation phase.
- *
- * Important: When MSC sends to an FSC, the CCL is pre-dedicated to an OU TYPE (GN/AT/PAINF).
- * Therefore MSC->FSC actions must include an ouTypeBucket.
  */
 public final class Action {
 
@@ -19,7 +16,7 @@ public final class Action {
     private final ActionType type;
     private final int fscId;      // only for MSC_TO_FSC
     private final int ouId;       // for FSC_TO_OU and MSC_TO_OU
-    private final int ouType;     // for MSC_TO_FSC (0..OuType.COUNT-1)
+    private final int ouType;     // for MSC_TO_FSC 
     private final int cclType;
 
     private Action(ActionType type, int fscId, int ouId, int ouType, int cclType) {

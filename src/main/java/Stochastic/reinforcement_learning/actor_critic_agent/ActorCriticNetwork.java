@@ -26,11 +26,15 @@ public final class ActorCriticNetwork {
     private final int actionSize;
 
     public ActorCriticNetwork(int obsSize, int actionSize, double learningRate) {
+        this(obsSize, actionSize, learningRate, 123L);
+    }
+
+    public ActorCriticNetwork(int obsSize, int actionSize, double learningRate, long seed) {
         this.obsSize = obsSize;
         this.actionSize = actionSize;
 
         ComputationGraphConfiguration conf = new NeuralNetConfiguration.Builder()
-                .seed(123)
+                .seed(seed)
                 .weightInit(WeightInit.XAVIER)
                 .updater(new Adam(learningRate))
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
@@ -44,11 +48,11 @@ public final class ActorCriticNetwork {
                         .nOut(256)
                         .activation(Activation.RELU)
                         .build(), "obs")
-                .addLayer("dense2", new DenseLayer.Builder()
-                        .nIn(256)
-                        .nOut(256)
-                        .activation(Activation.RELU)
-                        .build(), "dense1")
+                // .addLayer("dense2", new DenseLayer.Builder()
+                //         .nIn(256)
+                //         .nOut(256)
+                //         .activation(Activation.RELU)
+                //         .build(), "dense1")
 
                 // Policy head: softmax over actions, custom loss
                 .addLayer("policy", new OutputLayer.Builder()
@@ -56,14 +60,14 @@ public final class ActorCriticNetwork {
                         .nOut(actionSize)
                         .activation(Activation.SOFTMAX)
                         .lossFunction(new AdvantageWeightedSoftmaxLoss())
-                        .build(), "dense2")
+                        .build(), "dense1")
 
                 // Value head: scalar
                 .addLayer("value", new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
                         .nIn(256)
                         .nOut(1)
                         .activation(Activation.IDENTITY)
-                        .build(), "dense2")
+                        .build(), "dense1")
 
                 .setOutputs("policy", "value")
                 .build();

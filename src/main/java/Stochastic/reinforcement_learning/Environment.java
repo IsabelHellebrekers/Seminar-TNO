@@ -20,6 +20,7 @@ public final class Environment {
 
     private final int maxMscTrucksPerDay;
     private final int[] maxFscTrucksPerDay; // per FSC
+    private final boolean forceUseAllTrucksInPhase;
 
     private final int vustOuId;
 
@@ -34,37 +35,43 @@ public final class Environment {
     private double lastEpisodeTotalStockoutKg = 0.0;
     private int lastEpisodeDaysSurvived = 0;
 
-    private final boolean throwOnIllegalAction;
+    public Environment(Instance instance,
+            ActionSpace actionSpace,
+            DemandModel demandModel,
+            int maxMscTrucksPerDay,
+            int[] maxFscTrucksPerDay) {
+        this(instance, actionSpace, demandModel, maxMscTrucksPerDay, maxFscTrucksPerDay, true);
+    }
 
     public Environment(Instance instance,
-                       ActionSpace actionSpace,
-                       DemandModel demandModel,
-                       int maxMscTrucksPerDay,
-                       int[] maxFscTrucksPerDay,
-                       boolean throwOnIllegalAction) {
+            ActionSpace actionSpace,
+            DemandModel demandModel,
+            int maxMscTrucksPerDay,
+            int[] maxFscTrucksPerDay,
+            boolean forceUseAllTrucksInPhase) {
 
-        this.instance = Objects.requireNonNull(instance);
-        this.actionSpace = Objects.requireNonNull(actionSpace);
-        this.demandModel = Objects.requireNonNull(demandModel);
+        this.instance = instance;
+        this.actionSpace = actionSpace;
+        this.demandModel = demandModel;
 
         this.horizon = instance.timeHorizon;
         this.maxMscTrucksPerDay = maxMscTrucksPerDay;
-        this.maxFscTrucksPerDay = Objects.requireNonNull(maxFscTrucksPerDay);
+        this.maxFscTrucksPerDay = maxFscTrucksPerDay;
+        this.forceUseAllTrucksInPhase = forceUseAllTrucksInPhase;
 
         if (maxFscTrucksPerDay.length != instance.FSCs.size()) {
             throw new IllegalArgumentException("maxFscTrucksPerDay.length must equal number of FSCs");
         }
 
-        this.throwOnIllegalAction = throwOnIllegalAction;
-
         this.vustOuId = actionSpace.getVustOuId();
 
+        // parentFscOfOu & ouTypeOfOuId
         parentFscOfOu = new int[instance.operatingUnits.size()];
         ouTypeOfOuId = new int[instance.operatingUnits.size()];
 
         Map<String, Integer> fscIndexByName = new HashMap<>();
-        for (int f = 0; f < instance.FSCs.size(); f++) {
-            fscIndexByName.put(instance.FSCs.get(f).FSCname, f);
+        for (int fscIdx = 0; fscIdx < instance.FSCs.size(); fscIdx++) {
+            fscIndexByName.put(instance.FSCs.get(fscIdx).FSCname, fscIdx);
         }
 
         for (int ou = 0; ou < instance.operatingUnits.size(); ou++) {
@@ -75,7 +82,8 @@ public final class Environment {
             } else {
                 Integer fscIdx = fscIndexByName.get(u.source);
                 if (fscIdx == null) {
-                    throw new IllegalStateException("OU " + u.operatingUnitName + " has unknown FSC source: " + u.source);
+                    throw new IllegalStateException(
+                            "OU " + u.operatingUnitName + " has unknown FSC source: " + u.source);
                 }
                 this.parentFscOfOu[ou] = fscIdx;
             }
@@ -95,6 +103,7 @@ public final class Environment {
         int numOu = this.instance.operatingUnits.size();
         int numCcl = this.instance.cclTypes.size();
 
+        // initial full inventory fscCclByType
         int[][][] fscCclByType = new int[numFsc][OuType.COUNT][numCcl];
 
         for (int f = 0; f < numFsc; f++) {
@@ -105,22 +114,14 @@ public final class Environment {
                 int[] counts = e.getValue();
 
                 int type = OuType.fromString(key);
-                if (type < 0) {
-                    type = OuType.fromString(key.replace("_", ""));
-                }
-                if (type < 0) {
-                    throw new IllegalStateException("Cannot parse OU type from FSC.initialStorageLevels key: " + key);
-                }
-                if (counts.length != numCcl) {
-                    throw new IllegalStateException("initialStorageLevels[" + key + "] has length " + counts.length +
-                            " but expected numCcl=" + numCcl);
-                }
+
                 for (int c = 0; c < numCcl; c++) {
                     fscCclByType[f][type][c] = counts[c];
                 }
             }
         }
 
+        // Initial full inventory OUs
         double[][] ouKg = new double[numOu][3];
         for (int ou = 0; ou < numOu; ou++) {
             OperatingUnit u = this.instance.operatingUnits.get(ou);
@@ -134,29 +135,25 @@ public final class Environment {
         state = new State(
                 1,
                 State.Phase.DEMAND,
-                0,
+                0, // amount of trucks is reset in the demandStep function
                 fscTrucks,
                 fscCclByType,
-                ouKg
-        );
+                ouKg);
 
         return state.deepCopy();
     }
 
     public StepResult step(int actionIndex) {
+        // Demand phase
         if (this.state.getPhase() == State.Phase.DEMAND) {
             return stepDemand();
         }
 
+        // Action phase
         Action action = this.actionSpace.decode(actionIndex);
-
         if (!isFeasible(action)) {
-            if (throwOnIllegalAction) {
-                throw new IllegalStateException("The agent tries to make an illegal move: " + action +
-                        " in phase=" + state.getPhase() + " day=" + state.getDay());
-            } else {
-                return new StepResult(this.state.deepCopy(), -100.0, true);
-            }
+            throw new IllegalStateException("The agent tries to make an illegal move: " + action +
+                    " in phase=" + state.getPhase() + " day=" + state.getDay());
         }
 
         if (action.getType() == Action.ActionType.STOP)
@@ -164,6 +161,7 @@ public final class Environment {
 
         applyShipment(action);
 
+        // No shaping on individual shipment actions; demand phase drives learning signal.
         return new StepResult(this.state.deepCopy(), 0.0, false);
     }
 
@@ -188,23 +186,13 @@ public final class Environment {
             inv[ou][1] -= d.fuelKg();
             inv[ou][2] -= d.ammoKg();
 
-            if (inv[ou][0] < 0) {
-                stockout = true;
-                stockoutAmountKg += (-inv[ou][0]);
-                ouStockout = true;
-                inv[ou][0] = 0;
-            }
-            if (inv[ou][1] < 0) {
-                stockout = true;
-                stockoutAmountKg += (-inv[ou][1]);
-                ouStockout = true;
-                inv[ou][1] = 0;
-            }
-            if (inv[ou][2] < 0) {
-                stockout = true;
-                stockoutAmountKg += (-inv[ou][2]);
-                ouStockout = true;
-                inv[ou][2] = 0;
+            for (int productIdx = 0; productIdx < this.instance.products.size(); productIdx++) {
+                if (inv[ou][productIdx] < 0) {
+                    stockout = true;
+                    stockoutAmountKg += -inv[ou][productIdx];
+                    ouStockout = true;
+                    inv[ou][productIdx] = 0;
+                }
             }
 
             if (ouStockout) {
@@ -214,24 +202,22 @@ public final class Environment {
 
         lastEpisodeTotalStockoutKg += stockoutAmountKg;
 
-        int totalOus = instance.operatingUnits.size();
-        int satisfiedOuCount = totalOus - stockoutOuCount;
-
-        double survivalBonus = (double) day / horizon;
-        double reward = survivalBonus * survivalBonus * 120.0 + satisfiedOuCount * satisfiedOuCount * 5;
-
         if (stockout) {
             lastEpisodeDaysSurvived = day;
             LOG.info("[Episode " + episodeCounter + "] STOCKOUT day=" + day +
                     " ouStockouts=" + stockoutOuCount);
-            return new StepResult(state.deepCopy(), reward, true);
+            // Terminal penalty scales with stockout severity, but with small coefficients.
+            // This keeps "survive longer days" as the dominant objective.
+            double terminalPenalty = -2.0 - 0.2 * stockoutOuCount - 0.00001 * stockoutAmountKg;
+            return new StepResult(state.deepCopy(), terminalPenalty, true);
         }
 
         lastEpisodeDaysSurvived = day;
 
         if (day >= horizon) {
             LOG.info("[Episode " + episodeCounter + "] SUCCESS no stockout");
-            return new StepResult(state.deepCopy(), reward + 10.0, true);
+            // Bonus when the full horizon is survived.
+            return new StepResult(state.deepCopy(), 5.0, true);
         }
 
         state.setPhase(State.Phase.FSC_TO_OU);
@@ -241,17 +227,19 @@ public final class Environment {
             fscTrucks[i] = maxFscTrucksPerDay[i];
         }
 
-        return new StepResult(state.deepCopy(), reward, false);
+        // Per-day survival reward (dominant objective).
+        return new StepResult(state.deepCopy(), 2.0, false);
     }
 
     private StepResult stepStop() {
-
+        // Stop at FSC_TO_OU phase
         if (state.getPhase() == State.Phase.FSC_TO_OU) {
             state.setPhase(State.Phase.MSC_TO_FSC);
             state.setMscTrucksRemaining(maxMscTrucksPerDay);
             return new StepResult(state.deepCopy(), 0.0, false);
         }
 
+        // Stop at MSC_TO_FSC phase
         if (state.getPhase() == State.Phase.MSC_TO_FSC) {
             state.setDay(state.getDay() + 1);
             state.setPhase(State.Phase.DEMAND);
@@ -262,15 +250,11 @@ public final class Environment {
     }
 
     /**
-     * Legal action mask for actor-critic with "use trucks unless impossible".
-     *
-     * STOP is only allowed when there is no other feasible (non-STOP) action.
-     * This prevents early collapse into STOP and reduces training noise.
+     * Legal action mask for actor-critic.
      */
     public boolean[] getLegalActionMask() {
         boolean[] mask = new boolean[actionSpace.size()];
-
-        boolean anyNonStopFeasible = false;
+        boolean anyNonStopFeasibleAcions = false;
 
         for (int i = 0; i < mask.length; i++) {
             Action a = actionSpace.decode(i);
@@ -278,14 +262,15 @@ public final class Environment {
             mask[i] = feasible;
 
             if (feasible && a.getType() != Action.ActionType.STOP) {
-                anyNonStopFeasible = true;
+                anyNonStopFeasibleAcions = true;
             }
         }
 
         int stopIdx = actionSpace.getStopIndex();
 
-        // If there exists at least one shipment action, force the agent not to STOP.
-        if (anyNonStopFeasible) {
+        // Optional constraint:
+        // if enabled, force the agent to keep assigning trucks until no shipment is feasible.
+        if (forceUseAllTrucksInPhase && anyNonStopFeasibleAcions) {
             mask[stopIdx] = false;
         } else {
             // If nothing else is feasible, STOP must be possible to advance the phase/day.
@@ -301,41 +286,53 @@ public final class Environment {
 
     private boolean isFeasible(Action a) {
 
+        // STOP is treated as a phase-transition action in this environment.
+        // The training mask decides when STOP is exposed to the agent.
         if (a.getType() == Action.ActionType.STOP)
             return true;
 
+
         if (state.getPhase() == State.Phase.FSC_TO_OU) {
 
+            // During FSC_TO_OU, only FSC_TO_OU actions are valid
             if (a.getType() != Action.ActionType.FSC_TO_OU)
                 return false;
 
+            // Cannot target VUST
             int ou = a.getOuId();
-            if (ou == vustOuId) return false;
+            if (ou == vustOuId)
+                return false;
 
+            // Each OU can only be served from its assigned parent FSC
             int fsc = parentFscOfOu[ou];
-            if (fsc < 0) return false;
+            if (fsc < 0)
+                return false;
 
+            // Truck capacity at FSC
             if (state.getFscTrucksRemaining()[fsc] <= 0)
                 return false;
 
             int type = ouTypeOfOuId[ou];
             int cclType = a.getCclType();
 
+            // Cannot ship ccl if not available
             if (state.getFscCclByType()[fsc][type][cclType] <= 0)
                 return false;
 
+            // OU inventory capacity must be respected
             return ouHasCapacity(ou, cclType);
         }
 
         if (state.getPhase() == State.Phase.MSC_TO_FSC) {
 
+            // Truck capacity at MSC
             if (state.getMscTrucksRemaining() <= 0)
                 return false;
 
             if (a.getType() == Action.ActionType.MSC_TO_FSC) {
-
                 int fsc = a.getFscId();
 
+                // FSC total storage capacity
                 int total = 0;
                 int[][] buckets = state.getFscCclByType()[fsc];
                 for (int t = 0; t < buckets.length; t++) {
@@ -347,8 +344,8 @@ public final class Environment {
             }
 
             if (a.getType() == Action.ActionType.MSC_TO_OU) {
-                return a.getOuId() == vustOuId
-                        && ouHasCapacity(vustOuId, a.getCclType());
+                // VUST storage capacity
+                return a.getOuId() == vustOuId && ouHasCapacity(vustOuId, a.getCclType());
             }
         }
 
@@ -417,24 +414,16 @@ public final class Environment {
 
     private int mapOuToTypeIndex(OperatingUnit u) {
         String name = u.operatingUnitName;
-        if (name == null) {
-            throw new IllegalStateException("OperatingUnit has null operatingUnitName");
-        }
 
-        String norm = name.trim().toUpperCase(Locale.ROOT);
-
-        if (norm.equals("VUST")) {
+        if (name.equals("VUST")) {
             return -1;
         }
-        if (norm.startsWith("GN")) return OuType.GN.ordinal();
-        if (norm.startsWith("AT")) return OuType.AT.ordinal();
-        if (norm.startsWith("PAINF")) return OuType.PAINF.ordinal();
-
-        int underscore = norm.indexOf('_');
-        if (underscore > 0) {
-            int t = OuType.fromString(norm.substring(0, underscore));
-            if (t >= 0) return t;
-        }
+        if (name.startsWith("GN"))
+            return OuType.GN.ordinal();
+        if (name.startsWith("AT"))
+            return OuType.AT.ordinal();
+        if (name.startsWith("PAINF"))
+            return OuType.PAINF.ordinal();
 
         throw new IllegalStateException("Cannot infer OU type from operatingUnitName=" + u.operatingUnitName);
     }
@@ -445,6 +434,10 @@ public final class Environment {
 
     public int getEpisodeCounter() {
         return episodeCounter;
+    }
+
+    public State getCurrentStateCopy() {
+        return state.deepCopy();
     }
 
     public double getLastEpisodeTotalStockoutKg() {

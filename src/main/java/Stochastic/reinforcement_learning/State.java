@@ -63,11 +63,10 @@ public final class State {
 
         int remainingDays = Math.max(0, horizonDays - day);
 
-        int len =
-                1 + 1 + 3 + // day, remainingDays, phase one-hot
-                        1 + fscTrucksRemaining.length + // msc trucks + each fsc trucks
-                        (numFsc() * numOuTypes() * numCclTypes()) +
-                        (numOu() * 3);
+        int len = 1 + 1 + 3 + // day, remainingDays, phase one-hot
+                  1 + fscTrucksRemaining.length + // msc trucks + each fsc trucks
+                  (numFsc() * numOuTypes() * numCclTypes()) + // inventories of FSCs
+                  (numOu() * 3); // inventories of OUs
 
         float[] obs = new float[len];
         int k = 0;
