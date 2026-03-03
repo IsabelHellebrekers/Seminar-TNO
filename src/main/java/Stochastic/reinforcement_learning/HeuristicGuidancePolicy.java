@@ -1,13 +1,9 @@
-package Stochastic.reinforcement_learning.dqn_agent;
+package Stochastic.reinforcement_learning;
 
 import Objects.CCLpackage;
 import Objects.FSC;
 import Objects.Instance;
 import Objects.OperatingUnit;
-import Stochastic.reinforcement_learning.Action;
-import Stochastic.reinforcement_learning.ActionSpace;
-import Stochastic.reinforcement_learning.OuType;
-import Stochastic.reinforcement_learning.State;
 
 import java.util.Random;
 

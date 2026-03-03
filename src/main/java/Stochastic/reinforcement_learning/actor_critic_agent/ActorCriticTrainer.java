@@ -3,7 +3,7 @@ package Stochastic.reinforcement_learning.actor_critic_agent;
 import DataUtils.InstanceCreator;
 import Objects.Instance;
 import Stochastic.reinforcement_learning.*;
-import Stochastic.reinforcement_learning.dqn_agent.HeuristicGuidancePolicy;
+import Stochastic.reinforcement_learning.HeuristicGuidancePolicy;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
