@@ -23,7 +23,7 @@ public class OperatingUnit {
     public final double maxFuelKg;
     public final double maxAmmoKg;
 
-    // Assigned resupply source
+    // Assigned resupply source (MSC or one of the FSCs)
     public String source;
 
     /**
@@ -92,9 +92,17 @@ public class OperatingUnit {
         this.source = source;
     }
 
+    /**
+     * Method that changes the source of the operating unit.
+     * @param newSourceName the new source of the OU
+     */
     public void changeSource(String newSourceName) {
         this.source = newSourceName;
     }
+
+    /**
+     * String representation of an operating unit.
+     */
     @Override 
     public String toString() {
         return "operatingUnit='" + operatingUnitName + '\'' +

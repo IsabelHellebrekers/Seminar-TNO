@@ -6,6 +6,13 @@ public class Stockout {
     private final double amount;
     private final int day;
 
+    /**
+     * Presents a Stockout event presenting a shortage of a product at an operating unit.
+     * @param ou        the operating unit
+     * @param product   the product
+     * @param amount    the shortage amount (kg)        
+     * @param day       the day on which the stockout occurred
+     */
     public Stockout(String ou, String product, double amount, int day) {
         this.ou = ou;
         this.product = product;
@@ -13,22 +20,41 @@ public class Stockout {
         this.day = day;
     }
 
+    /**
+     * Returns the operating unit where the stockout occurred.
+     * @return the operating unit
+     */
     public String getOu() {
         return ou;
     }
 
+    /**
+     * Returns the product that caused the stockout.
+     * @return the product
+     */
     public String getProduct() {
         return product;
     }
 
+    /**
+     * Returns the amount of shortage during the stockout.
+     * @return the shortage amount
+     */
     public double getAmount() {
         return amount;
     }
 
+    /**
+     * Returns the day on which the stockout occurred.
+     * @return the day number
+     */
     public int getDay() {
         return day;
     }
 
+    /**
+     * String representation of the stockout event.
+     */
     @Override
     public String toString() {
         return "Stockout{" +

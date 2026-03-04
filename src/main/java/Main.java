@@ -69,9 +69,9 @@ public class Main {
         // System.out.println("BEST CONFIG : OU=" + res.bestCfg.ou() + " VUST=" +
         // res.bestCfg.vust());
 
-        EvaluationHeuristic.WeightConfig bestCfg = new EvaluationHeuristic.WeightConfig(
-                new EvaluationHeuristic.TargetWeights(1.3, 0.6, 1.3),
-                new EvaluationHeuristic.TargetWeights(1.0, 0.9, 1.1));
+        // EvaluationHeuristic.WeightConfig bestCfg = new EvaluationHeuristic.WeightConfig(
+        //         new EvaluationHeuristic.TargetWeights(1.3, 0.6, 1.3),
+        //         new EvaluationHeuristic.TargetWeights(1.0, 0.9, 1.1));
 
         int nOOS = 1000;
         int oosSeed = 10042;
@@ -86,8 +86,8 @@ public class Main {
 
         // EvaluationReporter.reportStockouts(data, M, K, nOOS, oosSeed, bestCfg);
 
-        // int nComposition = 1000;
-        // int compositionSeed = 20042;
+        int nComposition = 1000;
+        int compositionSeed = 20042;
 
         // int stepKg = 1000;
 
@@ -102,8 +102,8 @@ public class Main {
                 6000,
                 3000).get(0);
 
-        var oos = EvaluationHeuristic.evaluate(best, M, K, nOOS, oosSeed, bestCfg);
-        System.out.println("OOS with best CCL4 : " + oos);
+        // var oos = EvaluationHeuristic.evaluate(best, M, K, nOOS, oosSeed, bestCfg);
+        // System.out.println("OOS with best CCL4 : " + oos);
 
         // EvaluationReporter.reportStockouts(best, M, K, nOOS, oosSeed, bestCfg);
 
