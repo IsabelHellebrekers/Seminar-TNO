@@ -657,7 +657,6 @@ public class OutOfSampleMILP {
 
                     // Subtract deterministic daily demand
                     double d = demand.get(new DemandKey(i, p, t));
-                    
                     rhs.addConstant(-d);
 
                     // Add deliveries shipped on day t (available at t + 1)
