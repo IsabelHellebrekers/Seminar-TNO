@@ -25,10 +25,10 @@ public class Main {
         // runStochasticExperiments(base);
 
         // PERFECT HINDSIGHT EXPERIMENTS (uncomment to run)
-        runPerfectHindsightExperiments();
+        // runPerfectHindsightExperiments();
 
         // SENSITIVITY ANALYSIS (uncomment to run)
-
+        runSensitivityAnalysis();
     }
 
     /**
@@ -151,11 +151,11 @@ public class Main {
 
         Instance base3 = InstanceCreator.createFDInstance().get(0);
 
-        // System.out.println();
-        // System.out.println("--- Perfect hindsight: 3 CCL types ---");
-        // System.out.println("N=" + N + " | seed=" + oosSeed + " | fixed fleet: M=" + M + " K=" + K);
+        System.out.println();
+        System.out.println("--- Perfect hindsight: 3 CCL types ---");
+        System.out.println("N=" + N + " | seed=" + oosSeed + " | fixed fleet: M=" + M + " K=" + K);
 
-        // PerfectHindsight.run(base3, N, oosSeed, M, K);
+        PerfectHindsight.run(base3, N, oosSeed, M, K);
 
         Instance base4 = InstanceCreator.createFDInstanceExtraType(2000, 6000, 2000).get(0);
 
@@ -164,5 +164,20 @@ public class Main {
         System.out.println("N=" + N + " | seed=" + oosSeed + " | fixed fleet: M=" + M + " K=" + K);
 
         PerfectHindsight.run(base4, N, oosSeed, M, K);
+    }
+
+    /**
+     * // STILL NEED TO IMPLEMENT AND MAYBE ADJUST THE COMMENTS BELOW
+     * 
+     * Performs a sensitivity analysis on our previous results. We study the effect of
+     *  1) The effect of a smaller fleet size
+     *  2) Different demand distributions
+     *  3) Correlation between products
+     *  4) Correlation between days
+     *  5) A longer time horizon
+     *  6) Making truck reallocation possible
+     */
+    private static void runSensitivityAnalysis() {
+
     }
 }
