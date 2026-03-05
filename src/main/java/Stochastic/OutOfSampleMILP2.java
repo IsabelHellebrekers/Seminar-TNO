@@ -13,7 +13,6 @@ public class OutOfSampleMILP2 {
     private final Instance data;
     private final GRBModel model;
 
-
     // Lists of all FSCs, arcs, OUs, products, CCL types, OU Types
     private final List<FSC> fscs;
     private final List<Arc> arcs = new ArrayList<>();
@@ -65,16 +64,18 @@ public class OutOfSampleMILP2 {
     private record SKey(String w, int c, String o) {
     }
 
-    private record DemandKey (String i, String p) {
+    private record DemandKey(String i, String p) {
     }
 
     private record PWLData(double[] vBreaks, double[] qBreaks) {
     }
 
     /**
-     * Build the MILP model (derive sets, create variables, add constraints and set objective)
+     * Build the MILP model (derive sets, create variables, add constraints and set
+     * objective)
      */
-    public OutOfSampleMILP2(Instance data, GRBEnv env, double m, Map<String, Double> k, boolean verbose) throws GRBException {
+    public OutOfSampleMILP2(Instance data, GRBEnv env, double m, Map<String, Double> k, boolean verbose)
+            throws GRBException {
         this.data = data;
         this.fscs = this.data.FSCs;
         this.ous = this.data.operatingUnits;
@@ -101,10 +102,10 @@ public class OutOfSampleMILP2 {
 
     public void runRollingHorizon() throws GRBException {
 
-        Map<Integer,Map<DemandKey, Double>> realizedDemandsByDay = generateDemand();
+        Map<Integer, Map<DemandKey, Double>> realizedDemandsByDay = generateDemand();
         for (int day = 1; day < data.timeHorizon; day++) {
 
-            System.out.println("=== DAY " + day + " ===");
+            // System.out.println("=== DAY " + day + " ===");
 
             realizedDemands(realizedDemandsByDay, day);
 
@@ -112,9 +113,9 @@ public class OutOfSampleMILP2 {
             updateInventoryBalanceConstraintRHS();
 
             model.optimize();
-            //printTruckUsage();
+            // printTruckUsage();
 
-            //System.out.println(model.get(GRB.DoubleAttr.ObjVal));
+            // System.out.println(model.get(GRB.DoubleAttr.ObjVal));
 
             if (model.get(GRB.IntAttr.Status) != GRB.Status.OPTIMAL) {
                 System.out.println("Model not optimal on day " + day);
@@ -137,7 +138,7 @@ public class OutOfSampleMILP2 {
 
             model.update();
         }
-        System.out.println("=== DAY " + 10 + " ===");
+        // System.out.println("=== DAY " + 10 + " ===");
         realizedDemands(realizedDemandsByDay, data.timeHorizon);
 
     }
@@ -159,7 +160,8 @@ public class OutOfSampleMILP2 {
             double used = 0;
 
             for (Arc a : arcs) {
-                if (!a.w().equals(fsc.FSCname)) continue;
+                if (!a.w().equals(fsc.FSCname))
+                    continue;
 
                 for (CCLpackage c : cclTypes) {
                     used += x.get(new XKey(fsc.FSCname, a.i(), c.type))
@@ -180,7 +182,8 @@ public class OutOfSampleMILP2 {
             double inv = e.getValue();
             double newInv = inv - dailyDemands.get(demandKey);
             if (newInv < 1e-6) {
-                System.out.println("Stockout at OU " + key.i() + " product " + key.p() + " time " + day + " of " + (-newInv));
+                // System.out.println("Stockout at OU " + key.i() + " product " + key.p() + "
+                // time " + day + " of " + (-newInv));
                 newInv = 0;
                 stockout = true;
             }
@@ -188,7 +191,6 @@ public class OutOfSampleMILP2 {
         }
         currentInventory = newInventory;
     }
-
 
     private void precomputePWLFunctions() {
 
@@ -204,8 +206,9 @@ public class OutOfSampleMILP2 {
         double b = 2.0;
 
         // breakpoints concentrated near v=0
-        double[] vBreaks = new double[]{
-                0.0, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9
+        double[] vBreaks = new double[] {
+                0.0, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6,
+                0.7, 0.8, 0.9
         };
 
         double[] qValues = new double[vBreaks.length];
@@ -236,14 +239,14 @@ public class OutOfSampleMILP2 {
         List<Double> qList = new ArrayList<>();
 
         // P(0)
-        double prob = Math.pow(1-p, n);
+        double prob = Math.pow(1 - p, n);
         double cdf = prob;
 
         for (int x = 0; x <= n; x++) {
 
             // Compute P(x) from P(x-1)
             if (x > 0) {
-                prob = prob * (n - x + 1) / x * p / (1-p);
+                prob = prob * (n - x + 1) / x * p / (1 - p);
                 cdf += prob;
             }
             double v = 1.0 - cdf;
@@ -278,7 +281,6 @@ public class OutOfSampleMILP2 {
         return new PWLData(vBreaks, qBreaks);
     }
 
-
     private void setInitialInventories() {
         for (OperatingUnit ou : ous) {
             currentInventory.put(new IKey(ou.operatingUnitName, "FW"), ou.maxFoodWaterKg);
@@ -291,11 +293,12 @@ public class OutOfSampleMILP2 {
                     if (o.equals("VUST")) {
                         continue;
                     }
-                    currentFSCInventory.put(new SKey(w.FSCname, c.type, o), (double) w.initialStorageLevels.get(o)[c.type - 1]);
+                    currentFSCInventory.put(new SKey(w.FSCname, c.type, o),
+                            (double) w.initialStorageLevels.get(o)[c.type - 1]);
                 }
             }
         }
-        
+
     }
 
     /**
@@ -323,8 +326,7 @@ public class OutOfSampleMILP2 {
             for (CCLpackage c : this.cclTypes) {
                 XKey key = new XKey(w, i, c.type);
                 x.put(key, model.addVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER,
-                        "x_{" + "w" + w + "_i" + i + "_c" + c.type + "}"
-                ));
+                        "x_{" + "w" + w + "_i" + i + "_c" + c.type + "}"));
             }
         }
 
@@ -334,8 +336,7 @@ public class OutOfSampleMILP2 {
                 for (String o : this.ouTypes) {
                     YKey key = new YKey(fsc.FSCname, c.type, o);
                     y.put(key, model.addVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER,
-                            "y_{" + "w" + fsc.FSCname + "_c" + c.type + "_o" + o + "}"
-                    ));
+                            "y_{" + "w" + fsc.FSCname + "_c" + c.type + "_o" + o + "}"));
                 }
             }
         }
@@ -344,8 +345,7 @@ public class OutOfSampleMILP2 {
         for (CCLpackage c : this.cclTypes) {
             ZKey key = new ZKey(c.type);
             z.put(key, model.addVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER,
-                    "z_{" + "c" + c + "}"
-            ));
+                    "z_{" + "c" + c + "}"));
         }
 
         // I[i, p]: OU inventory (kg)
@@ -354,8 +354,7 @@ public class OutOfSampleMILP2 {
             for (String p : this.products) {
                 IKey key = new IKey(i, p);
                 I.put(key, model.addVar(0.0, GRB.INFINITY, 0.0, GRB.CONTINUOUS,
-                        "I_{" + "i" + i + "_p" + p + "}"
-                ));
+                        "I_{" + "i" + i + "_p" + p + "}"));
             }
         }
 
@@ -365,8 +364,7 @@ public class OutOfSampleMILP2 {
                 for (String o : this.ouTypes) {
                     SKey key = new SKey(fsc.FSCname, c.type, o);
                     S.put(key, this.model.addVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER,
-                            "S_{" + "w" + fsc.FSCname + "_c" + c + "_o" + o + "}"
-                    ));
+                            "S_{" + "w" + fsc.FSCname + "_c" + c + "_o" + o + "}"));
                 }
             }
         }
@@ -381,8 +379,7 @@ public class OutOfSampleMILP2 {
                     GRB.INFINITY,
                     0.0,
                     GRB.CONTINUOUS,
-                    "q_" + p
-            );
+                    "q_" + p);
             qProduct.put(p, qVar);
         }
     }
@@ -408,7 +405,6 @@ public class OutOfSampleMILP2 {
 
         for (GRBVar var : z.values())
             obj.addTerm(-reward, var);
-
 
         model.setObjective(obj, GRB.MINIMIZE);
     }
@@ -457,8 +453,7 @@ public class OutOfSampleMILP2 {
                     lhs,
                     GRB.LESS_EQUAL,
                     K.get(w.FSCname),
-                    "TRUCK_FSC_{w" + w.FSCname + "}"
-            );
+                    "TRUCK_FSC_{w" + w.FSCname + "}");
         }
     }
 
@@ -503,7 +498,7 @@ public class OutOfSampleMILP2 {
                     rhs.addConstant(currentFSCInventory.get(new SKey(w.FSCname, c.type, o)));
 
                     GRBLinExpr lhs = new GRBLinExpr();
-                    
+
                     lhs.addTerm(1.0, S.get(new SKey(w.FSCname, c.type, o)));
 
                     List<OperatingUnit> ousOfType = new ArrayList<>();
@@ -527,8 +522,7 @@ public class OutOfSampleMILP2 {
                             lhs,
                             GRB.EQUAL,
                             rhs,
-                            "FSC_BAL_{w" + w.FSCname + "_c" + c + "_o" + o + "}"
-                    );
+                            "FSC_BAL_{w" + w.FSCname + "_c" + c + "_o" + o + "}");
 
                     FSCInventoryBalanceConstraints.put(new SKey(w.FSCname, c.type, o), constr);
                 }
@@ -565,7 +559,7 @@ public class OutOfSampleMILP2 {
 
                     // Contributions from FSC shipments x
                     if (!i.equals("VUST")) {
-                        String w = ou.source;  // the only FSC that can send to this OU
+                        String w = ou.source; // the only FSC that can send to this OU
                         GRBVar xv = x.get(new XKey(w, i, c.type));
                         lhs.addTerm(-content, xv);
                     } else {
@@ -580,8 +574,7 @@ public class OutOfSampleMILP2 {
                         lhs,
                         GRB.EQUAL,
                         rhs,
-                        "OU_BAL_{-" + i + "_p" + p + "}"
-                );
+                        "OU_BAL_{-" + i + "_p" + p + "}");
 
                 inventoryBalanceConstraints.put(new IKey(i, p), constr);
             }
@@ -600,8 +593,7 @@ public class OutOfSampleMILP2 {
                     qProduct.get(p),
                     pwlByProduct.get(p).vBreaks(),
                     pwlByProduct.get(p).qBreaks(),
-                    "PWL_" + p
-            );
+                    "PWL_" + p);
         }
 
         for (OperatingUnit ou : ous) {
@@ -614,10 +606,9 @@ public class OutOfSampleMILP2 {
                     I.get(new IKey(i, "FW")),
                     GRB.GREATER_EQUAL,
                     rhsFW,
-                    "SERVICE_FW_{i" + i + "}"
-            );
+                    "SERVICE_FW_{i" + i + "}");
 
-            //PWLData pwlFUEL = pwlByProduct.get("FUEL");
+            // PWLData pwlFUEL = pwlByProduct.get("FUEL");
             GRBVar qVarFUEL = qProduct.get("FUEL");
             GRBLinExpr rhsFUEL = new GRBLinExpr();
             rhsFUEL.addTerm(ou.dailyFuelKg, qVarFUEL);
@@ -626,10 +617,9 @@ public class OutOfSampleMILP2 {
                     I.get(new IKey(i, "FUEL")),
                     GRB.GREATER_EQUAL,
                     rhsFUEL,
-                    "SERVICE_FUEL_{i" + i + "}"
-            );
+                    "SERVICE_FUEL_{i" + i + "}");
 
-            //PWLData pwlAMMO = pwlByProduct.get("AMMO");
+            // PWLData pwlAMMO = pwlByProduct.get("AMMO");
             GRBVar qVarAMMO = qProduct.get("AMMO");
             GRBLinExpr rhsAMMO = new GRBLinExpr();
             rhsAMMO.addTerm(ou.dailyAmmoKg, qVarAMMO);
@@ -638,8 +628,7 @@ public class OutOfSampleMILP2 {
                     I.get(new IKey(i, "AMMO")),
                     GRB.GREATER_EQUAL,
                     rhsAMMO,
-                    "SERVICE_AMMO_{" + i + "}"
-            );
+                    "SERVICE_AMMO_{" + i + "}");
         }
     }
 
@@ -656,22 +645,19 @@ public class OutOfSampleMILP2 {
                     I.get(new IKey(i, "FW")),
                     GRB.LESS_EQUAL,
                     ou.maxFoodWaterKg,
-                    "CAP_FW_{i" + i + "}"
-            );
+                    "CAP_FW_{i" + i + "}");
 
             model.addConstr(
                     I.get(new IKey(i, "FUEL")),
                     GRB.LESS_EQUAL,
                     ou.maxFuelKg,
-                    "CAP_FUEL_{i" + i + "}"
-            );
+                    "CAP_FUEL_{i" + i + "}");
 
             model.addConstr(
                     I.get(new IKey(i, "AMMO")),
                     GRB.LESS_EQUAL,
                     ou.maxAmmoKg,
-                    "CAP_AMMO_{i" + i + "}"
-            );
+                    "CAP_AMMO_{i" + i + "}");
         }
     }
 
@@ -694,8 +680,7 @@ public class OutOfSampleMILP2 {
                     lhs,
                     GRB.LESS_EQUAL,
                     w.maxStorageCapCcls,
-                    "FSC_CAP_{w" + w.FSCname + "}"
-            );
+                    "FSC_CAP_{w" + w.FSCname + "}");
         }
     }
 
@@ -713,7 +698,7 @@ public class OutOfSampleMILP2 {
             SKey key = e.getKey();
             double inv = e.getValue();
             if (key.o().equals("VUST")) {
-                        continue;
+                continue;
             }
             FSCInventoryBalanceConstraints.get(key).set(GRB.DoubleAttr.RHS, inv);
         }
@@ -749,10 +734,10 @@ public class OutOfSampleMILP2 {
         Map<Integer, Map<DemandKey, Double>> realizedDemands = new HashMap<>();
 
         for (int t = 1; t <= data.timeHorizon; t++) {
-            Map<DemandKey, Double> dailyDemands = new HashMap<>(); 
+            Map<DemandKey, Double> dailyDemands = new HashMap<>();
             Sampling rand = new Sampling();
 
-            for (OperatingUnit ou : ous) {               
+            for (OperatingUnit ou : ous) {
                 // Generate random demand
                 double dFW = rand.uniform() * ou.dailyFoodWaterKg;
                 dailyDemands.put(new DemandKey(ou.operatingUnitName, "FW"), dFW);
@@ -792,12 +777,6 @@ public class OutOfSampleMILP2 {
                 int total = 1000;
                 int percent = (int) Math.round(100.0 * (idx + 1) / total);
 
-                System.out.printf(
-                        "\rProgress: %3d%% (%d / %d instances)",
-                        percent, idx + 1, total
-                );
-                System.out.flush();
-
                 Instance inst = instances.get(0);
                 String instanceName = "Instance " + (idx + 1);
 
@@ -808,16 +787,22 @@ public class OutOfSampleMILP2 {
                     if (milp.stockout) {
                         nrStockouts++;
                     }
-                    System.out.println(" | Stockouts so far: " + nrStockouts);
+                    System.out.printf(
+                            "\rProgress: %3d%% (%d / %d instances) | Stockouts so far: %d",
+                            percent, idx + 1, total, nrStockouts);
 
                 } catch (Exception e) {
                     throw new RuntimeException("Failed solving " + instanceName + ": " + e.getMessage(), e);
                 } finally {
                     if (milp != null) {
-                        try { milp.dispose(); } catch (Exception ignored) {}
+                        try {
+                            milp.dispose();
+                        } catch (Exception ignored) {
+                        }
                     }
                 }
             }
+            System.out.flush();
 
             return results;
 
@@ -825,7 +810,10 @@ public class OutOfSampleMILP2 {
             throw new RuntimeException("Failed in solveInstances(): " + e.getMessage(), e);
         } finally {
             if (env != null) {
-                try { env.dispose(); } catch (Exception ignored) {}
+                try {
+                    env.dispose();
+                } catch (Exception ignored) {
+                }
             }
         }
     }
