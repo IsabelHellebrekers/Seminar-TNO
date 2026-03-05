@@ -42,6 +42,10 @@ public class OutOfSampleMILP {
     // Number of trucks stationed at FSC w
     private Map<String, Double> K = new HashMap<>();
 
+    private int stockoutDay = -1;
+    private String stockoutOU = null;
+    private String stockoutProduct = null;
+
     // Record keys for map indexing
     private record Arc(String w, String i) {
     }
@@ -105,16 +109,24 @@ public class OutOfSampleMILP {
 
             model.optimize();
 
-            // System.out.println(model.get(GRB.DoubleAttr.ObjVal));
+            int status = model.get(GRB.IntAttr.Status);
 
-            if (hasStockout2(realizedDemandsByDay, day)) {
-                this.stockout = true;
+            // Only read variable values if a solution exists
+            if (model.get(GRB.IntAttr.SolCount) == 0) {
+                // No solution available to query X values
+                stockout = true; // or handle separately as "infeasible"
                 break;
             }
 
-            if (model.get(GRB.IntAttr.Status) != GRB.Status.OPTIMAL) {
-                // System.out.println("Model not optimal on day " + day);
+            // If you want to require optimality:
+            if (status != GRB.Status.OPTIMAL) {
                 stockout = true;
+                break;
+            }
+
+            // Now it's safe to read GRBVar.X
+            if (hasStockout2(realizedDemandsByDay, day)) {
+                this.stockout = true;
                 break;
             }
 
@@ -137,9 +149,10 @@ public class OutOfSampleMILP {
         }
         model.optimize();
 
-        // Check whether there was any stockout
-        this.stockout = hasStockout(realizedDemandsByDay);
-        // System.out.println("Has stockout: " + stockout);
+        if (model.get(GRB.IntAttr.Status) != GRB.Status.OPTIMAL) {
+            this.stockout = true;
+            return;
+        }
     }
 
     private void freezePastDecisions(int currentDay) throws GRBException {
@@ -214,15 +227,18 @@ public class OutOfSampleMILP {
     public boolean hasStockout2(Map<DemandKey, Double> realizedDemandsByDay, int t) throws GRBException {
         for (OperatingUnit ou : ous) {
             String i = ou.operatingUnitName;
+
             for (String p : this.products) {
                 IKey ikey = new IKey(i, p, t);
                 DemandKey dkey = new DemandKey(i, p, t);
+
                 double d = realizedDemandsByDay.get(dkey);
                 double inv = I.get(ikey).get(GRB.DoubleAttr.X);
+
                 if (inv < d) {
-                    // if (inv < -1e-6) {
-                    // System.out.println("Stockout at OU " + i + " product " + p + " time " + t + "
-                    // of " + (d - inv));
+                    this.stockoutDay = t;
+                    this.stockoutOU = i;
+                    this.stockoutProduct = p;
                     return true;
                 }
             }
@@ -641,6 +657,7 @@ public class OutOfSampleMILP {
 
                     // Subtract deterministic daily demand
                     double d = demand.get(new DemandKey(i, p, t));
+                    
                     rhs.addConstant(-d);
 
                     // Add deliveries shipped on day t (available at t + 1)
@@ -853,7 +870,6 @@ public class OutOfSampleMILP {
             for (int idx = 0; idx < 1000; idx++) {
                 int total = 1000;
                 int percent = (int) Math.round(100.0 * (idx + 1) / total);
-
                 Instance inst = instances.get(0);
                 String instanceName = "Instance " + (idx + 1);
 
@@ -861,12 +877,32 @@ public class OutOfSampleMILP {
                 try {
                     milp = new OutOfSampleMILP(inst, env, m, k, false);
                     milp.runRollingHorizon();
+
                     if (milp.stockout) {
                         nrStockouts++;
                     }
+
+                    double stockoutPercent = 100.0 * nrStockouts / (idx + 1);
+
+                    String stockoutInfo;
+                    if (milp.stockout) {
+                        stockoutInfo = String.format(
+                                " | Stockout: Day %d, OU %s, Product %s                          ",
+                                milp.stockoutDay,
+                                milp.stockoutOU,
+                                milp.stockoutProduct);
+                    } else {
+                        stockoutInfo = " | No stockout occurred.                                 ";
+                    }
+
                     System.out.printf(
-                            "\rProgress: %3d%% (%d / %d instances) | Stockouts so far: %d",
-                            percent, idx + 1, total, nrStockouts);
+                            "\rProgress: %d%% (%d / %d instances) | Stockouts so far: %d (%.1f%%)%s",
+                            percent,
+                            idx + 1,
+                            total,
+                            nrStockouts,
+                            stockoutPercent,
+                            stockoutInfo);
 
                 } catch (Exception e) {
                     throw new RuntimeException("Failed solving " + instanceName + ": " + e.getMessage(), e);
