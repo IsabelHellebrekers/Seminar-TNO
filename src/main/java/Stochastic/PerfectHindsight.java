@@ -9,33 +9,43 @@ import DataUtils.InstanceCreator;
 import java.util.*;
 
 /**
- * Perfect-hindsight feasibility benchmark. 
+ * Perfect-hindsight feasibility benchmark.
  * 
- * For each sampled stochastic scenario, we solve the deterministic CapacitatedResupplyMILP
- * with full knowledge of the realized demand path and record whether at least one feasible solution exists.
+ * For each sampled stochastic scenario, we solve the deterministic
+ * CapacitatedResupplyMILP
+ * with full knowledge of the realized demand path and record whether at least
+ * one feasible solution exists.
  * 
  * Two benchmark variants are evaluated on the same scenario set:
- *  (1) Unlimited fleet size: the MILP is allowed to choose fleet variables (M and K) freely
- *  (2) Fixed fleet size: fleet variables are fixed to provided values
+ * (1) Unlimited fleet size: the MILP is allowed to choose fleet variables (M
+ * and K) freely
+ * (2) Fixed fleet size: fleet variables are fixed to provided values
  * 
- * This benchmark is used to sparate policy failure from structural infeasibility;
- * if even perfect hindsight is infeasible, then no heuristic can avoid stockouts.
+ * This benchmark is used to sparate policy failure from structural
+ * infeasibility;
+ * if even perfect hindsight is infeasible, then no heuristic can avoid
+ * stockouts.
  */
 public class PerfectHindsight {
 
+    public static void run(Instance baseInstance, int N, int baseSeed, int M, Map<String, Integer> K) {
+        List<Scenario> scenarios = generateScenarios(baseInstance, N, baseSeed);
+        runPerfectHindsightBenchmarks(scenarios, M, K, baseSeed);
+    }
+
     /**
      * Running the perfect-hingsight feasibility check:
-     *  (1) Build the base deterministic instance
-     *  (2) Generate N stochastic demand scenarios using (baseseed + s)
-     *  (3) Run feasibility benchmarks for unlimited vs fixed fleet size.
+     * (1) Build the base deterministic instance
+     * (2) Generate N stochastic demand scenarios using (baseseed + s)
+     * (3) Run feasibility benchmarks for unlimited vs fixed fleet size.
      */
     public static void main(String[] args) {
         int N = 1000;
         int baseseed = 10042;
-        int M = 78;
+        int M = 79;
         Map<String, Integer> K = new HashMap<>();
-        K.put("FSC_1", 48); 
-        K.put("FSC_2", 34);
+        K.put("FSC_1", 48);
+        K.put("FSC_2", 35);
 
         Instance fdInstance = InstanceCreator.createFDInstance().get(0);
 
@@ -45,9 +55,12 @@ public class PerfectHindsight {
     }
 
     /**
-     * Solve a perfect hindsight MILP for seach scenario and count feasibility outcomes.
-     * We treat a scenario as 'feasible' if the solver finds at least one feasible solution.
-     * @param scenarios sampled scenario list 
+     * Solve a perfect hindsight MILP for seach scenario and count feasibility
+     * outcomes.
+     * We treat a scenario as 'feasible' if the solver finds at least one feasible
+     * solution.
+     * 
+     * @param scenarios sampled scenario list
      * @param M         fixed MSC fleet size
      * @param K         fixed FSC fleet size, keyed by FSC name
      * @param baseSeed  base seed used for scenario generation
@@ -111,36 +124,38 @@ public class PerfectHindsight {
 
             // ------ (2) Fixed fleet (same scenarios, but fix M and K) ------
             for (int idx = 0; idx < scenarios.size(); idx++) {
-            Scenario sc = scenarios.get(idx);
+                Scenario sc = scenarios.get(idx);
 
-            CapacitatedResupplyMILP milp = null;
-            try {
-            milp = new CapacitatedResupplyMILP(sc.instance, env, false);
+                CapacitatedResupplyMILP milp = null;
+                try {
+                    milp = new CapacitatedResupplyMILP(sc.instance, env, false);
 
-            fixFleetSize(milp.getModel(), sc.instance, M, K);
+                    fixFleetSize(milp.getModel(), sc.instance, M, K);
 
-            GRBModel model = milp.getModel();
+                    GRBModel model = milp.getModel();
 
-            model.set(GRB.IntParam.SolutionLimit, 1);
-            model.set(GRB.IntParam.MIPFocus, 1);
+                    model.set(GRB.IntParam.SolutionLimit, 1);
+                    model.set(GRB.IntParam.MIPFocus, 1);
+                    model.set(GRB.DoubleParam.TimeLimit, 30.0);
 
-            milp.solve();
+                    milp.solve();
 
-            boolean ok = model.get(GRB.IntAttr.SolCount) > 0;
+                    boolean ok = model.get(GRB.IntAttr.SolCount) > 0;
 
-            if (ok) feasibleFixed++;
-            else {
-            infeasibleFixed++;
-            }
-            } finally {
-            if (milp != null) milp.dispose();
-            }
+                    if (ok)
+                        feasibleFixed++;
+                    else {
+                        infeasibleFixed++;
+                    }
+                } finally {
+                    if (milp != null)
+                        milp.dispose();
+                }
 
-            if ((idx + 1) % 10 == 0) {
-            System.out.printf("Part (2) progress %d/%d | feas=%d | infeas=%d%n",
-            (idx + 1), scenarios.size(), feasibleFixed, infeasibleFixed
-            );
-            }
+                if ((idx + 1) % 10 == 0) {
+                    System.out.printf("Part (2) progress %d/%d | feas=%d | infeas=%d%n",
+                            (idx + 1), scenarios.size(), feasibleFixed, infeasibleFixed);
+                }
             }
         } catch (GRBException e) {
             throw new RuntimeException(e);
@@ -185,9 +200,10 @@ public class PerfectHindsight {
     /**
      * Generate N stochastic scenarios from a deterministic base instance.
      * Scenario s used seed (baseseed + s).
-     * @param base      deterministic base instance
-     * @param N         number of scenarios to generate
-     * @param baseseed  base seed for reproducible scenario generation
+     * 
+     * @param base     deterministic base instance
+     * @param N        number of scenarios to generate
+     * @param baseseed base seed for reproducible scenario generation
      * @return list of Scenario objects containing
      */
     private static List<Scenario> generateScenarios(Instance base, int N, int baseseed) {
@@ -201,9 +217,11 @@ public class PerfectHindsight {
     }
 
     /**
-     * Build a scenario Instance by sampling a full demand path for each OU and product. 
-     * @param base          base instance to copy structure/capacities from
-     * @param scenarioSeed  RNG seed for demand sampling
+     * Build a scenario Instance by sampling a full demand path for each OU and
+     * product.
+     * 
+     * @param base         base instance to copy structure/capacities from
+     * @param scenarioSeed RNG seed for demand sampling
      * @return scenario instance with stochastic demand arrays
      */
     private static Instance buildScenario(Instance base, long scenarioSeed) {
@@ -260,9 +278,11 @@ public class PerfectHindsight {
     }
 
     /**
-     * Fix fleet size decision variables in an existing Gurobi model by setting variable bounds. 
+     * Fix fleet size decision variables in an existing Gurobi model by setting
+     * variable bounds.
+     * 
      * @param model Gurobi model containing fleet variables
-     * @param inst  instance used to enumerate FSCs and build variable names          
+     * @param inst  instance used to enumerate FSCs and build variable names
      * @param M     fixed MSC fleet size
      * @param K     fixed FSC fleet size keyed by FSC name
      * @throws GRBException if variable lookup of attribute updates fail

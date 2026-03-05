@@ -50,7 +50,7 @@ public class CapacitatedResupplyMILP {
 
         buildArcs();
 
-        env.set(GRB.IntParam.OutputFlag, verbose ? 1 : 0);
+        env.set(GRB.IntParam.OutputFlag, 0);
         this.model = new GRBModel(env);
 
         buildVariables();

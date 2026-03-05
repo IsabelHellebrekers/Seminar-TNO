@@ -6,106 +6,163 @@ import Stochastic.EvaluationHeuristic.EvaluationSummary;
 import Objects.*;
 import java.util.*;
 
+import com.gurobi.gurobi.GRBException;
+
 import java.io.IOException;
 
 public class Main {
 
-    private static void printProgressBar(int current, int total, long startTimeMs) {
-        int barWidth = 40;
+    public static void main(String[] args) throws IOException {
+        Instance base = InstanceCreator.createFDInstance().get(0);
 
-        double progress = (double) current / total;
-        int filled = (int) (barWidth * progress);
+        // FD EXPERIMENTS (uncomment to run)
+        // runFDExperiments(base);
 
-        long elapsed = System.currentTimeMillis() - startTimeMs;
-        double avgTimePerStep = (current == 0) ? 0.0 : (double) elapsed / current;
-        long eta = (long) (avgTimePerStep * (total - current));
+        // DISPERSED EXPERIMENTS (uncomment to run)
+        // runDispersedExperiments();
 
-        String bar = "[" + "=".repeat(filled) + " ".repeat(barWidth - filled) + "]";
+        // STOCHASTIC EXPERIMENTS (uncomment to run)
+        // runStochasticExperiments(base);
 
-        System.out.printf(
-                "\r%s %3d%% | %d/%d | Elapsed: %.1fs | ETA: %.1fs",
-                bar,
-                (int) (progress * 100),
-                current,
-                total,
-                elapsed / 1000.0,
-                eta / 1000.0);
+        // PERFECT HINDSIGHT EXPERIMENTS (uncomment to run)
+        runPerfectHindsightExperiments();
 
-        if (current == total)
-            System.out.println();
+        // SENSITIVITY ANALYSIS (uncomment to run)
+
     }
 
-    public static void main(String[] args) throws IOException {
-        InstanceCreator ic = new InstanceCreator();
-        Instance data = ic.createFDInstance().get(0);
+    /**
+     * Solves the deterministic MILP for the FD instance.
+     * 
+     * @param base FD instance
+     * @throws IOException if an error occurs
+     */
+    private static void runFDExperiments(Instance base) throws IOException {
+        List<Result> result = CapacitatedResupplyMILP.solveInstances(List.of(base));
+    }
 
-        // Solve FD Concept (Deterministic MILP)
-        // List<Result> results = CapacitatedResupplyMILP.solveInstances(new
-        // InstanceCreator().createFDInstance());
+    /**
+     * Solves the deterministic MILP for all 512 contiguous partitons (Dispersed
+     * instances).
+     * Writes the output to a CSV file named DispersedConceptSolutions.csv.
+     */
+    private static void runDispersedExperiments() {
+        long t0 = System.currentTimeMillis();
+        List<Result> results = CapacitatedResupplyMILP.solveInstances(InstanceCreator.contiguousPartitions());
+        long t1 = System.currentTimeMillis();
+        long timeSeconds = (t1 - t0) / 1000;
+        System.out.println("Runtime (s) : " + timeSeconds);
+        new OutputCreator().createCSV(results);
+    }
 
-        // Solve Dispersed Concept (Deterministic MILP for contiguous partitions)
-        // List<Result> results = CapacitatedResupplyMILP.solveInstances(new
-        // InstanceCreator().contiguousPartitions());
-        // new OutputCreator().createCSV(results);
+    /**
+     * Runs the stochastic experiments. The method follows the steps: 
+     *  1) Determine fleet size
+     *  2) Tune target level weights
+     *  3) Out-of-sample evaluation
+     *  4) Tune composition new CCL type
+     *  5) Out-of-sample evaluation
+     * @param base FD instance
+     */
+    private static void runStochasticExperiments(Instance base) {
+        final int nScenarios = 1000;
+        final double serviceLevel = 0.95;
 
-        // Part 1 results : fleet size
-        int M = 78; // 78
-        Map<String, Integer> K = new HashMap<>();
-        K.put("FSC_1", 48); // 48
-        K.put("FSC_2", 34); // 34
+        final long seedSizingTrain = 42000;
+        final long seedTuningTrain = 43000;
+        final long seedCompTrain = 44000;
+        final int seedOOS = 10042;
 
-        int nWeights = 1000;
-        int weightsSeed = 42;
+        System.out.println();
+        System.out.println("STEP 1 : STOCHASTIC FLEET SIZING");
+        StochasticFleetSizerCorrected.FleetSizingResult fleet;
+        try {
+            long t0 = System.currentTimeMillis();
+            fleet = StochasticFleetSizerCorrected.estimateFleetSizes(base, nScenarios, serviceLevel, seedSizingTrain);
+            long t1 = System.currentTimeMillis();
+            long timeSeconds = (t1 - t0) / 1000;
 
-        // double lb = 0.5, ub = 1.5, step = 0.1;
+            System.out.println("Runtime (s) : " + timeSeconds);
+            System.out.println("Total trucks = " + fleet.totalTrucks);
+            int mscTrucks = fleet.trucksMSCtoFSC + fleet.trucksMSCtoVUST;
+            System.out.println("MSC =" + mscTrucks);
+            for (String w : new TreeSet<>(fleet.trucksAtFSC.keySet())) {
+                System.out.println("  " + w + " = " + fleet.trucksAtFSC.get(w));
+            }
+        } catch (GRBException e) {
+            throw new RuntimeException();
+        }
 
-        // EvaluationHeuristic.TargetWeights defaultVust = new
-        // EvaluationHeuristic.TargetWeights(1.0, 1.0, 1.0);
+        final int M = fleet.trucksMSCtoFSC + fleet.trucksMSCtoVUST;
+        final Map<String, Integer> K = new HashMap<>(fleet.trucksAtFSC);
 
-        // var res = EvaluationHeuristic.tuneWeights(
-        // data, M, K, nWeights, weightsSeed,
-        // lb, ub, step, defaultVust);
+        System.out.println();
+        System.out.println("STEP 2 : WEIGHT TUNING (train)");
 
-        // System.out.println("BEST CONFIG : OU=" + res.bestCfg.ou() + " VUST=" +
-        // res.bestCfg.vust());
+        double lb = 0.5, ub = 1.5, step = 0.1;
+        EvaluationHeuristic.TargetWeights defaultVust = new EvaluationHeuristic.TargetWeights(1.0, 1.0, 1.0);
 
-        // EvaluationHeuristic.WeightConfig bestCfg = new EvaluationHeuristic.WeightConfig(
-        //         new EvaluationHeuristic.TargetWeights(1.3, 0.6, 1.3),
-        //         new EvaluationHeuristic.TargetWeights(1.0, 0.9, 1.1));
+        var tuning = EvaluationHeuristic.tuneWeights(
+                base, M, K, nScenarios, (int) seedTuningTrain,
+                lb, ub, step, defaultVust);
 
-        int nOOS = 1000;
-        int oosSeed = 10042;
+        System.out.println("BEST CONFIG : OU=" + tuning.bestCfg.ou() + " VUST=" +
+                tuning.bestCfg.vust());
 
-        // EvaluationSummary oosSummary = EvaluationHeuristic.evaluate(
-        // data, M, K,
-        // nOOS, oosSeed,
-        // bestCfg);
+        EvaluationHeuristic.WeightConfig bestCfg = tuning.bestCfg;
 
-        // System.out.println("OOS summary :");
-        // System.out.println(oosSummary);
+        System.out.println();
+        System.out.println("STEP 3 : OOS EVALUATION 3 CCLs (test)");
+        EvaluationSummary oosSummary = EvaluationHeuristic.evaluate(base, M, K, nScenarios, seedOOS, bestCfg);
+        System.out.println(oosSummary);
 
-        // EvaluationReporter.reportStockouts(data, M, K, nOOS, oosSeed, bestCfg);
+        int stepKg = 1000;
+        System.out.println();
+        System.out.println("STEP 4 : CCL COMPOSITION GRID SEARCH (train)");
 
-        int nComposition = 1000;
-        int compositionSeed = 20042;
+        var compRes = EvaluationHeuristic.gridSearchCCL(
+                M, K, nScenarios, (int) seedCompTrain, bestCfg, stepKg);
+        System.out.println("Chosen composition: " + compRes.bestComp);
+        System.out.println("Train summary: " + compRes.bestSummary);
 
-        // int stepKg = 1000;
+        Instance bestInst = InstanceCreator.createFDInstanceExtraType(
+                compRes.bestComp.fwKg(),
+                compRes.bestComp.fuelKg(),
+                compRes.bestComp.ammoKg()).get(0);
 
-        // var resComposition = EvaluationHeuristic.gridSearchCCL(
-        // M, K, nComposition, compositionSeed, bestCfg, stepKg
-        // );
+        System.out.println();
+        System.out.println("STEP 5 : OOS EVALUATION 4 CCLs (test)");
 
-        // System.out.println("Chosen CCL 4 composition : " + resComposition.bestComp);
+        var oos2 = EvaluationHeuristic.evaluate(bestInst, M, K, nScenarios, seedOOS, bestCfg);
+        System.out.println(oos2);
+    }
 
-        Instance best = InstanceCreator.createFDInstanceExtraType(
-                1000,
-                6000,
-                3000).get(0);
+    /**
+     * Performs perfect hindsight experiments. 
+     */
+    private static void runPerfectHindsightExperiments() {
+        final int N = 1000;
+        final int oosSeed = 10042;
 
-        // var oos = EvaluationHeuristic.evaluate(best, M, K, nOOS, oosSeed, bestCfg);
-        // System.out.println("OOS with best CCL4 : " + oos);
+        final int M = 79; 
+        final Map<String, Integer> K = new HashMap<>();
+        K.put("FSC_1", 48);
+        K.put("FSC_2", 35);
 
-        // EvaluationReporter.reportStockouts(best, M, K, nOOS, oosSeed, bestCfg);
+        Instance base3 = InstanceCreator.createFDInstance().get(0);
 
+        // System.out.println();
+        // System.out.println("--- Perfect hindsight: 3 CCL types ---");
+        // System.out.println("N=" + N + " | seed=" + oosSeed + " | fixed fleet: M=" + M + " K=" + K);
+
+        // PerfectHindsight.run(base3, N, oosSeed, M, K);
+
+        Instance base4 = InstanceCreator.createFDInstanceExtraType(2000, 6000, 2000).get(0);
+
+        System.out.println();
+        System.out.println("--- Perfect hindsight: 4 CCL types (CCL4=2000/6000/2000) ---");
+        System.out.println("N=" + N + " | seed=" + oosSeed + " | fixed fleet: M=" + M + " K=" + K);
+
+        PerfectHindsight.run(base4, N, oosSeed, M, K);
     }
 }

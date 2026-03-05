@@ -16,8 +16,6 @@ public class Result {
     private final int gurobiStatus;
     private final boolean optimal;
 
-    private final Double objectiveValue;
-
     private final int trucksAtMsc;
     private final int[] trucksAtFsc;
 
@@ -76,7 +74,6 @@ public class Result {
         this.instanceName = instanceName;
         this.gurobiStatus = gurobiStatus;
         this.optimal = optimal;
-        this.objectiveValue = objectiveValue;
         this.trucksAtMsc = trucksAtMsc;
         this.trucksAtFsc = trucksAtFsc.clone();
         this.ousSuppliedByFsc = ousSuppliedByFsc;
@@ -112,14 +109,6 @@ public class Result {
      */
     public boolean isOptimal() {
         return this.optimal;
-    }
-
-    /**
-     * Returns the objective function value of the solution.
-     * @return objective value
-     */
-    public Double getObjectiveValue() {
-        return this.objectiveValue;
     }
 
     /**
