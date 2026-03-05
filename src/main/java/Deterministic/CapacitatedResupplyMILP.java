@@ -36,21 +36,6 @@ public class CapacitatedResupplyMILP {
     private record Arc(String w, String i) {
     }
 
-    // private record XKey(String w, String i, int c, int t) {
-    // }
-    //
-    // private record YKey(String w, int c, String o, int t) {
-    // }
-    //
-    // private record ZKey(int c, int t) {
-    // }
-    //
-    // private record IKey(String i, String p, int t) {
-    // }
-    //
-    // private record SKey(String w, int c, String o, int t) {
-    // }
-
     /**
      * Build the MILP model (derive sets, create variables, add constraints and set
      * objective)
@@ -65,7 +50,7 @@ public class CapacitatedResupplyMILP {
 
         buildArcs();
 
-        env.set(GRB.IntParam.OutputFlag, verbose ? 1 : 0);
+        env.set(GRB.IntParam.OutputFlag, 0);
         this.model = new GRBModel(env);
 
         buildVariables();
@@ -630,6 +615,20 @@ public class CapacitatedResupplyMILP {
         }
     }
 
+    /**
+     * Extracts variable values from the solved MILP and creates a Result object. 
+     * Collects the optimal truck allocation and decision variable values from the Gurobi model.
+     * @param instanceName  name of the instance
+     * @param status        the Gurobi optimization status
+     * @param optimal       true if the solution is optimal, false otherwise    
+     * @param objVal        the objective function value (total trucks)
+     * @param trucksAtMsc   the number of trucks stationed at the MSC
+     * @param trucksAtFsc   array of trucks stationed at each FSC
+     * @param ouLists       for each FSC, a list of operating units it supplies
+     * @param milp          the solved MILP model containing the decision variables
+     * @return a Result object containing all solution details
+     * @throws GRBException if an error occurs accessing Gurobi variables
+     */
     public static Result makeNewResult(String instanceName, int status, boolean optimal, double objVal, int trucksAtMsc,
             int[] trucksAtFsc, List<List<String>> ouLists, CapacitatedResupplyMILP milp) throws GRBException {
         int M_value = (milp.M == null) ? 0 : (int) Math.round(milp.M.get(GRB.DoubleAttr.X));
@@ -679,10 +678,15 @@ public class CapacitatedResupplyMILP {
                 x_value, y_value, z_value, I_value, S_value);
     }
 
-    // HELPER METHOD THAT MAKES DEMAND TIME DEPENDENT (FOR PERFECT HINDSIGHT
-    // EVALUATION)
+    /**
+     * Helper method that maked demand time dependent (for perfect hindsight evaluation)
+     * @param ou    the operating unit
+     * @param p     the product type
+     * @param t     the day
+     * @return demand of product p (kg), at day t, at operating unit ou
+     */
     private double demandAt(OperatingUnit ou, String p, int t) {
-        int idx = t - 1; // 1-indexed t -> 0-indexed array
+        int idx = t - 1; 
 
         switch (p) {
             case "FW" -> {

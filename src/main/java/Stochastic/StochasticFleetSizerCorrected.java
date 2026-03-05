@@ -380,24 +380,4 @@ public final class StochasticFleetSizerCorrected {
         }
     }
 
-    public static final class RunStochasticSizing {
-        public static void main(String[] args) throws Exception {
-            Instance inst = InstanceCreator.createFDInstance().get(0);
-
-            int S = 1000;
-            double service = 0.95;
-
-            FleetSizingResult r = StochasticFleetSizerCorrected.estimateFleetSizes(inst, S, service, 42);
-
-            System.out.println("TOTAL trucks = " + r.totalTrucks);
-            System.out.println("  MSC->VUST = " + r.trucksMSCtoVUST);
-            System.out.println("  MSC->FSC = " + r.trucksMSCtoFSC);
-            System.out.println("  sum FSC fleets = " + sumMapValues(r.trucksAtFSC));
-            System.out.println("FSC->OU trucks:");
-            for (String w : new TreeSet<>(r.trucksAtFSC.keySet())) {
-                System.out.println("  " + w + " = " + r.trucksAtFSC.get(w));
-            }
-
-        }
-    }
 }

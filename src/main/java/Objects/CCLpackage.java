@@ -13,7 +13,7 @@ public class CCLpackage {
 
     /**
      * Constructor. 
-     * @param type          CCL type (1, 2 or 3)
+     * @param type          CCL type 
      * @param foodWaterKg   amount of FW in CCL (kg)
      * @param fuelKg        amount of FUEL in CCL (kg)
      * @param ammoKg        amount of AMMO in CCL (kg)
@@ -25,6 +25,9 @@ public class CCLpackage {
         this.ammoKg = ammoKg;
     }
 
+    /**
+     * String representation of a CCL type.
+     */
     @Override public String toString() {
         return "type='" + type + '\'' +
                 ", FW=" + foodWaterKg +
