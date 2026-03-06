@@ -21,6 +21,16 @@ public final class Environment {
     private final int maxMscTrucksPerDay;
     private final int[] maxFscTrucksPerDay; // per FSC
     private final boolean forceUseAllTrucksInPhase;
+    private final boolean denseShapingEnabled;
+    private final double denseShapingCoef;
+
+    // Reward weights tuned to prioritize full-horizon survival.
+    private static final double SURVIVAL_REWARD_PER_DAY = 2.0;
+    private static final double SUCCESS_BONUS = 25.0;
+    private static final double STOCKOUT_BASE_PENALTY = -5.0;
+    private static final double STOCKOUT_OU_PENALTY = -0.5;
+    private static final double STOCKOUT_KG_PENALTY = -0.00002;
+    private static final double STOCKOUT_REMAINING_DAY_PENALTY = -1.5;
 
     private final int vustOuId;
 
@@ -34,13 +44,14 @@ public final class Environment {
     private int episodeCounter = 0;
     private double lastEpisodeTotalStockoutKg = 0.0;
     private int lastEpisodeDaysSurvived = 0;
+    private boolean episodeEventLoggingEnabled = true;
 
     public Environment(Instance instance,
             ActionSpace actionSpace,
             DemandModel demandModel,
             int maxMscTrucksPerDay,
             int[] maxFscTrucksPerDay) {
-        this(instance, actionSpace, demandModel, maxMscTrucksPerDay, maxFscTrucksPerDay, true);
+        this(instance, actionSpace, demandModel, maxMscTrucksPerDay, maxFscTrucksPerDay, true, false, 0.0);
     }
 
     public Environment(Instance instance,
@@ -49,6 +60,17 @@ public final class Environment {
             int maxMscTrucksPerDay,
             int[] maxFscTrucksPerDay,
             boolean forceUseAllTrucksInPhase) {
+        this(instance, actionSpace, demandModel, maxMscTrucksPerDay, maxFscTrucksPerDay, forceUseAllTrucksInPhase, false, 0.0);
+    }
+
+    public Environment(Instance instance,
+            ActionSpace actionSpace,
+            DemandModel demandModel,
+            int maxMscTrucksPerDay,
+            int[] maxFscTrucksPerDay,
+            boolean forceUseAllTrucksInPhase,
+            boolean denseShapingEnabled,
+            double denseShapingCoef) {
 
         this.instance = instance;
         this.actionSpace = actionSpace;
@@ -58,6 +80,8 @@ public final class Environment {
         this.maxMscTrucksPerDay = maxMscTrucksPerDay;
         this.maxFscTrucksPerDay = maxFscTrucksPerDay;
         this.forceUseAllTrucksInPhase = forceUseAllTrucksInPhase;
+        this.denseShapingEnabled = denseShapingEnabled;
+        this.denseShapingCoef = denseShapingCoef;
 
         if (maxFscTrucksPerDay.length != instance.FSCs.size()) {
             throw new IllegalArgumentException("maxFscTrucksPerDay.length must equal number of FSCs");
@@ -159,10 +183,11 @@ public final class Environment {
         if (action.getType() == Action.ActionType.STOP)
             return stepStop();
 
+        double potentialBefore = denseShapingEnabled ? computePotentialScore() : 0.0;
         applyShipment(action);
+        double shapingReward = denseShapingEnabled ? denseShapingCoef * (computePotentialScore() - potentialBefore) : 0.0;
 
-        // No shaping on individual shipment actions; demand phase drives learning signal.
-        return new StepResult(this.state.deepCopy(), 0.0, false);
+        return new StepResult(this.state.deepCopy(), shapingReward, false);
     }
 
     private StepResult stepDemand() {
@@ -204,20 +229,29 @@ public final class Environment {
 
         if (stockout) {
             lastEpisodeDaysSurvived = day;
-            LOG.info("[Episode " + episodeCounter + "] STOCKOUT day=" + day +
-                    " ouStockouts=" + stockoutOuCount);
+            if (episodeEventLoggingEnabled) {
+                LOG.info("[Episode " + episodeCounter + "] STOCKOUT day=" + day +
+                        " ouStockouts=" + stockoutOuCount);
+            }
             // Terminal penalty scales with stockout severity, but with small coefficients.
-            // This keeps "survive longer days" as the dominant objective.
-            double terminalPenalty = -2.0 - 0.2 * stockoutOuCount - 0.00001 * stockoutAmountKg;
+            // Also penalize failing early to avoid plateauing at mid-horizon policies.
+            int remainingDays = Math.max(0, horizon - day);
+            double terminalPenalty =
+                    STOCKOUT_BASE_PENALTY +
+                    STOCKOUT_OU_PENALTY * stockoutOuCount +
+                    STOCKOUT_KG_PENALTY * stockoutAmountKg +
+                    STOCKOUT_REMAINING_DAY_PENALTY * remainingDays;
             return new StepResult(state.deepCopy(), terminalPenalty, true);
         }
 
         lastEpisodeDaysSurvived = day;
 
         if (day >= horizon) {
-            LOG.info("[Episode " + episodeCounter + "] SUCCESS no stockout");
+            if (episodeEventLoggingEnabled) {
+                LOG.info("[Episode " + episodeCounter + "] SUCCESS no stockout");
+            }
             // Bonus when the full horizon is survived.
-            return new StepResult(state.deepCopy(), 5.0, true);
+            return new StepResult(state.deepCopy(), SUCCESS_BONUS, true);
         }
 
         state.setPhase(State.Phase.FSC_TO_OU);
@@ -228,7 +262,7 @@ public final class Environment {
         }
 
         // Per-day survival reward (dominant objective).
-        return new StepResult(state.deepCopy(), 2.0, false);
+        return new StepResult(state.deepCopy(), SURVIVAL_REWARD_PER_DAY, false);
     }
 
     private StepResult stepStop() {
@@ -269,7 +303,8 @@ public final class Environment {
         int stopIdx = actionSpace.getStopIndex();
 
         // Optional constraint:
-        // if enabled, force the agent to keep assigning trucks until no shipment is feasible.
+        // if enabled, force the agent to keep assigning trucks until no shipment is
+        // feasible.
         if (forceUseAllTrucksInPhase && anyNonStopFeasibleAcions) {
             mask[stopIdx] = false;
         } else {
@@ -290,7 +325,6 @@ public final class Environment {
         // The training mask decides when STOP is exposed to the agent.
         if (a.getType() == Action.ActionType.STOP)
             return true;
-
 
         if (state.getPhase() == State.Phase.FSC_TO_OU) {
 
@@ -428,6 +462,45 @@ public final class Environment {
         throw new IllegalStateException("Cannot infer OU type from operatingUnitName=" + u.operatingUnitName);
     }
 
+    private double computePotentialScore() {
+        // Normalized inventory coverage at OUs plus FSC storage utilization.
+        // This gives denser feedback without changing terminal success criteria.
+        final double fwMult = 1.2;
+        final double fuelMult = 2.5;
+        final double ammoMult = 2.0;
+
+        double[][] inv = state.getOuKg();
+        double ouCoverage = 0.0;
+        int ouCount = instance.operatingUnits.size();
+
+        for (int ou = 0; ou < ouCount; ou++) {
+            OperatingUnit u = instance.operatingUnits.get(ou);
+            double fwTarget = Math.max(1.0, u.dailyFoodWaterKg * fwMult);
+            double fuelTarget = Math.max(1.0, u.dailyFuelKg * fuelMult);
+            double ammoTarget = Math.max(1.0, u.dailyAmmoKg * ammoMult);
+
+            ouCoverage += Math.min(2.0, inv[ou][0] / fwTarget);
+            ouCoverage += Math.min(2.0, inv[ou][1] / fuelTarget);
+            ouCoverage += Math.min(2.0, inv[ou][2] / ammoTarget);
+        }
+        ouCoverage /= Math.max(1.0, ouCount * 3.0);
+
+        double fscUtil = 0.0;
+        for (int f = 0; f < instance.FSCs.size(); f++) {
+            int total = 0;
+            int[][] buckets = state.getFscCclByType()[f];
+            for (int t = 0; t < buckets.length; t++) {
+                for (int c = 0; c < buckets[t].length; c++) {
+                    total += buckets[t][c];
+                }
+            }
+            fscUtil += (double) total / Math.max(1, instance.FSCs.get(f).maxStorageCapCcls);
+        }
+        fscUtil /= Math.max(1, instance.FSCs.size());
+
+        return ouCoverage + 0.25 * fscUtil;
+    }
+
     public int getHorizon() {
         return horizon;
     }
@@ -447,4 +520,10 @@ public final class Environment {
     public int getLastEpisodeDaysSurvived() {
         return lastEpisodeDaysSurvived;
     }
+
+    public void setEpisodeEventLoggingEnabled(boolean enabled) {
+        this.episodeEventLoggingEnabled = enabled;
+    }
+
+    public ActionSpace getActionSpace() { return actionSpace; }
 }
