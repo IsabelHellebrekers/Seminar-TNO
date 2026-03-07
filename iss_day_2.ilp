@@ -1,0 +1,11 @@
+\ Model (null)_copy
+\ LP format - for model browsing. Use MPS format to capture full model detail.
+\ Signature: 0xf1dc94bea0526518
+Minimize
+ 
+Subject To
+ OU_INIT_{iVUST_pAMMO}: I_{iVUST_pAMMO_t2} = 226391.7629811664
+ CAP_AMMO_{iVUST_t2}: I_{iVUST_pAMMO_t2} <= 201420
+Bounds
+ I_{iVUST_pAMMO_t2} free
+End

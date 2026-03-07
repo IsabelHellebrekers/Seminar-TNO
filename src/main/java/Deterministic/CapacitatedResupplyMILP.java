@@ -17,7 +17,7 @@ public class CapacitatedResupplyMILP {
     private final List<Arc> arcs = new ArrayList<>();
     private final List<OperatingUnit> ous;
     private final List<String> products;
-    private final List<CCLpackage> cclTypes; // index based
+    private final List<CCLpackage> cclTypes;
     private final List<String> ouTypes;
 
     // Hashmaps to easy access the GRBVariables

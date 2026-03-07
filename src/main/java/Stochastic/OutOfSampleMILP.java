@@ -257,10 +257,10 @@ public class OutOfSampleMILP {
                         ou.dailyFoodWaterKg);
 
                 demand.put(new DemandKey(i, "FUEL", t),
-                        ou.dailyFuelKg);
+                        1.3 * ou.dailyFuelKg);
 
                 demand.put(new DemandKey(i, "AMMO", t),
-                        ou.dailyAmmoKg);
+                        1.3 * ou.dailyAmmoKg);
             }
         }
     }
