@@ -1,5 +1,4 @@
 package Stochastic;
-import java.io.IOException;
 import java.util.Random;
 
 /**
@@ -164,6 +163,156 @@ public final class Sampling {
         }
 
         return AMMO;
+    }
+
+    /**
+     * Generate a 10-day correlated samples for FW, FUEL, and AMMO.
+     * Day-to-day correlation is enforced through an AR(1) process with parameter {@code rhoDays}, while
+     * product-wise correlation is introduced via a Gaussian copula with the provided pairwise rhos.
+     *
+     * @param rhoDays       AR(1) persistence between consecutive days
+     * @param rhoFWFUEL     correlation between FW and FUEL
+     * @param rhoFWAMMO     correlation between FW and AMMO
+     * @param rhoFUELAMMO   correlation between FUEL and AMMO
+     * @return              3x10 matrix of multipliers where the first index is the product
+     */
+    public double[][] correlatedSamples(double rhoDays, double rhoFWFUEL, double rhoFWAMMO, double rhoFUELAMMO) {
+        final int products = 3;
+        final int days = 10;
+        double[][] samples = new double[products][days];
+
+        double[][] correlation = {
+                { 1.0, rhoFWFUEL, rhoFWAMMO },
+                { rhoFWFUEL, 1.0, rhoFUELAMMO },
+                { rhoFWAMMO, rhoFUELAMMO, 1.0 }
+        };
+
+        double[][] lower = choleskyLower(correlation);
+        double innovationScale = Math.sqrt(Math.max(0.0, 1.0 - rhoDays * rhoDays));
+
+        double[] previous = new double[products];
+        double[] current = new double[products];
+
+        for (int day = 0; day < days; day++) {
+            double[] innovation = correlatedGaussian(lower);
+            if (day == 0) {
+                System.arraycopy(innovation, 0, current, 0, products);
+            } else {
+                for (int p = 0; p < products; p++) {
+                    current[p] = rhoDays * previous[p] + innovationScale * innovation[p];
+                }
+            }
+
+            for (int p = 0; p < products; p++) {
+                samples[p][day] = toMultiplier(p, current[p]);
+            }
+
+            System.arraycopy(current, 0, previous, 0, products);
+        }
+
+        return samples;
+    }
+
+    private double[] correlatedGaussian(double[][] lower) {
+        int dim = lower.length;
+        double[] eps = new double[dim];
+        for (int i = 0; i < dim; i++) {
+            eps[i] = rng.nextGaussian();
+        }
+
+        double[] result = new double[dim];
+        for (int i = 0; i < dim; i++) {
+            double sum = 0.0;
+            for (int k = 0; k <= i; k++) {
+                sum += lower[i][k] * eps[k];
+            }
+            result[i] = sum;
+        }
+
+        return result;
+    }
+
+    private double toMultiplier(int productIndex, double normalValue) {
+        double u = normalCdf(normalValue);
+        switch (productIndex) {
+            case 0:
+                return minUni + u * (maxUni - minUni);
+            case 1:
+                return binomialFromUniform(u);
+            case 2:
+                return triangularFromUniform(u);
+            default:
+                throw new IllegalArgumentException("Unsupported product index: " + productIndex);
+        }
+    }
+
+    private double binomialFromUniform(double u) {
+        double prob = Math.pow(1.0 - p, n);
+        double cdf = prob;
+        int successes = 0;
+        if (u <= cdf) {
+            return successes / 10.0;
+        }
+
+        while (successes < (int) n) {
+            prob = prob * (n - successes) / (successes + 1.0) * p / (1.0 - p);
+            successes++;
+            cdf += prob;
+            if (u <= cdf) {
+                break;
+            }
+        }
+
+        return successes / 10.0;
+    }
+
+    private double triangularFromUniform(double u) {
+        double c = (modeTri - minTri) / (maxTri - minTri);
+        if (u < c) {
+            return minTri + Math.sqrt(u * (maxTri - minTri) * (modeTri - minTri));
+        } else {
+            return maxTri - Math.sqrt((1.0 - u) * (maxTri - minTri) * (maxTri - modeTri));
+        }
+    }
+
+    private double normalCdf(double value) {
+        return 0.5 * (1.0 + erf(value / Math.sqrt(2.0)));
+    }
+
+    private double erf(double x) {
+        double sign = x >= 0 ? 1 : -1;
+        x = Math.abs(x);
+        double t = 1.0 / (1.0 + 0.3275911 * x);
+        double tau = t * (0.254829592 + t * (-0.284496736 + t * (1.421413741 + t * (-1.453152027 + t * 1.061405429))));
+        return sign * (1.0 - tau * Math.exp(-x * x));
+    }
+
+    private double[][] choleskyLower(double[][] matrix) {
+        int dim = matrix.length;
+        double[][] lower = new double[dim][dim];
+
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j <= i; j++) {
+                double sum = 0.0;
+                for (int k = 0; k < j; k++) {
+                    sum += lower[i][k] * lower[j][k];
+                }
+
+                double value = matrix[i][j] - sum;
+                if (i == j) {
+                    lower[i][j] = Math.sqrt(Math.max(value, 1e-12));
+                } else {
+                    double pivot = lower[j][j];
+                    if (pivot == 0.0) {
+                        pivot = 1e-6;
+                        lower[j][j] = pivot;
+                    }
+                    lower[i][j] = value / pivot;
+                }
+            }
+        }
+
+        return lower;
     }
 
 }

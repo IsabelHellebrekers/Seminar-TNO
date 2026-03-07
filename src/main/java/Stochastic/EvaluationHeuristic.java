@@ -193,6 +193,13 @@ public class EvaluationHeuristic {
 
         Sampling sampler = new Sampling(scenarioSeed);
 
+        // Added code for correlated demand part 1/2
+        double rhoDays = 0.8;
+        double rhoFWFuel = 0.35;
+        double rhoFWAmmo = 0.1;
+        double rhoFuelAmmo = 0.5;
+        double[][] correlatedMultipliers = sampler.correlatedSamples(rhoDays, rhoFWFuel, rhoFWAmmo, rhoFuelAmmo);
+
         // Simulate days t = 1,...,T
         for (int t = 1; t <= data.timeHorizon; t++) {
 
@@ -200,9 +207,17 @@ public class EvaluationHeuristic {
             for (OperatingUnit ou : data.operatingUnits) {
                 double[] inv = ouInv.get(ou.operatingUnitName);
 
-                double dFW = sampler.uniform() * ou.dailyFoodWaterKg;
-                double dFUEL = sampler.binomial() * ou.dailyFuelKg;
-                double dAMMO = sampler.triangular() * ou.dailyAmmoKg;
+
+//                double dFW = sampler.uniform() * ou.dailyFoodWaterKg;
+//                double dFUEL = sampler.binomial() * ou.dailyFuelKg;
+//                double dAMMO = sampler.triangular() * ou.dailyAmmoKg;
+
+                // Added code for demand correlation part 2/2.(Also comment the above code)
+                int dayIndex = t - 1;
+                double dFW = correlatedMultipliers[IDX_FW][dayIndex] * ou.dailyFoodWaterKg;
+                double dFUEL = correlatedMultipliers[IDX_FUEL][dayIndex] * ou.dailyFuelKg;
+                double dAMMO = correlatedMultipliers[IDX_AMMO][dayIndex] * ou.dailyAmmoKg;
+
 
                 totalStockoutKg += consumeAndRecordStockout(stockouts, ou.operatingUnitName, "FW", dFW, t, inv, IDX_FW);
                 totalStockoutKg += consumeAndRecordStockout(stockouts, ou.operatingUnitName, "FUEL", dFUEL, t, inv,
