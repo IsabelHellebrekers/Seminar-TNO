@@ -27,11 +27,16 @@ public final class Sampling {
     private final double maxTri = 2.0;
     private final double modeTri = 0.8;
 
+    // Sensitivity multipliers: meanMult shifts the mean, stdMult scales the spread around the mean.
+    // All base distributions have mean = 1.0, so: result = meanMult + stdMult * (raw - 1.0).
+    private double meanMult = 1.0;
+    private double stdMult  = 1.0;
+
     /**
      * Construct a sampler with a non-deterministic seed.
      */
     public Sampling() {
-        this.rng = new Random(); 
+        this.rng = new Random();
     }
 
     /**
@@ -43,10 +48,38 @@ public final class Sampling {
     }
 
     /**
+     * Set the mean multiplier. A value of m shifts the mean of every distribution
+     * from 1.0 to m while keeping the spread unchanged (stdMult = 1.0 by default).
+     * @param m the mean multiplier
+     */
+    public void setMeanMultiplier(double m) {
+        this.meanMult = m;
+    }
+
+    /**
+     * Set the standard-deviation multiplier. A value of s scales the spread of every
+     * distribution around its mean by s while keeping the mean unchanged (meanMult = 1.0
+     * by default).
+     * @param s the standard-deviation multiplier
+     */
+    public void setStdMultiplier(double s) {
+        this.stdMult = s;
+    }
+
+    /**
+     * Apply the mean/std multipliers to a raw multiplier drawn from a base distribution
+     * whose mean is 1.0: result = meanMult + stdMult * (raw - 1.0).
+     */
+    private double applyMultipliers(double raw) {
+        return meanMult + stdMult * (raw - 1.0);
+    }
+
+    /**
      * Draw a Uniform(minUni, maxUni) multiplier for FW demand.
      */
     public double uniform() {
-        return minUni + rng.nextDouble() * (maxUni - minUni);
+        double raw = minUni + rng.nextDouble() * (maxUni - minUni);
+        return applyMultipliers(raw);
     }
 
     /**
@@ -83,7 +116,7 @@ public final class Sampling {
         for (int i = 0; i < n; i++) {
             if (rng.nextDouble() < p) successes++;
         }
-        return successes*1.0/10;
+        return applyMultipliers(successes * 1.0 / 10);
     }
 
     /**
@@ -127,12 +160,13 @@ public final class Sampling {
     public double triangular() {
         double u = rng.nextDouble();
         double c = (modeTri - minTri) / (maxTri - minTri);
-
+        double raw;
         if (u < c) {
-            return minTri + Math.sqrt(u * (maxTri - minTri) * (modeTri - minTri));
+            raw = minTri + Math.sqrt(u * (maxTri - minTri) * (modeTri - minTri));
         } else {
-            return maxTri - Math.sqrt((1.0 - u) * (maxTri - minTri) * (maxTri - modeTri));
+            raw = maxTri - Math.sqrt((1.0 - u) * (maxTri - minTri) * (maxTri - modeTri));
         }
+        return applyMultipliers(raw);
     }
 
     /**
@@ -234,16 +268,21 @@ public final class Sampling {
 
     private double toMultiplier(int productIndex, double normalValue) {
         double u = normalCdf(normalValue);
+        double raw;
         switch (productIndex) {
             case 0:
-                return minUni + u * (maxUni - minUni);
+                raw = minUni + u * (maxUni - minUni);
+                break;
             case 1:
-                return binomialFromUniform(u);
+                raw = binomialFromUniform(u);
+                break;
             case 2:
-                return triangularFromUniform(u);
+                raw = triangularFromUniform(u);
+                break;
             default:
                 throw new IllegalArgumentException("Unsupported product index: " + productIndex);
         }
+        return applyMultipliers(raw);
     }
 
     private double binomialFromUniform(double u) {

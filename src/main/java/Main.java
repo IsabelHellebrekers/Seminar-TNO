@@ -13,32 +13,30 @@ import java.io.IOException;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        Instance base = InstanceCreator.createFDInstance().get(0);
+        Instance fdInstance = InstanceCreator.createFDInstance().get(0);
+        Instance dispersedInstance = InstanceCreator.contiguousPartitions().get(41); // Index of the instance with the
+                                                                                     // most FSCs and obj. 100
+        List<Instance> allInstances = List.of(fdInstance, dispersedInstance);
 
-        // FD EXPERIMENTS (uncomment to run)
-        // runFDExperiments(base);
+        // MILP (uncomment to run)
+        // List<Result> result = CapacitatedResupplyMILP.solveInstances(allInstances);
+        // System.out.println();
+
+        // for (Result res : result) {
+        //     System.out.println(res.getTruckVector());
+        // }
 
         // DISPERSED EXPERIMENTS (uncomment to run)
         // runDispersedExperiments();
 
         // STOCHASTIC EXPERIMENTS (uncomment to run)
-        // runStochasticExperiments(base);
+        // runStochasticExperiments(fdInstance);
 
         // PERFECT HINDSIGHT EXPERIMENTS (uncomment to run)
         // runPerfectHindsightExperiments();
 
         // SENSITIVITY ANALYSIS (uncomment to run)
-        runSensitivityAnalysis();
-    }
-
-    /**
-     * Solves the deterministic MILP for the FD instance.
-     * 
-     * @param base FD instance
-     * @throws IOException if an error occurs
-     */
-    private static void runFDExperiments(Instance base) throws IOException {
-        List<Result> result = CapacitatedResupplyMILP.solveInstances(List.of(base));
+        runSensitivityAnalysis(allInstances);
     }
 
     /**
@@ -56,12 +54,13 @@ public class Main {
     }
 
     /**
-     * Runs the stochastic experiments. The method follows the steps: 
-     *  1) Determine fleet size
-     *  2) Tune target level weights
-     *  3) Out-of-sample evaluation
-     *  4) Tune composition new CCL type
-     *  5) Out-of-sample evaluation
+     * Runs the stochastic experiments. The method follows the steps:
+     * 1) Determine fleet size
+     * 2) Tune target level weights
+     * 3) Out-of-sample evaluation
+     * 4) Tune composition new CCL type
+     * 5) Out-of-sample evaluation
+     * 
      * @param base FD instance
      */
     private static void runStochasticExperiments(Instance base) {
@@ -113,7 +112,8 @@ public class Main {
 
         System.out.println();
         System.out.println("STEP 3 : OOS EVALUATION 3 CCLs (test)");
-        EvaluationSummary oosSummary = EvaluationHeuristic.evaluate(base, M, K, nScenarios, seedOOS, bestCfg);
+        EvaluationSummary oosSummary = EvaluationHeuristic.evaluate(base, M, K, nScenarios, seedOOS, bestCfg,
+                List.of(0.0, 0.0, 0.0, 0.0)); // no correlation
         System.out.println(oosSummary);
 
         int stepKg = 1000;
@@ -133,18 +133,19 @@ public class Main {
         System.out.println();
         System.out.println("STEP 5 : OOS EVALUATION 4 CCLs (test)");
 
-        var oos2 = EvaluationHeuristic.evaluate(bestInst, M, K, nScenarios, seedOOS, bestCfg);
+        var oos2 = EvaluationHeuristic.evaluate(bestInst, M, K, nScenarios, seedOOS, bestCfg,
+                List.of(0.0, 0.0, 0.0, 0.0)); // no correlation
         System.out.println(oos2);
     }
 
     /**
-     * Performs perfect hindsight experiments. 
+     * Performs perfect hindsight experiments.
      */
     private static void runPerfectHindsightExperiments() {
         final int N = 1000;
         final int oosSeed = 10042;
 
-        final int M = 79; 
+        final int M = 79;
         final Map<String, Integer> K = new HashMap<>();
         K.put("FSC_1", 48);
         K.put("FSC_2", 35);
@@ -169,15 +170,69 @@ public class Main {
     /**
      * // STILL NEED TO IMPLEMENT AND MAYBE ADJUST THE COMMENTS BELOW
      * 
-     * Performs a sensitivity analysis on our previous results. We study the effect of
-     *  1) The effect of a smaller fleet size
-     *  2) Different demand distributions
-     *  3) Correlation between products
-     *  4) Correlation between days
-     *  5) A longer time horizon
-     *  6) Making truck reallocation possible
+     * Performs a sensitivity analysis on our previous results. We study the effect
+     * of
+     * 1) The effect of a smaller fleet size
+     * 2) Different demand distributions
+     * 3) Correlation between products
+     * 4) Correlation between days
+     * 5) A longer time horizon
+     * 6) Making truck reallocation possible
      */
-    private static void runSensitivityAnalysis() {
+    private static void runSensitivityAnalysis(List<Instance> instances) {
+        // CORRELATION
+        System.out.println("SENSITIVITY ANALYSIS : CORRELATION");
 
+        final int M = 79;
+        final Map<String, Integer> K = new HashMap<>();
+        K.put("FSC_1", 48);
+        K.put("FSC_2", 35);
+
+        final int nScenarios = 1000;
+        final int seedOOS = 10042; // can be anything
+
+        final EvaluationHeuristic.WeightConfig bestCfg = new EvaluationHeuristic.WeightConfig(
+                new EvaluationHeuristic.TargetWeights(1.3, 0.7, 1.3),
+                new EvaluationHeuristic.TargetWeights(1.0, 1.0, 1.2));
+
+        final List<List<Double>> correlationsList = List.of(
+                List.of(0.0, 0.0, 0.0, 0.0), // no correlation
+                List.of(0.5, 0.5, 0.5, 0.5),
+                List.of(0.1, 0.1, 0.1, 0.1));
+
+        for (List<Double> correlations : correlationsList) {
+            for (Instance instance : instances) {
+                EvaluationSummary oosSummary = EvaluationHeuristic.evaluate(instance, M, K, nScenarios, seedOOS, bestCfg, correlations);
+                System.out.println(oosSummary);
+            }
+        }
+
+        // DIFFERENT DEMAND DISTRIBUTIONS
+        // Investigate the effect of scaling the mean and standard deviation of the demand
+        // distributions independently, using multipliers applied around the base mean of 1.0.
+        System.out.println();
+        System.out.println("SENSITIVITY ANALYSIS : DEMAND DISTRIBUTIONS (no correlation)");
+
+        final List<Double> demandMultipliers = List.of(0.9, 0.95, 1.0, 1.05, 1.1);
+
+        final String[] instanceLabels = {"FD", "Dispersed"};
+
+        System.out.println("--- Mean sensitivity (stdMult = 1.0) ---");
+        for (double mult : demandMultipliers) {
+            for (int i = 0; i < instances.size(); i++) {
+                EvaluationSummary summary = EvaluationHeuristic.evaluate(
+                        instances.get(i), M, K, nScenarios, seedOOS, bestCfg, List.of(0.0, 0.0, 0.0, 0.0), mult, 1.0);
+                System.out.println("meanMult=" + mult + " | " + instanceLabels[i] + " | " + summary);
+            }
+        }
+
+        System.out.println("--- Std sensitivity (meanMult = 1.0) ---");
+        for (double mult : demandMultipliers) {
+            for (int i = 0; i < instances.size(); i++) {
+                EvaluationSummary summary = EvaluationHeuristic.evaluate(
+                        instances.get(i), M, K, nScenarios, seedOOS, bestCfg, List.of(0.0, 0.0, 0.0, 0.0), 1.0, mult);
+                System.out.println("stdMult=" + mult + " | " + instanceLabels[i] + " | " + summary);
+            }
+        }
     }
 }

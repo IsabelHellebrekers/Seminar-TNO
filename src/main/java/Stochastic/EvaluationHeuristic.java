@@ -126,12 +126,22 @@ public class EvaluationHeuristic {
      * @return aggregated evaluation summary
      */
     public static EvaluationSummary evaluate(Instance data, int M, Map<String, Integer> K, int nScenarios,
-            long baseSeed, WeightConfig cfg) {
+            long baseSeed, WeightConfig cfg, List<Double> correlations) {
+        return evaluate(data, M, K, nScenarios, baseSeed, cfg, correlations, 1.0, 1.0);
+    }
+
+    /**
+     * Evaluate with explicit demand distribution multipliers.
+     * @param meanMult multiplier applied to the mean of every demand distribution (base mean = 1.0)
+     * @param stdMult  multiplier applied to the spread of every demand distribution around its mean
+     */
+    public static EvaluationSummary evaluate(Instance data, int M, Map<String, Integer> K, int nScenarios,
+            long baseSeed, WeightConfig cfg, List<Double> correlations, double meanMult, double stdMult) {
         int noStockoutCount = 0;
         double sumStockoutKg = 0.0;
 
         for (int s = 1; s <= nScenarios; s++) {
-            ScenarioResult result = evaluateSingleScenario(data, M, K, baseSeed + s, cfg);
+            ScenarioResult result = evaluateSingleScenario(data, M, K, baseSeed + s, cfg, correlations, meanMult, stdMult);
             if (!result.hasStockout) {
                 noStockoutCount++;
             }
@@ -156,7 +166,12 @@ public class EvaluationHeuristic {
      * @return a single ScenarioResult
      */
     public static ScenarioResult evaluateSingleScenario(Instance data, int M, Map<String, Integer> K, long scenarioSeed,
-            WeightConfig cfg) {
+            WeightConfig cfg, List<Double> correlations) {
+        return evaluateSingleScenario(data, M, K, scenarioSeed, cfg, correlations, 1.0, 1.0);
+    }
+
+    public static ScenarioResult evaluateSingleScenario(Instance data, int M, Map<String, Integer> K, long scenarioSeed,
+            WeightConfig cfg, List<Double> correlations, double meanMult, double stdMult) {
         Random rng = new Random(scenarioSeed);
 
         Map<String, OperatingUnit> ouByName = new HashMap<>();
@@ -192,13 +207,11 @@ public class EvaluationHeuristic {
         double totalStockoutKg = 0.0;
 
         Sampling sampler = new Sampling(scenarioSeed);
+        sampler.setMeanMultiplier(meanMult);
+        sampler.setStdMultiplier(stdMult);
 
-        // Added code for correlated demand part 1/2
-        double rhoDays = 0.8;
-        double rhoFWFuel = 0.35;
-        double rhoFWAmmo = 0.1;
-        double rhoFuelAmmo = 0.5;
-        double[][] correlatedMultipliers = sampler.correlatedSamples(rhoDays, rhoFWFuel, rhoFWAmmo, rhoFuelAmmo);
+        double[][] correlatedMultipliers = sampler.correlatedSamples(
+                correlations.get(0), correlations.get(1), correlations.get(2), correlations.get(3));
 
         // Simulate days t = 1,...,T
         for (int t = 1; t <= data.timeHorizon; t++) {
@@ -207,12 +220,6 @@ public class EvaluationHeuristic {
             for (OperatingUnit ou : data.operatingUnits) {
                 double[] inv = ouInv.get(ou.operatingUnitName);
 
-
-//                double dFW = sampler.uniform() * ou.dailyFoodWaterKg;
-//                double dFUEL = sampler.binomial() * ou.dailyFuelKg;
-//                double dAMMO = sampler.triangular() * ou.dailyAmmoKg;
-
-                // Added code for demand correlation part 2/2.(Also comment the above code)
                 int dayIndex = t - 1;
                 double dFW = correlatedMultipliers[IDX_FW][dayIndex] * ou.dailyFoodWaterKg;
                 double dFUEL = correlatedMultipliers[IDX_FUEL][dayIndex] * ou.dailyFuelKg;
@@ -891,7 +898,7 @@ public class EvaluationHeuristic {
                             new TargetWeights(aFW, aFU, aAM),
                             fixedVust);
 
-                    EvaluationSummary s = evaluate(data, M, K, nTrainScenarios, baseSeedTrain, cfg);
+                    EvaluationSummary s = evaluate(data, M, K, nTrainScenarios, baseSeedTrain, cfg, List.of(0.0, 0.0, 0.0, 0.0)); // no correlation
 
                     if (best == null
                             || s.scenariosWithoutStockout > best.scenariosWithoutStockout
@@ -937,7 +944,7 @@ public class EvaluationHeuristic {
                             fixedOu,
                             new TargetWeights(v1, v2, v3));
 
-                    EvaluationSummary s = evaluate(data, M, K, nTrainScenarios, baseSeedTrain, cfg);
+                    EvaluationSummary s = evaluate(data, M, K, nTrainScenarios, baseSeedTrain, cfg, List.of(0.0, 0.0, 0.0, 0.0)); // no correlation
 
                     if (best == null
                             || s.scenariosWithoutStockout > best.scenariosWithoutStockout
@@ -1010,7 +1017,7 @@ public class EvaluationHeuristic {
                             new TargetWeights(aFW, aFUEL, aAMMO),
                             defaultVustWeights);
 
-                    EvaluationSummary s = evaluate(data, M, K, nTrainScenarios, baseSeedTrain, cfg);
+                    EvaluationSummary s = evaluate(data, M, K, nTrainScenarios, baseSeedTrain, cfg, List.of(0.0, 0.0, 0.0, 0.0)); // no correlation
 
                     if (isBetter(s, bestSumOU)) {
                         bestSumOU = s;
@@ -1042,7 +1049,7 @@ public class EvaluationHeuristic {
                             bestCfgOU.ou(),
                             new TargetWeights(vFW, vFUEL, vAMMO));
 
-                    EvaluationSummary s = evaluate(data, M, K, nTrainScenarios, baseSeedTrain, cfg);
+                    EvaluationSummary s = evaluate(data, M, K, nTrainScenarios, baseSeedTrain, cfg, List.of(0.0, 0.0, 0.0, 0.0)); // no correlation
 
                     if (isBetter(s, bestSumV)) {
                         bestSumV = s;
@@ -1187,7 +1194,7 @@ public class EvaluationHeuristic {
                 int ammo = TOTAL - fw - fuel;
 
                 Instance variant = InstanceCreator.createFDInstanceExtraType(fw, fuel, ammo).get(0);
-                EvaluationSummary s = evaluate(variant, M, K, nScenarios, baseSeed, cfg);
+                EvaluationSummary s = evaluate(variant, M, K, nScenarios, baseSeed, cfg, List.of(0.0, 0.0, 0.0, 0.0)); // no correlation
 
                 if (best == null
                         || s.scenariosWithoutStockout > best.scenariosWithoutStockout

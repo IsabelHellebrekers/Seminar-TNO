@@ -56,7 +56,7 @@ public class EvaluationReporter {
 
         for (int s = 1; s <= nScenarios; s++) {
             EvaluationHeuristic.ScenarioResult res = EvaluationHeuristic.evaluateSingleScenario(data, M, K,
-                    baseSeed + s, cfg);
+                    baseSeed + s, cfg, List.of(0.0, 0.0, 0.0, 0.0)); // no correlation
 
             sumTotalStockoutKg += res.totalStockoutKg;
             scenarioTotals.add(res.totalStockoutKg);
