@@ -186,6 +186,7 @@ public class CapacitatedResupplyMILP {
         addNoStockOutConstraints();
         addOuCapacityConstraints();
         addFscCapacityConstraints();
+        addFscDispatchFeasibilityConstraints();
     }
 
     /**
@@ -676,6 +677,47 @@ public class CapacitatedResupplyMILP {
 
         return new Result(instanceName, status, optimal, objVal, trucksAtMsc, trucksAtFsc, ouLists, M_value, K_value,
                 x_value, y_value, z_value, I_value, S_value);
+    }
+
+    /**
+     * FSC dispatch feasibility constraints.
+     *
+     * Ensures that on every day t an FSC can only dispatch CCL packages it actually
+     * holds at the START of that day, before the MSC replenishment (y) arrives.
+     *
+     * Without this constraint the MILP balance equation
+     *   S[w,c,o,t+1] = S[w,c,o,t] − x[w,i,c,t] + y[w,c,o,t]
+     * allows x > S[w,c,o,t] (a negative intermediate inventory) as long as the
+     * same-day y delivery covers the shortfall.  That is physically infeasible.
+     *
+     * Constraint added: S[w,c,o,t] >= Σ_{i: source=w, ouType=o} x[w,i,c,t]
+     *
+     * @throws GRBException if an error occurs
+     */
+    private void addFscDispatchFeasibilityConstraints() throws GRBException {
+        for (int t = 1; t <= this.data.timeHorizon; t++) {
+            for (FSC w : this.fscs) {
+                for (CCLpackage c : this.cclTypes) {
+                    for (String o : this.ouTypes) {
+                        if (o.equals("VUST")) continue;
+
+                        GRBLinExpr dispatchSum = new GRBLinExpr();
+                        for (OperatingUnit i : this.ous) {
+                            if (!i.source.equals(w.FSCname)) continue;
+                            if (!i.ouType.equals(o)) continue;
+                            GRBVar xv = x.get(new Result.XKey(w.FSCname, i.operatingUnitName, c.type, t));
+                            if (xv != null) dispatchSum.addTerm(1.0, xv);
+                        }
+
+                        model.addConstr(
+                                S.get(new Result.SKey(w.FSCname, c.type, o, t)),
+                                GRB.GREATER_EQUAL,
+                                dispatchSum,
+                                "FSC_DISP_{w" + w.FSCname + "_c" + c.type + "_o" + o + "_t" + t + "}");
+                    }
+                }
+            }
+        }
     }
 
     /**
