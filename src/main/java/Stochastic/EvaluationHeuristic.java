@@ -210,8 +210,11 @@ public class EvaluationHeuristic {
         sampler.setMeanMultiplier(meanMult);
         sampler.setStdMultiplier(stdMult);
 
-        double[][] correlatedMultipliers = sampler.correlatedSamples(
-                correlations.get(0), correlations.get(1), correlations.get(2), correlations.get(3));
+        Map<String, double[][]> ouMultipliers = new HashMap<>();
+        for (OperatingUnit ou : data.operatingUnits) {
+            ouMultipliers.put(ou.operatingUnitName, sampler.correlatedSamples(
+                    correlations.get(0), correlations.get(1), correlations.get(2), correlations.get(3)));
+        }
 
         // Simulate days t = 1,...,T
         for (int t = 1; t <= data.timeHorizon; t++) {
@@ -219,6 +222,7 @@ public class EvaluationHeuristic {
             // 1) Realize and consume demand on day t
             for (OperatingUnit ou : data.operatingUnits) {
                 double[] inv = ouInv.get(ou.operatingUnitName);
+                double[][] correlatedMultipliers = ouMultipliers.get(ou.operatingUnitName);
 
                 int dayIndex = t - 1;
                 double dFW = correlatedMultipliers[IDX_FW][dayIndex] * ou.dailyFoodWaterKg;
