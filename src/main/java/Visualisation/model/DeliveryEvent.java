@@ -39,12 +39,14 @@ public class DeliveryEvent implements Event {
 
     @Override
     public String label() {
-        return "t=" + this.time + " Delivery (all arcs)";
+        return "t=" + this.time + " MSC -> FSC/VUST supply";
     }
 
     @Override
     public void apply(SimState state) {
         state.clearArcHighlights();
+
+        // Highlight MSC->FSC and MSC->VUST arcs only
         for (var e : this.arcTrucks.entrySet()) {
             int trucks = e.getValue();
             if (trucks <= 0) continue;
@@ -53,19 +55,17 @@ public class DeliveryEvent implements Event {
             state.highlightArc(parts[0], parts[1], trucks);
         }
 
-        // Update OU inventory for all OUs
+        // Update VUST inventory to t+1 value (VUST is supplied directly by MSC)
         var I = this.result.getIValue();
         int tNext = this.time + 1;
-        for (String ou : this.ouNames) {
-            Double fw = I.get(new Result.IKey(ou, "FW", tNext));
-            Double fuel = I.get(new Result.IKey(ou, "FUEL", tNext));
-            Double ammo = I.get(new Result.IKey(ou, "AMMO", tNext));
-            if (fw != null) state.setInventoryOU(ou, "FW", fw);
-            if (fuel != null) state.setInventoryOU(ou, "FUEL", fuel);
-            if (ammo != null) state.setInventoryOU(ou, "AMMO", ammo);
-        }
+        Double fw   = I.get(new Result.IKey("VUST", "FW",   tNext));
+        Double fuel = I.get(new Result.IKey("VUST", "FUEL", tNext));
+        Double ammo = I.get(new Result.IKey("VUST", "AMMO", tNext));
+        if (fw   != null) state.setInventoryOU("VUST", "FW",   fw);
+        if (fuel != null) state.setInventoryOU("VUST", "FUEL", fuel);
+        if (ammo != null) state.setInventoryOU("VUST", "AMMO", ammo);
 
-        // Update FSC inventory for all FSCs
+        // Bring FSC inventories up to S[w, t+1] totals after MSC replenishment
         Map<String, Integer> totals = new HashMap<>();
         for (var e : this.result.getSValue().entrySet()) {
             var key = e.getKey();

@@ -2,16 +2,21 @@ package Visualisation.ui;
 
 import Visualisation.model.SimState;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 public class FscPane extends VBox {
-    private static final double BAR_WIDTH = 90.0;
-    private static final String CCL_COLOR = "#FF7F0E";
+    private static final double BAR_WIDTH     = 90.0;
+    private static final String CCL_COLOR     = "#FF7F0E";
+    private static final String OVERLAY_STYLE =
+            "-fx-text-fill: white; -fx-font-size: 8px; -fx-font-family: 'Consolas'; -fx-font-weight: bold;";
 
-    private final String fscName;
-    private final ProgressBar ccl = new ProgressBar(0.0);
+    private final String      fscName;
+    private final ProgressBar ccl      = new ProgressBar(0.0);
+    private final Label       cclLabel = new Label();
 
     public FscPane(String fscName) {
         this.fscName = fscName;
@@ -25,12 +30,27 @@ public class FscPane extends VBox {
 
         initBar(ccl);
 
-        getChildren().addAll(name, ccl);
+        cclLabel.setStyle(OVERLAY_STYLE);
+        cclLabel.setVisible(false);
+
+        // Overlay the count label on top of the bar — no extra height
+        StackPane cclStack = new StackPane(ccl, cclLabel);
+        StackPane.setAlignment(cclLabel, Pos.CENTER_RIGHT);
+        cclLabel.setPadding(new Insets(0, 4, 0, 0));
+
+        getChildren().addAll(name, cclStack);
+    }
+
+    /** Show or hide the exact CCL count overlaid on the bar. */
+    public void setDebugMode(boolean debug) {
+        cclLabel.setVisible(debug);
     }
 
     public void refresh(SimState state) {
-        int max = state.getInventoryFSCMax(this.fscName);
-        this.ccl.setProgress(ratio(state.getInventoryFSC(this.fscName), max));
+        int current = state.getInventoryFSC(this.fscName);
+        int max     = state.getInventoryFSCMax(this.fscName);
+        this.ccl.setProgress(ratio(current, max));
+        this.cclLabel.setText(current + "/" + max);
     }
 
     private static void initBar(ProgressBar bar) {
@@ -38,7 +58,7 @@ public class FscPane extends VBox {
         bar.setMaxHeight(10);
         bar.setPrefHeight(10);
         bar.setMinHeight(10);
-        bar.setStyle("-fx-accent: " + FscPane.CCL_COLOR + "; -fx-control-inner-background: #2A2A2A; -fx-box-border: #2A2A2A;");
+        bar.setStyle("-fx-accent: " + CCL_COLOR + "; -fx-control-inner-background: #2A2A2A; -fx-box-border: #2A2A2A;");
     }
 
     private static double ratio(double value, double max) {

@@ -8,6 +8,7 @@ import Objects.Result;
 import Visualisation.model.DeliveryEvent;
 import Visualisation.model.DemandEvent;
 import Visualisation.model.Event;
+import Visualisation.model.FSCDeliveryEvent;
 import Visualisation.model.SimState;
 import Visualisation.ui.ControlsPane;
 import Visualisation.ui.GraphPane;
@@ -38,8 +39,8 @@ public class VisualiserApp extends Application {
         ControlsPane controls = new ControlsPane();
 
         // Make instance and result object
-//        Instance inst = InstanceCreator.createFDInstance().get(0);
-        Instance inst = InstanceCreator.contiguousPartitions().get(30); // 25 is een mooie visualisatie
+       Instance inst = InstanceCreator.createFDInstance().get(0);
+        // Instance inst = InstanceCreator.contiguousPartitions().get(25); // 25 is een mooie visualisatie
         Result res = solveInstance(inst);
 
         // Make initial state and upcoming events
@@ -48,7 +49,8 @@ public class VisualiserApp extends Application {
 
         // Visualise
         int[] index = {0};
-        boolean[] paused = {false};
+        boolean[] paused     = {false};
+        boolean[] debugMode  = {false};
         long[] lastNs = {0L};
         double[] totalMinutes = {9 * 60.0};
 
@@ -111,6 +113,45 @@ public class VisualiserApp extends Application {
             controls.setPaused(true);
             updateClock(controls, totalMinutes[0]);
             status.setText("Reset.");
+        });
+
+        controls.setOnDebug(a -> {
+            debugMode[0] = !debugMode[0];
+            controls.setDebugMode(debugMode[0]);
+            graph.setDebugMode(debugMode[0]);
+            graph.refresh(state);
+            if (debugMode[0]) {
+                // Auto-pause when entering debug mode
+                paused[0] = true;
+                controls.setPaused(true);
+                lastNs[0] = 0L;
+            }
+        });
+
+        controls.setOnNext(a -> {
+            paused[0] = true;
+            controls.setPaused(true);
+            lastNs[0] = 0L;
+            if (index[0] < schedule.size()) {
+                ScheduledEvent se = schedule.get(index[0]++);
+                se.event.apply(state);
+                graph.refresh(state);
+                status.setText(se.event.label());
+                totalMinutes[0] = se.totalMinutes;
+                updateClock(controls, totalMinutes[0]);
+            }
+        });
+
+        controls.setOnPrev(a -> {
+            if (index[0] > 0) {
+                index[0]--;
+                state.resetFrom(inst, res);
+                for (int i = 0; i < index[0]; i++) schedule.get(i).event.apply(state);
+                graph.refresh(state);
+                totalMinutes[0] = index[0] > 0 ? schedule.get(index[0] - 1).totalMinutes : 9 * 60.0;
+                updateClock(controls, totalMinutes[0]);
+                status.setText(index[0] > 0 ? schedule.get(index[0] - 1).event.label() : "Reset.");
+            }
         });
 
         stage.setScene(new Scene(root, 1000, 750));
@@ -179,21 +220,25 @@ public class VisualiserApp extends Application {
                 continue;
             }
 
-            Map<String, Integer> arcTrucks = new HashMap<>();
-            for (Map.Entry<Result.YKey, Integer> e : result.getYValue().entrySet()) {
-                Result.YKey key = e.getKey();
-                if (key.t() != t) continue;
-                if (!nodes.contains(key.fsc())) continue;
-                arcTrucks.merge("MSC->" + key.fsc(), e.getValue(), Integer::sum);
-            }
-
+            // Phase 1 (14:00): FSC -> OU supply
+            Map<String, Integer> fscArcTrucks = new HashMap<>();
             for (Map.Entry<Result.XKey, Integer> e : result.getXValue().entrySet()) {
                 Result.XKey key = e.getKey();
                 if (key.t() != t) continue;
                 String arc = key.fsc() + "->" + key.ou();
                 if (nodes.contains(key.fsc()) && nodes.contains(key.ou())) {
-                    arcTrucks.merge(arc, e.getValue(), Integer::sum);
+                    fscArcTrucks.merge(arc, e.getValue(), Integer::sum);
                 }
+            }
+            events.add(new ScheduledEvent(t, 14 * 60, new FSCDeliveryEvent(t, fscArcTrucks, ouNames, fscNames, result)));
+
+            // Phase 2 (20:00): MSC -> FSC and MSC -> VUST supply
+            Map<String, Integer> mscArcTrucks = new HashMap<>();
+            for (Map.Entry<Result.YKey, Integer> e : result.getYValue().entrySet()) {
+                Result.YKey key = e.getKey();
+                if (key.t() != t) continue;
+                if (!nodes.contains(key.fsc())) continue;
+                mscArcTrucks.merge("MSC->" + key.fsc(), e.getValue(), Integer::sum);
             }
 
             int mscToVust = 0;
@@ -203,10 +248,10 @@ public class VisualiserApp extends Application {
                 mscToVust += e.getValue();
             }
             if (mscToVust > 0 && nodes.contains("VUST")) {
-                arcTrucks.merge("MSC->VUST", mscToVust, Integer::sum);
+                mscArcTrucks.merge("MSC->VUST", mscToVust, Integer::sum);
             }
 
-            events.add(new ScheduledEvent(t, 20 * 60, new DeliveryEvent(t, arcTrucks, ouNames, fscNames, result)));
+            events.add(new ScheduledEvent(t, 20 * 60, new DeliveryEvent(t, mscArcTrucks, ouNames, fscNames, result)));
         }
 
         return events;
@@ -221,10 +266,10 @@ public class VisualiserApp extends Application {
     }
 
     private static class ScheduledEvent {
-        private final int totalMinutes;
-        private final Event event;
+        final int   totalMinutes;
+        final Event event;
 
-        private ScheduledEvent(int day, int minutesOfDay, Event event) {
+        ScheduledEvent(int day, int minutesOfDay, Event event) {
             this.totalMinutes = (day - 1) * 24 * 60 + minutesOfDay;
             this.event = event;
         }

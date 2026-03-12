@@ -2,20 +2,27 @@ package Visualisation.ui;
 
 import Visualisation.model.SimState;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 public class OperatingUnitPane extends VBox {
-    private static final double BAR_WIDTH = 90.0;
-    private static final String FW_COLOR = "#1F77B4";
-    private static final String FUEL_COLOR = "#2CA02C";
-    private static final String AMMO_COLOR = "#D62728";
+    private static final double BAR_WIDTH   = 90.0;
+    private static final String FW_COLOR    = "#1F77B4";
+    private static final String FUEL_COLOR  = "#2CA02C";
+    private static final String AMMO_COLOR  = "#D62728";
+    private static final String OVERLAY_STYLE =
+            "-fx-text-fill: white; -fx-font-size: 8px; -fx-font-family: 'Consolas'; -fx-font-weight: bold;";
 
-    private final String ouName;
-    private final ProgressBar fw = new ProgressBar(0.0);
-    private final ProgressBar fuel = new ProgressBar(0.0);
-    private final ProgressBar ammo = new ProgressBar(0.0);
+    private final String      ouName;
+    private final ProgressBar fw       = new ProgressBar(0.0);
+    private final ProgressBar fuel     = new ProgressBar(0.0);
+    private final ProgressBar ammo     = new ProgressBar(0.0);
+    private final Label       fwLabel   = new Label();
+    private final Label       fuelLabel = new Label();
+    private final Label       ammoLabel = new Label();
 
     public OperatingUnitPane(String ouName) {
         this.ouName = ouName;
@@ -27,21 +34,57 @@ public class OperatingUnitPane extends VBox {
         Label name = new Label(ouName);
         name.setStyle("-fx-font-size: 9px; -fx-text-fill: #E6E6E6;");
 
-        initBar(fw, FW_COLOR);
+        initBar(fw,   FW_COLOR);
         initBar(fuel, FUEL_COLOR);
         initBar(ammo, AMMO_COLOR);
 
-        getChildren().addAll(name, fw, fuel, ammo);
+        for (Label lbl : new Label[]{fwLabel, fuelLabel, ammoLabel}) {
+            lbl.setStyle(OVERLAY_STYLE);
+            lbl.setVisible(false);
+        }
+
+        getChildren().addAll(name,
+                makeBarStack(fw,   fwLabel),
+                makeBarStack(fuel, fuelLabel),
+                makeBarStack(ammo, ammoLabel));
+    }
+
+    private static StackPane makeBarStack(ProgressBar bar, Label label) {
+        StackPane stack = new StackPane(bar, label);
+        StackPane.setAlignment(label, Pos.CENTER_RIGHT);
+        label.setPadding(new Insets(0, 4, 0, 0));
+        return stack;
+    }
+
+    /** Show or hide the exact kg value labels for each product. */
+    public void setDebugMode(boolean debug) {
+        for (Label lbl : new Label[]{fwLabel, fuelLabel, ammoLabel}) {
+            lbl.setVisible(debug);
+        }
     }
 
     public void refresh(SimState state) {
-        double fwMax = state.getInventoryOUMax(this.ouName, "FW");
+        double fwMax   = state.getInventoryOUMax(this.ouName, "FW");
         double fuelMax = state.getInventoryOUMax(this.ouName, "FUEL");
         double ammoMax = state.getInventoryOUMax(this.ouName, "AMMO");
+        double fwVal   = state.getInventoryOU(this.ouName, "FW");
+        double fuelVal = state.getInventoryOU(this.ouName, "FUEL");
+        double ammoVal = state.getInventoryOU(this.ouName, "AMMO");
 
-        this.fw.setProgress(ratio(state.getInventoryOU(this.ouName, "FW"), fwMax));
-        this.fuel.setProgress(ratio(state.getInventoryOU(this.ouName, "FUEL"), fuelMax));
-        this.ammo.setProgress(ratio(state.getInventoryOU(this.ouName, "AMMO"), ammoMax));
+        this.fw.setProgress(ratio(fwVal, fwMax));
+        this.fuel.setProgress(ratio(fuelVal, fuelMax));
+        this.ammo.setProgress(ratio(ammoVal, ammoMax));
+
+        fwLabel.setText(fmt(fwVal));
+        fuelLabel.setText(fmt(fuelVal));
+        ammoLabel.setText(fmt(ammoVal));
+    }
+
+    /** Format kg value: exact if < 100 000, otherwise round to nearest k. */
+    private static String fmt(double v) {
+        long r = Math.round(v);
+        if (r >= 100_000) return (r / 1000) + "k";
+        return Long.toString(r);
     }
 
     private static void initBar(ProgressBar bar, String color) {
