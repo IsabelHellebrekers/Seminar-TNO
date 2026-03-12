@@ -52,8 +52,9 @@
       white-space: nowrap;
       transition: border-color 0.15s, color 0.15s;
     }
-    .btn:hover  { border-color: #555; color: #E6E6E6; }
-    .btn.active { color: #00FF88; border-color: #00CC66; }
+    .btn:hover        { border-color: #555; color: #E6E6E6; }
+    .btn.active       { color: #00FF88; border-color: #00CC66; }
+    .btn.debug-active { color: #00FF88; border-color: #00FF88; background: #0D1F13; }
 
     #speed-wrap { display: flex; align-items: center; gap: 6px; }
     #gh-link { margin-left: auto; opacity: 0.45; transition: opacity 0.2s; display: flex; align-items: center; }
@@ -99,6 +100,7 @@
   <button class="btn" id="btnPrev">&#8676; Prev</button>
   <button class="btn" id="btnPlay">&#9654; Play</button>
   <button class="btn" id="btnNext">Next &#8677;</button>
+  <button class="btn" id="btnDebug">Debug</button>
   <div id="speed-wrap">
     <span id="speed-label">Speed</span>
     <input type="range" id="speed" min="0.5" max="3.5" step="0.1" value="2">
@@ -139,11 +141,12 @@
   };
 
   // ── State ────────────────────────────────────────────────────────────────
-  let sim      = null;
-  let pos      = {};
-  let frameIdx = 0;
-  let playing  = false;
-  let timerId  = null;
+  let sim       = null;
+  let pos       = {};
+  let frameIdx  = 0;
+  let playing   = false;
+  let timerId   = null;
+  let debugMode = false;
 
   // ── DOM refs ─────────────────────────────────────────────────────────────
   const svg          = document.getElementById('graph');
@@ -158,6 +161,7 @@
   const btnReset     = document.getElementById('btnReset');
   const speedInput   = document.getElementById('speed');
   const scenarioEl   = document.getElementById('scenario');
+  const btnDebug     = document.getElementById('btnDebug');
 
   // ── Load manifest → first scenario ───────────────────────────────────────
   fetch('scenarios.json')
@@ -229,7 +233,16 @@
       arrow.setAttribute('fill', C.edgeOff);
       arrow.setAttribute('opacity', '0.25');
 
-      g.append(line, arrow);
+      const tl = svgEl('text');
+      tl.classList.add('truck-label');
+      tl.setAttribute('text-anchor', 'middle');
+      tl.setAttribute('fill', '#00FF88');
+      tl.setAttribute('font-size', '10px');
+      tl.setAttribute('font-family', 'Consolas, Courier New, monospace');
+      tl.setAttribute('font-weight', 'bold');
+      tl.setAttribute('visibility', 'hidden');
+
+      g.append(line, arrow, tl);
       edgesLayer.appendChild(g);
     });
     positionEdges();
@@ -270,13 +283,17 @@
     lbl.textContent = node.name;
     g.appendChild(lbl);
 
-    // Inventory bars
+    // Inventory bars + debug value labels
     if (node.type === 'FSC') {
       g.appendChild(makeBar(x + 6, y + 22, C.ccl,  'ccl'));
+      g.appendChild(makeDebugVal(x + BW + 14, y + 29, 'ccl'));
     } else if (node.type === 'OU' || node.type === 'VUST') {
       g.appendChild(makeBar(x + 6, y + 15, C.fw,   'fw'));
       g.appendChild(makeBar(x + 6, y + 26, C.fuel, 'fuel'));
       g.appendChild(makeBar(x + 6, y + 37, C.ammo, 'ammo'));
+      g.appendChild(makeDebugVal(x + BW + 14, y + 22, 'fw'));
+      g.appendChild(makeDebugVal(x + BW + 14, y + 33, 'fuel'));
+      g.appendChild(makeDebugVal(x + BW + 14, y + 44, 'ammo'));
     }
   }
 
@@ -299,6 +316,19 @@
     return g;
   }
 
+  function makeDebugVal(x, y, key) {
+    const t = svgEl('text');
+    t.dataset.debugVal = key;
+    t.setAttribute('x', x);
+    t.setAttribute('y', y);
+    t.setAttribute('fill', '#00FF88');
+    t.setAttribute('font-size', '9px');
+    t.setAttribute('font-family', 'Consolas, Courier New, monospace');
+    t.setAttribute('font-weight', 'bold');
+    t.setAttribute('visibility', 'hidden');
+    return t;
+  }
+
   function positionEdges() {
     edgesLayer.querySelectorAll('g').forEach(g => {
       const pf = pos[g.dataset.from], pt = pos[g.dataset.to];
@@ -309,6 +339,8 @@
       line.setAttribute('x1', x1); line.setAttribute('y1', y1);
       line.setAttribute('x2', x2); line.setAttribute('y2', y2);
       g.querySelector('polygon').setAttribute('points', arrowPts(x1, y1, x2, y2));
+      const tl = g.querySelector('text.truck-label');
+      if (tl) { tl.setAttribute('x', (x1 + x2) / 2); tl.setAttribute('y', (y1 + y2) / 2 - 6); }
     });
   }
 
@@ -333,6 +365,11 @@
 
     edgesLayer.querySelectorAll('g[data-key]').forEach(g => {
       const trucks = frame.arcTrucks[g.dataset.key] || 0;
+      const tl = g.querySelector('text.truck-label');
+      if (tl) {
+        tl.textContent = trucks > 0 ? trucks : '0';
+        tl.setAttribute('visibility', debugMode ? 'visible' : 'hidden');
+      }
       const line   = g.querySelector('line');
       const arrow  = g.querySelector('polygon');
 
@@ -379,11 +416,16 @@
   }
 
   function setBar(nodeG, key, value, max) {
-    // Use data-bar-key attribute for reliable lookup (avoids class-selector collisions)
     const bar = nodeG.querySelector('[data-bar-key="' + key + '"]');
     if (!bar) return;
     const ratio = (max > 0) ? Math.min(1, Math.max(0, value / max)) : 0;
     bar.setAttribute('width', (ratio * BW).toFixed(1));
+
+    const dv = nodeG.querySelector('[data-debug-val="' + key + '"]');
+    if (dv) {
+      dv.textContent = Math.round(value) + '/' + Math.round(max);
+      dv.setAttribute('visibility', debugMode ? 'visible' : 'hidden');
+    }
   }
 
   // ── Controls ──────────────────────────────────────────────────────────────
@@ -391,6 +433,12 @@
   btnPrev.addEventListener('click',  () => { pause(); showFrame(frameIdx - 1); });
   btnNext.addEventListener('click',  () => { pause(); showFrame(frameIdx + 1); });
   btnReset.addEventListener('click', () => { pause(); showFrame(0); });
+  btnDebug.addEventListener('click', () => {
+    debugMode = !debugMode;
+    btnDebug.classList.toggle('debug-active', debugMode);
+    if (debugMode) pause();
+    showFrame(frameIdx);   // refresh all labels/values with new visibility
+  });
 
   function play() {
     if (playing || !sim) return;
@@ -409,7 +457,7 @@
     if (!playing) return;
     if (frameIdx >= sim.frames.length - 1) { pause(); return; }
     showFrame(frameIdx + 1);
-    timerId = setTimeout(step, Math.round(2000 / parseInt(speedInput.value)));
+    timerId = setTimeout(step, Math.round(2000 / parseFloat(speedInput.value)));
   }
 
   // ── Responsive resize ─────────────────────────────────────────────────────
