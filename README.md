@@ -20,16 +20,8 @@ src/main/java/
 ├── DataUtils/            # Instance construction and CSV output
 ├── Deterministic/        # MILP formulation (CapacitatedResupplyMILP)
 ├── Stochastic/           # Stochastic fleet sizing, heuristic evaluation, sensitivity analysis
-├── Visualisation/        # JavaFX visualiser + headless JSON exporter for GitHub Pages
-│   ├── model/            # Simulation events (DemandEvent, FSCDeliveryEvent, DeliveryEvent)
-│   ├── ui/               # GraphPane, FscPane, OperatingUnitPane, ControlsPane
-│   └── util/             # Layout engine
-└── Main.java             # Entry point for experiments
-docs/
-├── index.html            # Static web visualiser (GitHub Pages)
-├── sim_fd.json           # Pre-computed FD simulation frames
-├── sim_dispersed.json    # Pre-computed Dispersed simulation frames
-└── scenarios.json        # Scenario manifest
+├── Visualisation/        # JavaFX instance visualiser + JSON exporter for GitHub Page
+└── Main.java             # For running experiments
 ```
 
 ## Prerequisites
