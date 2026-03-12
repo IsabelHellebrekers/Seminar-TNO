@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 public class GraphPane extends Pane {
-    private static final double NODE_WIDTH      = 110.0;
+    private static final double NODE_WIDTH      = 155.0;
     private static final double NODE_HEIGHT     = 50.0;
     private static final double ARROW_SIZE      = 8.0;
     private static final double ARROW_ANGLE_DEG = 25.0;

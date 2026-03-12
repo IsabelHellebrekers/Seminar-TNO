@@ -30,7 +30,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class VisualiserApp extends Application {
-    public static void main(String[] args) { launch(args); }
+    public static void main(String[] args) {
+        launch(args);
+    }
 
     @Override
     public void start(Stage stage) {
@@ -39,13 +41,24 @@ public class VisualiserApp extends Application {
         ControlsPane controls = new ControlsPane();
 
         // Make instance and result object
-       Instance inst = InstanceCreator.createFDInstance().get(0);
-        // Instance inst = InstanceCreator.contiguousPartitions().get(25); // 25 is een mooie visualisatie
-        Result res = solveInstance(inst);
+        Instance fdInst = InstanceCreator.createFDInstance().get(0);
+        Instance dispersedInst = InstanceCreator.contiguousPartitions().get(224);
+        Result fdResult = solveInstance(fdInst);
+        Result dispersedResult = solveInstance(dispersedInst);
+
+
+        // Add more export() calls here for additional scenarios, then call writeManifest().
+        try {
+            SimExporter.export(fdInst, fdResult, "docs/sim_fd.json", "FD Concept");
+            SimExporter.export(dispersedInst, dispersedResult, "docs/sim_dispersed.json", "Dispersed Concept");
+            SimExporter.writeManifest("docs/scenarios.json");
+        } catch (Exception e) {
+            System.err.println("[SimExporter] Export failed: " + e.getMessage());
+        }
 
         // Make initial state and upcoming events
-        SimState state = SimState.from(inst, res);
-        List<ScheduledEvent> schedule = buildSchedule(inst, res);
+        SimState state = SimState.from(fdInst, fdResult);
+        List<ScheduledEvent> schedule = buildSchedule(fdInst, fdResult);
 
         // Visualise
         int[] index = {0};
@@ -58,7 +71,7 @@ public class VisualiserApp extends Application {
         root.setStyle("-fx-background-color: #111111;");
         root.setTop(controls);
         root.setBottom(status);
-        GraphPane graph = new GraphPane(inst, state);
+        GraphPane graph = new GraphPane(fdInst, state);
         StackPane center = new StackPane(graph);
         center.setAlignment(Pos.CENTER);
         root.setCenter(center);
@@ -105,7 +118,7 @@ public class VisualiserApp extends Application {
         });
 
         controls.setOnReset(a -> {
-            state.resetFrom(inst, res);
+            state.resetFrom(fdInst, fdResult);
             graph.refresh(state);
             index[0] = 0;
             totalMinutes[0] = 9 * 60.0;
@@ -145,7 +158,7 @@ public class VisualiserApp extends Application {
         controls.setOnPrev(a -> {
             if (index[0] > 0) {
                 index[0]--;
-                state.resetFrom(inst, res);
+                state.resetFrom(fdInst, fdResult);
                 for (int i = 0; i < index[0]; i++) schedule.get(i).event.apply(state);
                 graph.refresh(state);
                 totalMinutes[0] = index[0] > 0 ? schedule.get(index[0] - 1).totalMinutes : 9 * 60.0;
@@ -224,27 +237,32 @@ public class VisualiserApp extends Application {
             Map<String, Integer> fscArcTrucks = new HashMap<>();
             for (Map.Entry<Result.XKey, Integer> e : result.getXValue().entrySet()) {
                 Result.XKey key = e.getKey();
-                if (key.t() != t) continue;
+                if (key.t() != t)
+                    continue;
                 String arc = key.fsc() + "->" + key.ou();
                 if (nodes.contains(key.fsc()) && nodes.contains(key.ou())) {
                     fscArcTrucks.merge(arc, e.getValue(), Integer::sum);
                 }
             }
-            events.add(new ScheduledEvent(t, 14 * 60, new FSCDeliveryEvent(t, fscArcTrucks, ouNames, fscNames, result)));
+            events.add(
+                    new ScheduledEvent(t, 14 * 60, new FSCDeliveryEvent(t, fscArcTrucks, ouNames, fscNames, result)));
 
             // Phase 2 (20:00): MSC -> FSC and MSC -> VUST supply
             Map<String, Integer> mscArcTrucks = new HashMap<>();
             for (Map.Entry<Result.YKey, Integer> e : result.getYValue().entrySet()) {
                 Result.YKey key = e.getKey();
-                if (key.t() != t) continue;
-                if (!nodes.contains(key.fsc())) continue;
+                if (key.t() != t)
+                    continue;
+                if (!nodes.contains(key.fsc()))
+                    continue;
                 mscArcTrucks.merge("MSC->" + key.fsc(), e.getValue(), Integer::sum);
             }
 
             int mscToVust = 0;
             for (Map.Entry<Result.ZKey, Integer> e : result.getZValue().entrySet()) {
                 Result.ZKey key = e.getKey();
-                if (key.t() != t) continue;
+                if (key.t() != t)
+                    continue;
                 mscToVust += e.getValue();
             }
             if (mscToVust > 0 && nodes.contains("VUST")) {
@@ -266,7 +284,7 @@ public class VisualiserApp extends Application {
     }
 
     private static class ScheduledEvent {
-        final int   totalMinutes;
+        final int totalMinutes;
         final Event event;
 
         ScheduledEvent(int day, int minutesOfDay, Event event) {

@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Capacitated Resupply Problem</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #111111;
+      color: #E6E6E6;
+      font-family: 'Consolas', 'Courier New', monospace;
+      overflow: hidden;
+    }
+
+    /* ── Controls bar ─────────────────────────────────────────────────────── */
+    #controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 16px;
+      background: #161616;
+      border-bottom: 1px solid #252525;
+      height: 46px;
+      flex-wrap: nowrap;
+    }
+
+    select#scenario {
+      background: #1E1E1E;
+      color: #C8C8C8;
+      border: 1px solid #333;
+      padding: 4px 10px;
+      font-family: inherit;
+      font-size: 12px;
+      border-radius: 3px;
+      cursor: pointer;
+      outline: none;
+      max-width: 200px;
+    }
+    select#scenario:focus { border-color: #00CC66; }
+
+    .btn {
+      background: #1E1E1E;
+      color: #C8C8C8;
+      border: 1px solid #333;
+      padding: 4px 14px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      border-radius: 3px;
+      white-space: nowrap;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn:hover  { border-color: #555; color: #E6E6E6; }
+    .btn.active { color: #00FF88; border-color: #00CC66; }
+
+    #speed-wrap { display: flex; align-items: center; gap: 6px; }
+    #gh-link { margin-left: auto; opacity: 0.45; transition: opacity 0.2s; display: flex; align-items: center; }
+    #gh-link:hover { opacity: 1; }
+    #speed-label { font-size: 11px; color: #555; }
+    #speed { width: 76px; accent-color: #00CC66; cursor: pointer; }
+
+    /* Frame progress bar */
+    #progress-wrap { flex: 1; display: flex; align-items: center; min-width: 40px; }
+    #progress { flex: 1; height: 3px; background: #252525; border-radius: 2px; }
+    #progress-fill { height: 100%; background: #00CC66; border-radius: 2px; width: 0%; transition: width 0.15s; }
+
+    #clock {
+      color: #00FF88;
+      font-weight: bold;
+      font-size: 13px;
+      white-space: nowrap;
+      letter-spacing: 0.03em;
+    }
+    #status {
+      font-size: 11px;
+      color: #555;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 300px;
+    }
+
+    /* ── SVG canvas ───────────────────────────────────────────────────────── */
+    #graph { display: block; width: 100%; height: calc(100vh - 46px); }
+
+    /* CSS transitions for smooth frame-to-frame updates */
+    .edge-line  { transition: stroke 0.2s, opacity 0.2s, stroke-width 0.2s; }
+    .edge-arrow { transition: fill   0.2s, opacity 0.2s; }
+    .inv-fill   { transition: width  0.25s ease-out; }
+  </style>
+</head>
+<body>
+
+<div id="controls">
+  <select id="scenario" title="Switch scenario"></select>
+  <button class="btn" id="btnReset">Reset</button>
+  <button class="btn" id="btnPrev">&#8676; Prev</button>
+  <button class="btn" id="btnPlay">&#9654; Play</button>
+  <button class="btn" id="btnNext">Next &#8677;</button>
+  <div id="speed-wrap">
+    <span id="speed-label">Speed</span>
+    <input type="range" id="speed" min="0.5" max="3.5" step="0.1" value="2">
+  </div>
+  <div id="progress-wrap"><div id="progress"><div id="progress-fill"></div></div></div>
+  <span id="clock">—</span>
+  <span id="status">Loading…</span>
+  <a id="gh-link" href="https://github.com/IsabelHellebrekers/Seminar-TNO" target="_blank" title="View on GitHub">
+    <svg height="20" width="20" viewBox="0 0 16 16" fill="#666"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+  </a>
+</div>
+
+<svg id="graph">
+  <g id="edges-layer"></g>
+  <g id="nodes-layer"></g>
+</svg>
+
+<script>
+(function () {
+  'use strict';
+
+  // ── Constants ────────────────────────────────────────────────────────────
+  const NW = 155, NH = 50;   // node width / height (px)
+  const BW = 75,  BH = 8;    // inventory bar width / height
+  const ARROW_LEN = 8, ARROW_DEG = 25;
+
+  const C = {
+    fw:      '#1F77B4',
+    fuel:    '#2CA02C',
+    ammo:    '#D62728',
+    ccl:     '#FF7F0E',
+    edgeOff: '#2C2C2C',
+    edgeOn:  '#FF2A2A',
+    barBg:   '#2A2A2A',
+    nodeFill:'#1F1F1F',
+    nodeBdr: '#3A3A3A',
+    text:    '#D8D8D8',
+  };
+
+  // ── State ────────────────────────────────────────────────────────────────
+  let sim      = null;
+  let pos      = {};
+  let frameIdx = 0;
+  let playing  = false;
+  let timerId  = null;
+
+  // ── DOM refs ─────────────────────────────────────────────────────────────
+  const svg          = document.getElementById('graph');
+  const edgesLayer   = document.getElementById('edges-layer');
+  const nodesLayer   = document.getElementById('nodes-layer');
+  const clockEl      = document.getElementById('clock');
+  const statusEl     = document.getElementById('status');
+  const progressFill = document.getElementById('progress-fill');
+  const btnPlay      = document.getElementById('btnPlay');
+  const btnPrev      = document.getElementById('btnPrev');
+  const btnNext      = document.getElementById('btnNext');
+  const btnReset     = document.getElementById('btnReset');
+  const speedInput   = document.getElementById('speed');
+  const scenarioEl   = document.getElementById('scenario');
+
+  // ── Load manifest → first scenario ───────────────────────────────────────
+  fetch('scenarios.json')
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(scenarios => {
+      scenarios.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value       = s.file;
+        opt.textContent = s.name;
+        scenarioEl.appendChild(opt);
+      });
+      return loadScenario(scenarios[0].file);
+    })
+    .catch(err => { statusEl.textContent = 'Cannot load scenarios.json — ' + err.message; });
+
+  scenarioEl.addEventListener('change', () => { pause(); loadScenario(scenarioEl.value); });
+
+  function loadScenario(file) {
+    statusEl.textContent = 'Loading…';
+    return fetch(file)
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(data => { sim = data; build(); showFrame(0); })
+      .catch(err => { statusEl.textContent = 'Error: ' + err.message; });
+  }
+
+  // ── Layout — mirrors LayoutEngine.java exactly ────────────────────────────
+  function computeLayout(W, H) {
+    const padding = Math.max(40, H * 0.04);
+    const out = {};
+    out['MSC'] = { x: Math.max(80, W * 0.06), y: H / 2 };
+
+    const mid = [
+      ...sim.nodes.filter(n => n.type === 'FSC'),
+      ...sim.nodes.filter(n => n.type === 'VUST'),
+    ];
+    placeGroup(mid, W * 0.4, padding, H - 2 * padding, out);
+
+    placeGroup(sim.nodes.filter(n => n.type === 'OU'), W * 0.88, padding, H - 2 * padding, out);
+    return out;
+  }
+
+  function placeGroup(nodes, x, startY, rangeH, out) {
+    if (!nodes.length) return;
+    if (nodes.length === 1) { out[nodes[0].name] = { x, y: startY + rangeH / 2 }; return; }
+    nodes.forEach((n, i) => { out[n.name] = { x, y: startY + rangeH * i / (nodes.length - 1) }; });
+  }
+
+  // ── Build SVG (full rebuild on scenario change or resize) ─────────────────
+  function build() {
+    pos = computeLayout(svg.clientWidth, svg.clientHeight);
+    edgesLayer.innerHTML = '';
+    nodesLayer.innerHTML = '';
+
+    // Edges — behind nodes
+    sim.edges.forEach(edge => {
+      const g    = svgEl('g');
+      g.dataset.from = edge.from;
+      g.dataset.to   = edge.to;
+      g.dataset.key  = edge.from + '->' + edge.to;
+
+      const line = svgEl('line');
+      line.classList.add('edge-line');
+      line.setAttribute('stroke', C.edgeOff);
+      line.setAttribute('stroke-width', '2');
+      line.setAttribute('opacity', '0.25');
+
+      const arrow = svgEl('polygon');
+      arrow.classList.add('edge-arrow');
+      arrow.setAttribute('fill', C.edgeOff);
+      arrow.setAttribute('opacity', '0.25');
+
+      g.append(line, arrow);
+      edgesLayer.appendChild(g);
+    });
+    positionEdges();
+
+    // Nodes — on top
+    sim.nodes.forEach(node => {
+      const p = pos[node.name];
+      if (!p) return;
+      const g = svgEl('g');
+      g.dataset.name = node.name;
+      g.dataset.type = node.type;
+      nodesLayer.appendChild(g);
+      buildNode(g, node, p);
+    });
+  }
+
+  function buildNode(g, node, p) {
+    g.innerHTML = '';
+    const x = p.x - NW / 2, y = p.y - NH / 2;
+
+    // Box
+    const rect = svgEl('rect');
+    rect.setAttribute('x', x);      rect.setAttribute('y', y);
+    rect.setAttribute('width', NW); rect.setAttribute('height', NH);
+    rect.setAttribute('fill', C.nodeFill);
+    rect.setAttribute('stroke', C.nodeBdr);
+    rect.setAttribute('stroke-width', '1');
+    rect.setAttribute('rx', '2');
+    g.appendChild(rect);
+
+    // Name
+    const lbl = svgEl('text');
+    lbl.setAttribute('x', x + 6);
+    lbl.setAttribute('y', y + 12);
+    lbl.setAttribute('fill', C.text);
+    lbl.setAttribute('font-size', '9px');
+    lbl.setAttribute('font-family', 'Consolas, Courier New, monospace');
+    lbl.textContent = node.name;
+    g.appendChild(lbl);
+
+    // Inventory bars
+    if (node.type === 'FSC') {
+      g.appendChild(makeBar(x + 6, y + 22, C.ccl,  'ccl'));
+    } else if (node.type === 'OU' || node.type === 'VUST') {
+      g.appendChild(makeBar(x + 6, y + 15, C.fw,   'fw'));
+      g.appendChild(makeBar(x + 6, y + 26, C.fuel, 'fuel'));
+      g.appendChild(makeBar(x + 6, y + 37, C.ammo, 'ammo'));
+    }
+  }
+
+  function makeBar(x, y, color, key) {
+    const g = svgEl('g');
+
+    const bg = svgEl('rect');
+    bg.setAttribute('x', x);   bg.setAttribute('y', y);
+    bg.setAttribute('width', BW); bg.setAttribute('height', BH);
+    bg.setAttribute('fill', C.barBg); bg.setAttribute('rx', '1');
+
+    const fill = svgEl('rect');
+    fill.setAttribute('x', x);   fill.setAttribute('y', y);
+    fill.setAttribute('width', '0'); fill.setAttribute('height', BH);
+    fill.setAttribute('fill', color); fill.setAttribute('rx', '1');
+    fill.classList.add('inv-fill');
+    fill.dataset.barKey = key;   // ← used by setBar() for reliable lookup
+
+    g.append(bg, fill);
+    return g;
+  }
+
+  function positionEdges() {
+    edgesLayer.querySelectorAll('g').forEach(g => {
+      const pf = pos[g.dataset.from], pt = pos[g.dataset.to];
+      if (!pf || !pt) return;
+      const x1 = pf.x + NW / 2, y1 = pf.y;
+      const x2 = pt.x - NW / 2, y2 = pt.y;
+      const line = g.querySelector('line');
+      line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+      g.querySelector('polygon').setAttribute('points', arrowPts(x1, y1, x2, y2));
+    });
+  }
+
+  // ── Frame rendering ───────────────────────────────────────────────────────
+  function showFrame(idx) {
+    if (!sim) return;
+    idx = Math.max(0, Math.min(idx, sim.frames.length - 1));
+    frameIdx = idx;
+    const frame = sim.frames[idx];
+
+    clockEl.textContent  = frame.time;
+    statusEl.textContent = frame.label;
+    progressFill.style.width = ((idx + 1) / sim.frames.length * 100).toFixed(1) + '%';
+
+    // ── Edges ──
+    // Compute maxTrucks over declared edges only — mirrors GraphPane.refresh() exactly
+    let maxTrucks = 0;
+    edgesLayer.querySelectorAll('g[data-key]').forEach(g => {
+      const t = frame.arcTrucks[g.dataset.key] || 0;
+      if (t > maxTrucks) maxTrucks = t;
+    });
+
+    edgesLayer.querySelectorAll('g[data-key]').forEach(g => {
+      const trucks = frame.arcTrucks[g.dataset.key] || 0;
+      const line   = g.querySelector('line');
+      const arrow  = g.querySelector('polygon');
+
+      if (trucks <= 0) {
+        line.setAttribute('stroke', C.edgeOff);
+        line.setAttribute('opacity', '0.25');
+        arrow.setAttribute('fill', C.edgeOff);
+        arrow.setAttribute('opacity', '0.25');
+        line.style.filter  = 'none';
+        arrow.style.filter = 'none';
+      } else {
+        const norm      = maxTrucks > 0 ? trucks / maxTrucks : 0;
+        const intensity = Math.pow(norm, 0.18);
+        const color     = lerpColor('#3A3A3A', C.edgeOn, intensity);
+        const opacity   = (0.25 + 0.75 * intensity).toFixed(2);
+        // Mirror JavaFX DropShadow: radius = 1 + 40*intensity, alpha = 0.05 + 0.95*intensity
+        const blur  = (1 + 20 * intensity).toFixed(1);
+        const alpha = (0.05 + 0.95 * intensity).toFixed(2);
+        const glow  = `drop-shadow(0 0 ${blur}px rgba(255,42,42,${alpha}))`;
+
+        line.setAttribute('stroke', color);
+        line.setAttribute('opacity', opacity);
+        arrow.setAttribute('fill', color);
+        arrow.setAttribute('opacity', opacity);
+        line.style.filter  = glow;
+        arrow.style.filter = glow;
+      }
+    });
+
+    // ── Node inventory bars ──
+    nodesLayer.querySelectorAll('g[data-name]').forEach(g => {
+      const ns   = frame.nodes[g.dataset.name];
+      const type = g.dataset.type;
+      if (!ns) return;   // MSC has no inventory entry
+
+      if (type === 'FSC') {
+        setBar(g, 'ccl',  ns.ccl,  ns.cclMax);
+      } else if (type === 'OU' || type === 'VUST') {
+        setBar(g, 'fw',   ns.fw,   ns.fwMax);
+        setBar(g, 'fuel', ns.fuel, ns.fuelMax);
+        setBar(g, 'ammo', ns.ammo, ns.ammoMax);
+      }
+    });
+  }
+
+  function setBar(nodeG, key, value, max) {
+    // Use data-bar-key attribute for reliable lookup (avoids class-selector collisions)
+    const bar = nodeG.querySelector('[data-bar-key="' + key + '"]');
+    if (!bar) return;
+    const ratio = (max > 0) ? Math.min(1, Math.max(0, value / max)) : 0;
+    bar.setAttribute('width', (ratio * BW).toFixed(1));
+  }
+
+  // ── Controls ──────────────────────────────────────────────────────────────
+  btnPlay.addEventListener('click',  () => playing ? pause() : play());
+  btnPrev.addEventListener('click',  () => { pause(); showFrame(frameIdx - 1); });
+  btnNext.addEventListener('click',  () => { pause(); showFrame(frameIdx + 1); });
+  btnReset.addEventListener('click', () => { pause(); showFrame(0); });
+
+  function play() {
+    if (playing || !sim) return;
+    playing = true;
+    btnPlay.innerHTML = '&#9646;&#9646; Pause';
+    btnPlay.classList.add('active');
+    step();
+  }
+  function pause() {
+    playing = false;
+    btnPlay.innerHTML = '&#9654; Play';
+    btnPlay.classList.remove('active');
+    if (timerId) { clearTimeout(timerId); timerId = null; }
+  }
+  function step() {
+    if (!playing) return;
+    if (frameIdx >= sim.frames.length - 1) { pause(); return; }
+    showFrame(frameIdx + 1);
+    timerId = setTimeout(step, Math.round(2000 / parseInt(speedInput.value)));
+  }
+
+  // ── Responsive resize ─────────────────────────────────────────────────────
+  new ResizeObserver(() => {
+    if (!sim) return;
+    pos = computeLayout(svg.clientWidth, svg.clientHeight);
+    sim.nodes.forEach(node => {
+      const p = pos[node.name];
+      const g = nodesLayer.querySelector('g[data-name="' + CSS.escape(node.name) + '"]');
+      if (p && g) buildNode(g, node, p);
+    });
+    positionEdges();
+    showFrame(frameIdx);
+  }).observe(svg);
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function svgEl(tag) {
+    return document.createElementNS('http://www.w3.org/2000/svg', tag);
+  }
+
+  function arrowPts(x1, y1, x2, y2) {
+    const a  = Math.atan2(y2 - y1, x2 - x1);
+    const th = ARROW_DEG * Math.PI / 180;
+    return [
+      x2, y2,
+      x2 - ARROW_LEN * Math.cos(a - th), y2 - ARROW_LEN * Math.sin(a - th),
+      x2 - ARROW_LEN * Math.cos(a + th), y2 - ARROW_LEN * Math.sin(a + th),
+    ].join(' ');
+  }
+
+  function lerpColor(c1, c2, t) {
+    const hex = s => [parseInt(s.slice(1,3),16), parseInt(s.slice(3,5),16), parseInt(s.slice(5,7),16)];
+    const [r1,g1,b1] = hex(c1), [r2,g2,b2] = hex(c2);
+    return '#' + [r1+(r2-r1)*t, g1+(g2-g1)*t, b1+(b2-b1)*t]
+      .map(v => Math.round(v).toString(16).padStart(2,'0')).join('');
+  }
+
+})();
+</script>
+</body>
+</html>

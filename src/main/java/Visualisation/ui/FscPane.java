@@ -5,14 +5,16 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 public class FscPane extends VBox {
-    private static final double BAR_WIDTH     = 90.0;
-    private static final String CCL_COLOR     = "#FF7F0E";
-    private static final String OVERLAY_STYLE =
-            "-fx-text-fill: white; -fx-font-size: 8px; -fx-font-family: 'Consolas'; -fx-font-weight: bold;";
+    private static final double BAR_WIDTH   = 75.0;
+    private static final String CCL_COLOR  = "#FF7F0E";
+    private static final String LABEL_STYLE =
+            "-fx-text-fill: #00FF88; -fx-font-size: 10px; -fx-font-family: 'Consolas'; -fx-font-weight: bold;" +
+            "-fx-background-color: #0A1A0F; -fx-padding: 1 4 1 4;" +
+            "-fx-border-color: #00FF88; -fx-border-width: 1; -fx-border-radius: 3; -fx-background-radius: 3;";
 
     private final String      fscName;
     private final ProgressBar ccl      = new ProgressBar(0.0);
@@ -30,15 +32,13 @@ public class FscPane extends VBox {
 
         initBar(ccl);
 
-        cclLabel.setStyle(OVERLAY_STYLE);
+        cclLabel.setStyle(LABEL_STYLE);
         cclLabel.setVisible(false);
 
-        // Overlay the count label on top of the bar — no extra height
-        StackPane cclStack = new StackPane(ccl, cclLabel);
-        StackPane.setAlignment(cclLabel, Pos.CENTER_RIGHT);
-        cclLabel.setPadding(new Insets(0, 4, 0, 0));
+        HBox cclRow = new HBox(4, ccl, cclLabel);
+        cclRow.setAlignment(Pos.CENTER_LEFT);
 
-        getChildren().addAll(name, cclStack);
+        getChildren().addAll(name, cclRow);
     }
 
     /** Show or hide the exact CCL count overlaid on the bar. */
