@@ -1,0 +1,655 @@
+{
+  "nodes": [
+    {"name": "MSC", "type": "MSC"},
+    {"name": "FSC_1", "type": "FSC"},
+    {"name": "FSC_2", "type": "FSC"},
+    {"name": "VUST", "type": "VUST"},
+    {"name": "GN_CIE_1", "type": "OU"},
+    {"name": "PAINF_CIE_1", "type": "OU"},
+    {"name": "PAINF_CIE_2", "type": "OU"},
+    {"name": "PAINF_CIE_3", "type": "OU"},
+    {"name": "AT_CIE_1", "type": "OU"},
+    {"name": "AT_CIE_2", "type": "OU"},
+    {"name": "GN_CIE_2", "type": "OU"},
+    {"name": "PAINF_CIE_4", "type": "OU"},
+    {"name": "PAINF_CIE_5", "type": "OU"},
+    {"name": "AT_CIE_3", "type": "OU"}
+  ],
+  "edges": [
+    {"from": "MSC", "to": "FSC_1"},
+    {"from": "MSC", "to": "FSC_2"},
+    {"from": "MSC", "to": "VUST"},
+    {"from": "FSC_1", "to": "GN_CIE_1"},
+    {"from": "FSC_1", "to": "PAINF_CIE_1"},
+    {"from": "FSC_1", "to": "PAINF_CIE_2"},
+    {"from": "FSC_1", "to": "PAINF_CIE_3"},
+    {"from": "FSC_1", "to": "AT_CIE_1"},
+    {"from": "FSC_1", "to": "AT_CIE_2"},
+    {"from": "FSC_2", "to": "GN_CIE_2"},
+    {"from": "FSC_2", "to": "PAINF_CIE_4"},
+    {"from": "FSC_2", "to": "PAINF_CIE_5"},
+    {"from": "FSC_2", "to": "AT_CIE_3"}
+  ],
+  "frames": [
+    {
+      "label": "Initial state (full inventories)",
+      "time": "Day 1 09:00",
+      "arcTrucks": {"MSC->FSC_1": 0, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 0, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 0},
+      "nodes": {
+        "FSC_1": {"ccl": 126, "cclMax": 126},
+        "FSC_2": {"ccl": 87, "cclMax": 87},
+        "VUST": {"fw": 39054, "fwMax": 39054, "fuel": 128526, "fuelMax": 128526, "ammo": 201420, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 18627, "fwMax": 18627, "fuel": 63216, "fuelMax": 63216, "ammo": 131154, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 24258, "fwMax": 24258, "fuel": 95079, "fuelMax": 95079, "ammo": 174666, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 33591, "fwMax": 33591, "fuel": 78381, "fuelMax": 78381, "ammo": 182028, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 28341, "fwMax": 28341, "fuel": 93147, "fuelMax": 93147, "ammo": 172512, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 10428, "fwMax": 10428, "fuel": 23763, "fuelMax": 23763, "ammo": 52809, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 7452, "fwMax": 7452, "fuel": 23694, "fuelMax": 23694, "ammo": 55854, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 20898, "fwMax": 20898, "fuel": 73674, "fuelMax": 73674, "ammo": 118428, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 34710, "fwMax": 34710, "fuel": 100458, "fuelMax": 100458, "ammo": 158832, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 31053, "fwMax": 31053, "fuel": 95403, "fuelMax": 95403, "ammo": 167544, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 9099, "fwMax": 9099, "fuel": 28884, "fuelMax": 28884, "ammo": 49017, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=1 Demand (all OUs)",
+      "time": "Day 1 10:00",
+      "arcTrucks": {"MSC->FSC_1": 0, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 0, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 0},
+      "nodes": {
+        "FSC_1": {"ccl": 126, "cclMax": 126},
+        "FSC_2": {"ccl": 87, "cclMax": 87},
+        "VUST": {"fw": 26036, "fwMax": 39054, "fuel": 85684, "fuelMax": 128526, "ammo": 134280, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 12418, "fwMax": 18627, "fuel": 42144, "fuelMax": 63216, "ammo": 87436, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 16172, "fwMax": 24258, "fuel": 63386, "fuelMax": 95079, "ammo": 116444, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 22394, "fwMax": 33591, "fuel": 52254, "fuelMax": 78381, "ammo": 121352, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 18894, "fwMax": 28341, "fuel": 62098, "fuelMax": 93147, "ammo": 115008, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 6952, "fwMax": 10428, "fuel": 15842, "fuelMax": 23763, "ammo": 35206, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 4968, "fwMax": 7452, "fuel": 15796, "fuelMax": 23694, "ammo": 37236, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 13932, "fwMax": 20898, "fuel": 49116, "fuelMax": 73674, "ammo": 78952, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 23140, "fwMax": 34710, "fuel": 66972, "fuelMax": 100458, "ammo": 105888, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 20702, "fwMax": 31053, "fuel": 63602, "fuelMax": 95403, "ammo": 111696, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 6066, "fwMax": 9099, "fuel": 19256, "fuelMax": 28884, "ammo": 32678, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=1 FSC → OU supply",
+      "time": "Day 1 14:00",
+      "arcTrucks": {"MSC->FSC_1": 0, "FSC_1->GN_CIE_1": 6, "FSC_1->PAINF_CIE_1": 9, "FSC_1->PAINF_CIE_2": 5, "FSC_1->PAINF_CIE_3": 8, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 2, "MSC->FSC_2": 0, "FSC_2->GN_CIE_2": 6, "FSC_2->PAINF_CIE_4": 8, "FSC_2->PAINF_CIE_5": 6, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 0},
+      "nodes": {
+        "FSC_1": {"ccl": 96, "cclMax": 126},
+        "FSC_2": {"ccl": 67, "cclMax": 87},
+        "VUST": {"fw": 26036, "fwMax": 39054, "fuel": 85684, "fuelMax": 128526, "ammo": 134280, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 16418, "fwMax": 18627, "fuel": 62144, "fuelMax": 63216, "ammo": 123436, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 23172, "fwMax": 24258, "fuel": 90386, "fuelMax": 95079, "ammo": 172444, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 27394, "fwMax": 33591, "fuel": 72254, "fuelMax": 78381, "ammo": 146352, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 23894, "fwMax": 28341, "fuel": 88098, "fuelMax": 93147, "ammo": 164008, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 6952, "fwMax": 10428, "fuel": 15842, "fuelMax": 23763, "ammo": 35206, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 5968, "fwMax": 7452, "fuel": 21796, "fuelMax": 23694, "ammo": 50236, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 19932, "fwMax": 20898, "fuel": 73116, "fuelMax": 73674, "ammo": 108952, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 31140, "fwMax": 34710, "fuel": 98972, "fuelMax": 100458, "ammo": 145888, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 29702, "fwMax": 31053, "fuel": 78602, "fuelMax": 95403, "ammo": 147696, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 6066, "fwMax": 9099, "fuel": 19256, "fuelMax": 28884, "ammo": 32678, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=1 MSC → FSC/VUST supply",
+      "time": "Day 1 20:00",
+      "arcTrucks": {"MSC->FSC_1": 27, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 20, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 0},
+      "nodes": {
+        "FSC_1": {"ccl": 123, "cclMax": 126},
+        "FSC_2": {"ccl": 87, "cclMax": 87},
+        "VUST": {"fw": 26036, "fwMax": 39054, "fuel": 85684, "fuelMax": 128526, "ammo": 134280, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 16418, "fwMax": 18627, "fuel": 62144, "fuelMax": 63216, "ammo": 123436, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 23172, "fwMax": 24258, "fuel": 90386, "fuelMax": 95079, "ammo": 172444, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 27394, "fwMax": 33591, "fuel": 72254, "fuelMax": 78381, "ammo": 146352, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 23894, "fwMax": 28341, "fuel": 88098, "fuelMax": 93147, "ammo": 164008, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 6952, "fwMax": 10428, "fuel": 15842, "fuelMax": 23763, "ammo": 35206, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 5968, "fwMax": 7452, "fuel": 21796, "fuelMax": 23694, "ammo": 50236, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 19932, "fwMax": 20898, "fuel": 73116, "fuelMax": 73674, "ammo": 108952, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 31140, "fwMax": 34710, "fuel": 98972, "fuelMax": 100458, "ammo": 145888, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 29702, "fwMax": 31053, "fuel": 78602, "fuelMax": 95403, "ammo": 147696, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 6066, "fwMax": 9099, "fuel": 19256, "fuelMax": 28884, "ammo": 32678, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=2 Demand (all OUs)",
+      "time": "Day 2 10:00",
+      "arcTrucks": {"MSC->FSC_1": 27, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 20, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 0},
+      "nodes": {
+        "FSC_1": {"ccl": 123, "cclMax": 126},
+        "FSC_2": {"ccl": 87, "cclMax": 87},
+        "VUST": {"fw": 13018, "fwMax": 39054, "fuel": 42842, "fuelMax": 128526, "ammo": 67140, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 10209, "fwMax": 18627, "fuel": 41072, "fuelMax": 63216, "ammo": 79718, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 15086, "fwMax": 24258, "fuel": 58693, "fuelMax": 95079, "ammo": 114222, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 16197, "fwMax": 33591, "fuel": 46127, "fuelMax": 78381, "ammo": 85676, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 14447, "fwMax": 28341, "fuel": 57049, "fuelMax": 93147, "ammo": 106504, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 3476, "fwMax": 10428, "fuel": 7921, "fuelMax": 23763, "ammo": 17603, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 3484, "fwMax": 7452, "fuel": 13898, "fuelMax": 23694, "ammo": 31618, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 12966, "fwMax": 20898, "fuel": 48558, "fuelMax": 73674, "ammo": 69476, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 19570, "fwMax": 34710, "fuel": 65486, "fuelMax": 100458, "ammo": 92944, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 19351, "fwMax": 31053, "fuel": 46801, "fuelMax": 95403, "ammo": 91848, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 3033, "fwMax": 9099, "fuel": 9628, "fuelMax": 28884, "ammo": 16339, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=2 FSC → OU supply",
+      "time": "Day 2 14:00",
+      "arcTrucks": {"MSC->FSC_1": 0, "FSC_1->GN_CIE_1": 2, "FSC_1->PAINF_CIE_1": 8, "FSC_1->PAINF_CIE_2": 13, "FSC_1->PAINF_CIE_3": 9, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 2, "MSC->FSC_2": 0, "FSC_2->GN_CIE_2": 6, "FSC_2->PAINF_CIE_4": 7, "FSC_2->PAINF_CIE_5": 9, "FSC_2->AT_CIE_3": 2, "MSC->VUST": 0},
+      "nodes": {
+        "FSC_1": {"ccl": 89, "cclMax": 126},
+        "FSC_2": {"ccl": 63, "cclMax": 87},
+        "VUST": {"fw": 13018, "fwMax": 39054, "fuel": 42842, "fuelMax": 128526, "ammo": 67140, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 16209, "fwMax": 18627, "fuel": 47072, "fuelMax": 63216, "ammo": 87718, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 24086, "fwMax": 24258, "fuel": 77693, "fuelMax": 95079, "ammo": 166222, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 28197, "fwMax": 33591, "fuel": 76127, "fuelMax": 78381, "ammo": 173676, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 23447, "fwMax": 28341, "fuel": 93049, "fuelMax": 93147, "ammo": 151504, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 3476, "fwMax": 10428, "fuel": 7921, "fuelMax": 23763, "ammo": 17603, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 3484, "fwMax": 7452, "fuel": 17898, "fuelMax": 23694, "ammo": 47618, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 18966, "fwMax": 20898, "fuel": 72558, "fuelMax": 73674, "ammo": 99476, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 19570, "fwMax": 34710, "fuel": 79486, "fuelMax": 100458, "ammo": 148944, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 28351, "fwMax": 31053, "fuel": 67801, "fuelMax": 95403, "ammo": 151848, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 9033, "fwMax": 9099, "fuel": 15628, "fuelMax": 28884, "ammo": 24339, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=2 MSC → FSC/VUST supply",
+      "time": "Day 2 20:00",
+      "arcTrucks": {"MSC->FSC_1": 30, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 17, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 0},
+      "nodes": {
+        "FSC_1": {"ccl": 119, "cclMax": 126},
+        "FSC_2": {"ccl": 80, "cclMax": 87},
+        "VUST": {"fw": 13018, "fwMax": 39054, "fuel": 42842, "fuelMax": 128526, "ammo": 67140, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 16209, "fwMax": 18627, "fuel": 47072, "fuelMax": 63216, "ammo": 87718, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 24086, "fwMax": 24258, "fuel": 77693, "fuelMax": 95079, "ammo": 166222, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 28197, "fwMax": 33591, "fuel": 76127, "fuelMax": 78381, "ammo": 173676, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 23447, "fwMax": 28341, "fuel": 93049, "fuelMax": 93147, "ammo": 151504, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 3476, "fwMax": 10428, "fuel": 7921, "fuelMax": 23763, "ammo": 17603, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 3484, "fwMax": 7452, "fuel": 17898, "fuelMax": 23694, "ammo": 47618, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 18966, "fwMax": 20898, "fuel": 72558, "fuelMax": 73674, "ammo": 99476, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 19570, "fwMax": 34710, "fuel": 79486, "fuelMax": 100458, "ammo": 148944, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 28351, "fwMax": 31053, "fuel": 67801, "fuelMax": 95403, "ammo": 151848, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 9033, "fwMax": 9099, "fuel": 15628, "fuelMax": 28884, "ammo": 24339, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=3 Demand (all OUs)",
+      "time": "Day 3 10:00",
+      "arcTrucks": {"MSC->FSC_1": 30, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 17, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 0},
+      "nodes": {
+        "FSC_1": {"ccl": 119, "cclMax": 126},
+        "FSC_2": {"ccl": 80, "cclMax": 87},
+        "VUST": {"fw": 0, "fwMax": 39054, "fuel": 0, "fuelMax": 128526, "ammo": 0, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 10000, "fwMax": 18627, "fuel": 26000, "fuelMax": 63216, "ammo": 44000, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 16000, "fwMax": 24258, "fuel": 46000, "fuelMax": 95079, "ammo": 108000, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 17000, "fwMax": 33591, "fuel": 50000, "fuelMax": 78381, "ammo": 113000, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 14000, "fwMax": 28341, "fuel": 62000, "fuelMax": 93147, "ammo": 94000, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 0, "fwMax": 10428, "fuel": 0, "fuelMax": 23763, "ammo": 0, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 1000, "fwMax": 7452, "fuel": 10000, "fuelMax": 23694, "ammo": 29000, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 12000, "fwMax": 20898, "fuel": 48000, "fuelMax": 73674, "ammo": 60000, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 8000, "fwMax": 34710, "fuel": 46000, "fuelMax": 100458, "ammo": 96000, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 18000, "fwMax": 31053, "fuel": 36000, "fuelMax": 95403, "ammo": 96000, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 6000, "fwMax": 9099, "fuel": 6000, "fuelMax": 28884, "ammo": 8000, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=3 FSC → OU supply",
+      "time": "Day 3 14:00",
+      "arcTrucks": {"MSC->FSC_1": 0, "FSC_1->GN_CIE_1": 3, "FSC_1->PAINF_CIE_1": 1, "FSC_1->PAINF_CIE_2": 8, "FSC_1->PAINF_CIE_3": 11, "FSC_1->AT_CIE_1": 8, "FSC_1->AT_CIE_2": 3, "MSC->FSC_2": 0, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 11, "FSC_2->PAINF_CIE_5": 8, "FSC_2->AT_CIE_3": 5, "MSC->VUST": 0},
+      "nodes": {
+        "FSC_1": {"ccl": 85, "cclMax": 126},
+        "FSC_2": {"ccl": 56, "cclMax": 87},
+        "VUST": {"fw": 0, "fwMax": 39054, "fuel": 0, "fuelMax": 128526, "ammo": 0, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 11000, "fwMax": 18627, "fuel": 34000, "fuelMax": 63216, "ammo": 65000, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 16000, "fwMax": 24258, "fuel": 48000, "fuelMax": 95079, "ammo": 116000, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 20000, "fwMax": 33591, "fuel": 67000, "fuelMax": 78381, "ammo": 173000, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 26000, "fwMax": 28341, "fuel": 88000, "fuelMax": 93147, "ammo": 166000, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 9000, "fwMax": 10428, "fuel": 19000, "fuelMax": 23763, "ammo": 52000, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 4000, "fwMax": 7452, "fuel": 22000, "fuelMax": 23694, "ammo": 44000, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 12000, "fwMax": 20898, "fuel": 48000, "fuelMax": 73674, "ammo": 60000, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 19000, "fwMax": 34710, "fuel": 90000, "fuelMax": 100458, "ammo": 151000, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 18000, "fwMax": 31053, "fuel": 52000, "fuelMax": 95403, "ammo": 160000, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 9000, "fwMax": 9099, "fuel": 17000, "fuelMax": 28884, "ammo": 44000, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=3 MSC → FSC/VUST supply",
+      "time": "Day 3 20:00",
+      "arcTrucks": {"MSC->FSC_1": 20, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 0, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 27},
+      "nodes": {
+        "FSC_1": {"ccl": 105, "cclMax": 126},
+        "FSC_2": {"ccl": 56, "cclMax": 87},
+        "VUST": {"fw": 27000, "fwMax": 39054, "fuel": 108000, "fuelMax": 128526, "ammo": 135000, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 11000, "fwMax": 18627, "fuel": 34000, "fuelMax": 63216, "ammo": 65000, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 16000, "fwMax": 24258, "fuel": 48000, "fuelMax": 95079, "ammo": 116000, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 20000, "fwMax": 33591, "fuel": 67000, "fuelMax": 78381, "ammo": 173000, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 26000, "fwMax": 28341, "fuel": 88000, "fuelMax": 93147, "ammo": 166000, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 9000, "fwMax": 10428, "fuel": 19000, "fuelMax": 23763, "ammo": 52000, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 4000, "fwMax": 7452, "fuel": 22000, "fuelMax": 23694, "ammo": 44000, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 12000, "fwMax": 20898, "fuel": 48000, "fuelMax": 73674, "ammo": 60000, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 19000, "fwMax": 34710, "fuel": 90000, "fuelMax": 100458, "ammo": 151000, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 18000, "fwMax": 31053, "fuel": 52000, "fuelMax": 95403, "ammo": 160000, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 9000, "fwMax": 9099, "fuel": 17000, "fuelMax": 28884, "ammo": 44000, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=4 Demand (all OUs)",
+      "time": "Day 4 10:00",
+      "arcTrucks": {"MSC->FSC_1": 20, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 0, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 27},
+      "nodes": {
+        "FSC_1": {"ccl": 105, "cclMax": 126},
+        "FSC_2": {"ccl": 56, "cclMax": 87},
+        "VUST": {"fw": 13982, "fwMax": 39054, "fuel": 65158, "fuelMax": 128526, "ammo": 67860, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 4791, "fwMax": 18627, "fuel": 12928, "fuelMax": 63216, "ammo": 21282, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 7914, "fwMax": 24258, "fuel": 16307, "fuelMax": 95079, "ammo": 57778, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 8803, "fwMax": 33591, "fuel": 40873, "fuelMax": 78381, "ammo": 112324, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 16553, "fwMax": 28341, "fuel": 56951, "fuelMax": 93147, "ammo": 108496, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 5524, "fwMax": 10428, "fuel": 11079, "fuelMax": 23763, "ammo": 34397, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 1516, "fwMax": 7452, "fuel": 14102, "fuelMax": 23694, "ammo": 25382, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 5034, "fwMax": 20898, "fuel": 23442, "fuelMax": 73674, "ammo": 20524, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 7430, "fwMax": 34710, "fuel": 56514, "fuelMax": 100458, "ammo": 98056, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 7649, "fwMax": 31053, "fuel": 20199, "fuelMax": 95403, "ammo": 104152, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 5967, "fwMax": 9099, "fuel": 7372, "fuelMax": 28884, "ammo": 27661, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=4 FSC → OU supply",
+      "time": "Day 4 14:00",
+      "arcTrucks": {"MSC->FSC_1": 0, "FSC_1->GN_CIE_1": 11, "FSC_1->PAINF_CIE_1": 14, "FSC_1->PAINF_CIE_2": 8, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 1, "MSC->FSC_2": 0, "FSC_2->GN_CIE_2": 9, "FSC_2->PAINF_CIE_4": 8, "FSC_2->PAINF_CIE_5": 4, "FSC_2->AT_CIE_3": 3, "MSC->VUST": 0},
+      "nodes": {
+        "FSC_1": {"ccl": 71, "cclMax": 126},
+        "FSC_2": {"ccl": 32, "cclMax": 87},
+        "VUST": {"fw": 13982, "fwMax": 39054, "fuel": 65158, "fuelMax": 128526, "ammo": 67860, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 14791, "fwMax": 18627, "fuel": 54928, "fuelMax": 63216, "ammo": 79282, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 21914, "fwMax": 24258, "fuel": 72307, "fuelMax": 95079, "ammo": 127778, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 32803, "fwMax": 33591, "fuel": 64873, "fuelMax": 78381, "ammo": 144324, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 16553, "fwMax": 28341, "fuel": 56951, "fuelMax": 93147, "ammo": 108496, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 5524, "fwMax": 10428, "fuel": 11079, "fuelMax": 23763, "ammo": 34397, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 4516, "fwMax": 7452, "fuel": 17102, "fuelMax": 23694, "ammo": 29382, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 14034, "fwMax": 20898, "fuel": 59442, "fuelMax": 73674, "ammo": 65524, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 31430, "fwMax": 34710, "fuel": 80514, "fuelMax": 100458, "ammo": 130056, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 19649, "fwMax": 31053, "fuel": 32199, "fuelMax": 95403, "ammo": 120152, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 8967, "fwMax": 9099, "fuel": 19372, "fuelMax": 28884, "ammo": 42661, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=4 MSC → FSC/VUST supply",
+      "time": "Day 4 20:00",
+      "arcTrucks": {"MSC->FSC_1": 27, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 20, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 0},
+      "nodes": {
+        "FSC_1": {"ccl": 98, "cclMax": 126},
+        "FSC_2": {"ccl": 52, "cclMax": 87},
+        "VUST": {"fw": 13982, "fwMax": 39054, "fuel": 65158, "fuelMax": 128526, "ammo": 67860, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 14791, "fwMax": 18627, "fuel": 54928, "fuelMax": 63216, "ammo": 79282, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 21914, "fwMax": 24258, "fuel": 72307, "fuelMax": 95079, "ammo": 127778, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 32803, "fwMax": 33591, "fuel": 64873, "fuelMax": 78381, "ammo": 144324, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 16553, "fwMax": 28341, "fuel": 56951, "fuelMax": 93147, "ammo": 108496, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 5524, "fwMax": 10428, "fuel": 11079, "fuelMax": 23763, "ammo": 34397, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 4516, "fwMax": 7452, "fuel": 17102, "fuelMax": 23694, "ammo": 29382, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 14034, "fwMax": 20898, "fuel": 59442, "fuelMax": 73674, "ammo": 65524, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 31430, "fwMax": 34710, "fuel": 80514, "fuelMax": 100458, "ammo": 130056, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 19649, "fwMax": 31053, "fuel": 32199, "fuelMax": 95403, "ammo": 120152, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 8967, "fwMax": 9099, "fuel": 19372, "fuelMax": 28884, "ammo": 42661, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=5 Demand (all OUs)",
+      "time": "Day 5 10:00",
+      "arcTrucks": {"MSC->FSC_1": 27, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 20, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 0},
+      "nodes": {
+        "FSC_1": {"ccl": 98, "cclMax": 126},
+        "FSC_2": {"ccl": 52, "cclMax": 87},
+        "VUST": {"fw": 964, "fwMax": 39054, "fuel": 22316, "fuelMax": 128526, "ammo": 720, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 8582, "fwMax": 18627, "fuel": 33856, "fuelMax": 63216, "ammo": 35564, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 13828, "fwMax": 24258, "fuel": 40614, "fuelMax": 95079, "ammo": 69556, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 21606, "fwMax": 33591, "fuel": 38746, "fuelMax": 78381, "ammo": 83648, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 7106, "fwMax": 28341, "fuel": 25902, "fuelMax": 93147, "ammo": 50992, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 2048, "fwMax": 10428, "fuel": 3158, "fuelMax": 23763, "ammo": 16794, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 2032, "fwMax": 7452, "fuel": 9204, "fuelMax": 23694, "ammo": 10764, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 7068, "fwMax": 20898, "fuel": 34884, "fuelMax": 73674, "ammo": 26048, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 19860, "fwMax": 34710, "fuel": 47028, "fuelMax": 100458, "ammo": 77112, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 9298, "fwMax": 31053, "fuel": 398, "fuelMax": 95403, "ammo": 64304, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 5934, "fwMax": 9099, "fuel": 9744, "fuelMax": 28884, "ammo": 26322, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=5 FSC → OU supply",
+      "time": "Day 5 14:00",
+      "arcTrucks": {"MSC->FSC_1": 0, "FSC_1->GN_CIE_1": 6, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 8, "FSC_1->PAINF_CIE_3": 16, "FSC_1->AT_CIE_1": 2, "FSC_1->AT_CIE_2": 2, "MSC->FSC_2": 0, "FSC_2->GN_CIE_2": 4, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 20, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 0},
+      "nodes": {
+        "FSC_1": {"ccl": 64, "cclMax": 126},
+        "FSC_2": {"ccl": 28, "cclMax": 87},
+        "VUST": {"fw": 964, "fwMax": 39054, "fuel": 22316, "fuelMax": 128526, "ammo": 720, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 14582, "fwMax": 18627, "fuel": 57856, "fuelMax": 63216, "ammo": 65564, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 13828, "fwMax": 24258, "fuel": 40614, "fuelMax": 95079, "ammo": 69556, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 21606, "fwMax": 33591, "fuel": 54746, "fuelMax": 78381, "ammo": 147648, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 16106, "fwMax": 28341, "fuel": 75902, "fuelMax": 93147, "ammo": 151992, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 8048, "fwMax": 10428, "fuel": 9158, "fuelMax": 23763, "ammo": 24794, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 3032, "fwMax": 7452, "fuel": 15204, "fuelMax": 23694, "ammo": 23764, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 7068, "fwMax": 20898, "fuel": 42884, "fuelMax": 73674, "ammo": 58048, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 19860, "fwMax": 34710, "fuel": 47028, "fuelMax": 100458, "ammo": 77112, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 29298, "fwMax": 31053, "fuel": 80398, "fuelMax": 95403, "ammo": 164304, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 5934, "fwMax": 9099, "fuel": 9744, "fuelMax": 28884, "ammo": 26322, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=5 MSC → FSC/VUST supply",
+      "time": "Day 5 20:00",
+      "arcTrucks": {"MSC->FSC_1": 4, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 16, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 27},
+      "nodes": {
+        "FSC_1": {"ccl": 68, "cclMax": 126},
+        "FSC_2": {"ccl": 44, "cclMax": 87},
+        "VUST": {"fw": 36964, "fwMax": 39054, "fuel": 88316, "fuelMax": 128526, "ammo": 168720, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 14582, "fwMax": 18627, "fuel": 57856, "fuelMax": 63216, "ammo": 65564, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 13828, "fwMax": 24258, "fuel": 40614, "fuelMax": 95079, "ammo": 69556, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 21606, "fwMax": 33591, "fuel": 54746, "fuelMax": 78381, "ammo": 147648, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 16106, "fwMax": 28341, "fuel": 75902, "fuelMax": 93147, "ammo": 151992, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 8048, "fwMax": 10428, "fuel": 9158, "fuelMax": 23763, "ammo": 24794, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 3032, "fwMax": 7452, "fuel": 15204, "fuelMax": 23694, "ammo": 23764, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 7068, "fwMax": 20898, "fuel": 42884, "fuelMax": 73674, "ammo": 58048, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 19860, "fwMax": 34710, "fuel": 47028, "fuelMax": 100458, "ammo": 77112, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 29298, "fwMax": 31053, "fuel": 80398, "fuelMax": 95403, "ammo": 164304, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 5934, "fwMax": 9099, "fuel": 9744, "fuelMax": 28884, "ammo": 26322, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=6 Demand (all OUs)",
+      "time": "Day 6 10:00",
+      "arcTrucks": {"MSC->FSC_1": 4, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 16, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 27},
+      "nodes": {
+        "FSC_1": {"ccl": 68, "cclMax": 126},
+        "FSC_2": {"ccl": 44, "cclMax": 87},
+        "VUST": {"fw": 23946, "fwMax": 39054, "fuel": 45474, "fuelMax": 128526, "ammo": 101580, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 8373, "fwMax": 18627, "fuel": 36784, "fuelMax": 63216, "ammo": 21846, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 5742, "fwMax": 24258, "fuel": 8921, "fuelMax": 95079, "ammo": 11334, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 10409, "fwMax": 33591, "fuel": 28619, "fuelMax": 78381, "ammo": 86972, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 6659, "fwMax": 28341, "fuel": 44853, "fuelMax": 93147, "ammo": 94488, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 4572, "fwMax": 10428, "fuel": 1237, "fuelMax": 23763, "ammo": 7191, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 548, "fwMax": 7452, "fuel": 7306, "fuelMax": 23694, "ammo": 5146, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 102, "fwMax": 20898, "fuel": 18326, "fuelMax": 73674, "ammo": 18572, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 8290, "fwMax": 34710, "fuel": 13542, "fuelMax": 100458, "ammo": 24168, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 18947, "fwMax": 31053, "fuel": 48597, "fuelMax": 95403, "ammo": 108456, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 2901, "fwMax": 9099, "fuel": 116, "fuelMax": 28884, "ammo": 9983, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=6 FSC → OU supply",
+      "time": "Day 6 14:00",
+      "arcTrucks": {"MSC->FSC_1": 0, "FSC_1->GN_CIE_1": 5, "FSC_1->PAINF_CIE_1": 13, "FSC_1->PAINF_CIE_2": 1, "FSC_1->PAINF_CIE_3": 7, "FSC_1->AT_CIE_1": 3, "FSC_1->AT_CIE_2": 5, "MSC->FSC_2": 0, "FSC_2->GN_CIE_2": 7, "FSC_2->PAINF_CIE_4": 11, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 6, "MSC->VUST": 0},
+      "nodes": {
+        "FSC_1": {"ccl": 34, "cclMax": 126},
+        "FSC_2": {"ccl": 20, "cclMax": 87},
+        "VUST": {"fw": 23946, "fwMax": 39054, "fuel": 45474, "fuelMax": 128526, "ammo": 101580, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 17373, "fwMax": 18627, "fuel": 49784, "fuelMax": 63216, "ammo": 49846, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 20742, "fwMax": 24258, "fuel": 59921, "fuelMax": 95079, "ammo": 75334, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 13409, "fwMax": 33591, "fuel": 31619, "fuelMax": 78381, "ammo": 90972, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 27659, "fwMax": 28341, "fuel": 65853, "fuelMax": 93147, "ammo": 122488, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 5572, "fwMax": 10428, "fuel": 9237, "fuelMax": 23763, "ammo": 28191, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 3548, "fwMax": 7452, "fuel": 18306, "fuelMax": 23694, "ammo": 41146, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 18102, "fwMax": 20898, "fuel": 38326, "fuelMax": 73674, "ammo": 50572, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 25290, "fwMax": 34710, "fuel": 54542, "fuelMax": 100458, "ammo": 76168, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 18947, "fwMax": 31053, "fuel": 48597, "fuelMax": 95403, "ammo": 108456, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 8901, "fwMax": 9099, "fuel": 24116, "fuelMax": 28884, "ammo": 39983, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=6 MSC → FSC/VUST supply",
+      "time": "Day 6 20:00",
+      "arcTrucks": {"MSC->FSC_1": 14, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 20, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 13},
+      "nodes": {
+        "FSC_1": {"ccl": 48, "cclMax": 126},
+        "FSC_2": {"ccl": 40, "cclMax": 87},
+        "VUST": {"fw": 36946, "fwMax": 39054, "fuel": 97474, "fuelMax": 128526, "ammo": 166580, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 17373, "fwMax": 18627, "fuel": 49784, "fuelMax": 63216, "ammo": 49846, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 20742, "fwMax": 24258, "fuel": 59921, "fuelMax": 95079, "ammo": 75334, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 13409, "fwMax": 33591, "fuel": 31619, "fuelMax": 78381, "ammo": 90972, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 27659, "fwMax": 28341, "fuel": 65853, "fuelMax": 93147, "ammo": 122488, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 5572, "fwMax": 10428, "fuel": 9237, "fuelMax": 23763, "ammo": 28191, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 3548, "fwMax": 7452, "fuel": 18306, "fuelMax": 23694, "ammo": 41146, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 18102, "fwMax": 20898, "fuel": 38326, "fuelMax": 73674, "ammo": 50572, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 25290, "fwMax": 34710, "fuel": 54542, "fuelMax": 100458, "ammo": 76168, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 18947, "fwMax": 31053, "fuel": 48597, "fuelMax": 95403, "ammo": 108456, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 8901, "fwMax": 9099, "fuel": 24116, "fuelMax": 28884, "ammo": 39983, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=7 Demand (all OUs)",
+      "time": "Day 7 10:00",
+      "arcTrucks": {"MSC->FSC_1": 14, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 20, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 13},
+      "nodes": {
+        "FSC_1": {"ccl": 48, "cclMax": 126},
+        "FSC_2": {"ccl": 40, "cclMax": 87},
+        "VUST": {"fw": 23928, "fwMax": 39054, "fuel": 54632, "fuelMax": 128526, "ammo": 99440, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 11164, "fwMax": 18627, "fuel": 28712, "fuelMax": 63216, "ammo": 6128, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 12656, "fwMax": 24258, "fuel": 28228, "fuelMax": 95079, "ammo": 17112, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 2212, "fwMax": 33591, "fuel": 5492, "fuelMax": 78381, "ammo": 30296, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 18212, "fwMax": 28341, "fuel": 34804, "fuelMax": 93147, "ammo": 64984, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 2096, "fwMax": 10428, "fuel": 1316, "fuelMax": 23763, "ammo": 10588, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 1064, "fwMax": 7452, "fuel": 10408, "fuelMax": 23694, "ammo": 22528, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 11136, "fwMax": 20898, "fuel": 13768, "fuelMax": 73674, "ammo": 11096, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 13720, "fwMax": 34710, "fuel": 21056, "fuelMax": 100458, "ammo": 23224, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 8596, "fwMax": 31053, "fuel": 16796, "fuelMax": 95403, "ammo": 52608, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 5868, "fwMax": 9099, "fuel": 14488, "fuelMax": 28884, "ammo": 23644, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=7 FSC → OU supply",
+      "time": "Day 7 14:00",
+      "arcTrucks": {"MSC->FSC_1": 0, "FSC_1->GN_CIE_1": 10, "FSC_1->PAINF_CIE_1": 7, "FSC_1->PAINF_CIE_2": 9, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 6, "FSC_1->AT_CIE_2": 2, "MSC->FSC_2": 0, "FSC_2->GN_CIE_2": 6, "FSC_2->PAINF_CIE_4": 12, "FSC_2->PAINF_CIE_5": 4, "FSC_2->AT_CIE_3": 2, "MSC->VUST": 0},
+      "nodes": {
+        "FSC_1": {"ccl": 14, "cclMax": 126},
+        "FSC_2": {"ccl": 16, "cclMax": 87},
+        "VUST": {"fw": 23928, "fwMax": 39054, "fuel": 54632, "fuelMax": 128526, "ammo": 99440, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 11164, "fwMax": 18627, "fuel": 48712, "fuelMax": 63216, "ammo": 86128, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 16656, "fwMax": 24258, "fuel": 45228, "fuelMax": 95079, "ammo": 66112, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 27212, "fwMax": 33591, "fuel": 33492, "fuelMax": 78381, "ammo": 67296, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 18212, "fwMax": 28341, "fuel": 34804, "fuelMax": 93147, "ammo": 64984, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 8096, "fwMax": 10428, "fuel": 15316, "fuelMax": 23763, "ammo": 50588, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 7064, "fwMax": 7452, "fuel": 16408, "fuelMax": 23694, "ammo": 30528, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 17136, "fwMax": 20898, "fuel": 37768, "fuelMax": 73674, "ammo": 41096, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 25720, "fwMax": 34710, "fuel": 69056, "fuelMax": 100458, "ammo": 83224, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 12596, "fwMax": 31053, "fuel": 32796, "fuelMax": 95403, "ammo": 72608, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 6868, "fwMax": 9099, "fuel": 20488, "fuelMax": 28884, "ammo": 36644, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=7 MSC → FSC/VUST supply",
+      "time": "Day 7 20:00",
+      "arcTrucks": {"MSC->FSC_1": 33, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 14, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 0},
+      "nodes": {
+        "FSC_1": {"ccl": 47, "cclMax": 126},
+        "FSC_2": {"ccl": 30, "cclMax": 87},
+        "VUST": {"fw": 23928, "fwMax": 39054, "fuel": 54632, "fuelMax": 128526, "ammo": 99440, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 11164, "fwMax": 18627, "fuel": 48712, "fuelMax": 63216, "ammo": 86128, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 16656, "fwMax": 24258, "fuel": 45228, "fuelMax": 95079, "ammo": 66112, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 27212, "fwMax": 33591, "fuel": 33492, "fuelMax": 78381, "ammo": 67296, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 18212, "fwMax": 28341, "fuel": 34804, "fuelMax": 93147, "ammo": 64984, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 8096, "fwMax": 10428, "fuel": 15316, "fuelMax": 23763, "ammo": 50588, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 7064, "fwMax": 7452, "fuel": 16408, "fuelMax": 23694, "ammo": 30528, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 17136, "fwMax": 20898, "fuel": 37768, "fuelMax": 73674, "ammo": 41096, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 25720, "fwMax": 34710, "fuel": 69056, "fuelMax": 100458, "ammo": 83224, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 12596, "fwMax": 31053, "fuel": 32796, "fuelMax": 95403, "ammo": 72608, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 6868, "fwMax": 9099, "fuel": 20488, "fuelMax": 28884, "ammo": 36644, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=8 Demand (all OUs)",
+      "time": "Day 8 10:00",
+      "arcTrucks": {"MSC->FSC_1": 33, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 14, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 0},
+      "nodes": {
+        "FSC_1": {"ccl": 47, "cclMax": 126},
+        "FSC_2": {"ccl": 30, "cclMax": 87},
+        "VUST": {"fw": 10910, "fwMax": 39054, "fuel": 11790, "fuelMax": 128526, "ammo": 32300, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 4955, "fwMax": 18627, "fuel": 27640, "fuelMax": 63216, "ammo": 42410, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 8570, "fwMax": 24258, "fuel": 13535, "fuelMax": 95079, "ammo": 7890, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 16015, "fwMax": 33591, "fuel": 7365, "fuelMax": 78381, "ammo": 6620, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 8765, "fwMax": 28341, "fuel": 3755, "fuelMax": 93147, "ammo": 7480, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 4620, "fwMax": 10428, "fuel": 7395, "fuelMax": 23763, "ammo": 32985, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 4580, "fwMax": 7452, "fuel": 8510, "fuelMax": 23694, "ammo": 11910, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 10170, "fwMax": 20898, "fuel": 13210, "fuelMax": 73674, "ammo": 1620, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 14150, "fwMax": 34710, "fuel": 35570, "fuelMax": 100458, "ammo": 30280, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 2245, "fwMax": 31053, "fuel": 995, "fuelMax": 95403, "ammo": 16760, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 3835, "fwMax": 9099, "fuel": 10860, "fuelMax": 28884, "ammo": 20305, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=8 FSC → OU supply",
+      "time": "Day 8 14:00",
+      "arcTrucks": {"MSC->FSC_1": 0, "FSC_1->GN_CIE_1": 2, "FSC_1->PAINF_CIE_1": 8, "FSC_1->PAINF_CIE_2": 10, "FSC_1->PAINF_CIE_3": 9, "FSC_1->AT_CIE_1": 1, "FSC_1->AT_CIE_2": 4, "MSC->FSC_2": 0, "FSC_2->GN_CIE_2": 6, "FSC_2->PAINF_CIE_4": 6, "FSC_2->PAINF_CIE_5": 12, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 0},
+      "nodes": {
+        "FSC_1": {"ccl": 13, "cclMax": 126},
+        "FSC_2": {"ccl": 6, "cclMax": 87},
+        "VUST": {"fw": 10910, "fwMax": 39054, "fuel": 11790, "fuelMax": 128526, "ammo": 32300, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 10955, "fwMax": 18627, "fuel": 33640, "fuelMax": 63216, "ammo": 50410, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 10570, "fwMax": 24258, "fuel": 33535, "fuelMax": 95079, "ammo": 65890, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 16015, "fwMax": 33591, "fuel": 27365, "fuelMax": 78381, "ammo": 86620, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 13765, "fwMax": 28341, "fuel": 31755, "fuelMax": 93147, "ammo": 64480, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 4620, "fwMax": 10428, "fuel": 9395, "fuelMax": 23763, "ammo": 40985, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 5580, "fwMax": 7452, "fuel": 18510, "fuelMax": 23694, "ammo": 40910, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 10170, "fwMax": 20898, "fuel": 25210, "fuelMax": 73674, "ammo": 49620, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 14150, "fwMax": 34710, "fuel": 47570, "fuelMax": 100458, "ammo": 78280, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 14245, "fwMax": 31053, "fuel": 48995, "fuelMax": 95403, "ammo": 76760, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 3835, "fwMax": 9099, "fuel": 10860, "fuelMax": 28884, "ammo": 20305, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=8 MSC → FSC/VUST supply",
+      "time": "Day 8 20:00",
+      "arcTrucks": {"MSC->FSC_1": 21, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 18, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 8},
+      "nodes": {
+        "FSC_1": {"ccl": 34, "cclMax": 126},
+        "FSC_2": {"ccl": 24, "cclMax": 87},
+        "VUST": {"fw": 18910, "fwMax": 39054, "fuel": 43790, "fuelMax": 128526, "ammo": 72300, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 10955, "fwMax": 18627, "fuel": 33640, "fuelMax": 63216, "ammo": 50410, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 10570, "fwMax": 24258, "fuel": 33535, "fuelMax": 95079, "ammo": 65890, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 16015, "fwMax": 33591, "fuel": 27365, "fuelMax": 78381, "ammo": 86620, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 13765, "fwMax": 28341, "fuel": 31755, "fuelMax": 93147, "ammo": 64480, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 4620, "fwMax": 10428, "fuel": 9395, "fuelMax": 23763, "ammo": 40985, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 5580, "fwMax": 7452, "fuel": 18510, "fuelMax": 23694, "ammo": 40910, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 10170, "fwMax": 20898, "fuel": 25210, "fuelMax": 73674, "ammo": 49620, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 14150, "fwMax": 34710, "fuel": 47570, "fuelMax": 100458, "ammo": 78280, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 14245, "fwMax": 31053, "fuel": 48995, "fuelMax": 95403, "ammo": 76760, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 3835, "fwMax": 9099, "fuel": 10860, "fuelMax": 28884, "ammo": 20305, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=9 Demand (all OUs)",
+      "time": "Day 9 10:00",
+      "arcTrucks": {"MSC->FSC_1": 21, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 18, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 8},
+      "nodes": {
+        "FSC_1": {"ccl": 34, "cclMax": 126},
+        "FSC_2": {"ccl": 24, "cclMax": 87},
+        "VUST": {"fw": 5892, "fwMax": 39054, "fuel": 948, "fuelMax": 128526, "ammo": 5160, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 4746, "fwMax": 18627, "fuel": 12568, "fuelMax": 63216, "ammo": 6692, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 2484, "fwMax": 24258, "fuel": 1842, "fuelMax": 95079, "ammo": 7668, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 4818, "fwMax": 33591, "fuel": 1238, "fuelMax": 78381, "ammo": 25944, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 4318, "fwMax": 28341, "fuel": 706, "fuelMax": 93147, "ammo": 6976, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 1144, "fwMax": 10428, "fuel": 1474, "fuelMax": 23763, "ammo": 23382, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 3096, "fwMax": 7452, "fuel": 10612, "fuelMax": 23694, "ammo": 22292, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 3204, "fwMax": 20898, "fuel": 652, "fuelMax": 73674, "ammo": 10144, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 2580, "fwMax": 34710, "fuel": 14084, "fuelMax": 100458, "ammo": 25336, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 3894, "fwMax": 31053, "fuel": 17194, "fuelMax": 95403, "ammo": 20912, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 802, "fwMax": 9099, "fuel": 1232, "fuelMax": 28884, "ammo": 3966, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=9 FSC → OU supply",
+      "time": "Day 9 14:00",
+      "arcTrucks": {"MSC->FSC_1": 0, "FSC_1->GN_CIE_1": 6, "FSC_1->PAINF_CIE_1": 9, "FSC_1->PAINF_CIE_2": 7, "FSC_1->PAINF_CIE_3": 9, "FSC_1->AT_CIE_1": 3, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 0, "FSC_2->GN_CIE_2": 6, "FSC_2->PAINF_CIE_4": 7, "FSC_2->PAINF_CIE_5": 6, "FSC_2->AT_CIE_3": 4, "MSC->VUST": 0},
+      "nodes": {
+        "FSC_1": {"ccl": 0, "cclMax": 126},
+        "FSC_2": {"ccl": 1, "cclMax": 87},
+        "VUST": {"fw": 5892, "fwMax": 39054, "fuel": 948, "fuelMax": 128526, "ammo": 5160, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 7746, "fwMax": 18627, "fuel": 25568, "fuelMax": 63216, "ammo": 50692, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 9484, "fwMax": 24258, "fuel": 33842, "fuelMax": 95079, "ammo": 58668, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 11818, "fwMax": 33591, "fuel": 29238, "fuelMax": 78381, "ammo": 60944, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 11318, "fwMax": 28341, "fuel": 32706, "fuelMax": 93147, "ammo": 57976, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 10144, "fwMax": 10428, "fuel": 10474, "fuelMax": 23763, "ammo": 35382, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 3096, "fwMax": 7452, "fuel": 10612, "fuelMax": 23694, "ammo": 22292, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 9204, "fwMax": 20898, "fuel": 24652, "fuelMax": 73674, "ammo": 40144, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 23580, "fwMax": 34710, "fuel": 35084, "fuelMax": 100458, "ammo": 53336, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 12894, "fwMax": 31053, "fuel": 32194, "fuelMax": 95403, "ammo": 56912, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 8802, "fwMax": 9099, "fuel": 15232, "fuelMax": 28884, "ammo": 21966, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=9 MSC → FSC/VUST supply",
+      "time": "Day 9 20:00",
+      "arcTrucks": {"MSC->FSC_1": 0, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 32, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 15},
+      "nodes": {
+        "FSC_1": {"ccl": 0, "cclMax": 126},
+        "FSC_2": {"ccl": 33, "cclMax": 87},
+        "VUST": {"fw": 38892, "fwMax": 39054, "fuel": 51948, "fuelMax": 128526, "ammo": 71160, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 7746, "fwMax": 18627, "fuel": 25568, "fuelMax": 63216, "ammo": 50692, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 9484, "fwMax": 24258, "fuel": 33842, "fuelMax": 95079, "ammo": 58668, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 11818, "fwMax": 33591, "fuel": 29238, "fuelMax": 78381, "ammo": 60944, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 11318, "fwMax": 28341, "fuel": 32706, "fuelMax": 93147, "ammo": 57976, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 10144, "fwMax": 10428, "fuel": 10474, "fuelMax": 23763, "ammo": 35382, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 3096, "fwMax": 7452, "fuel": 10612, "fuelMax": 23694, "ammo": 22292, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 9204, "fwMax": 20898, "fuel": 24652, "fuelMax": 73674, "ammo": 40144, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 23580, "fwMax": 34710, "fuel": 35084, "fuelMax": 100458, "ammo": 53336, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 12894, "fwMax": 31053, "fuel": 32194, "fuelMax": 95403, "ammo": 56912, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 8802, "fwMax": 9099, "fuel": 15232, "fuelMax": 28884, "ammo": 21966, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=10 Demand (all OUs)",
+      "time": "Day 10 10:00",
+      "arcTrucks": {"MSC->FSC_1": 0, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 32, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 15},
+      "nodes": {
+        "FSC_1": {"ccl": 0, "cclMax": 126},
+        "FSC_2": {"ccl": 33, "cclMax": 87},
+        "VUST": {"fw": 25874, "fwMax": 39054, "fuel": 9106, "fuelMax": 128526, "ammo": 4020, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 1537, "fwMax": 18627, "fuel": 4496, "fuelMax": 63216, "ammo": 6974, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 1398, "fwMax": 24258, "fuel": 2149, "fuelMax": 95079, "ammo": 446, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 621, "fwMax": 33591, "fuel": 3111, "fuelMax": 78381, "ammo": 268, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 1871, "fwMax": 28341, "fuel": 1657, "fuelMax": 93147, "ammo": 472, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 6668, "fwMax": 10428, "fuel": 2553, "fuelMax": 23763, "ammo": 17779, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 612, "fwMax": 7452, "fuel": 2714, "fuelMax": 23694, "ammo": 3674, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 2238, "fwMax": 20898, "fuel": 94, "fuelMax": 73674, "ammo": 668, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 12010, "fwMax": 34710, "fuel": 1598, "fuelMax": 100458, "ammo": 392, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 2543, "fwMax": 31053, "fuel": 393, "fuelMax": 95403, "ammo": 1064, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 5769, "fwMax": 9099, "fuel": 5604, "fuelMax": 28884, "ammo": 5627, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=10 FSC → OU supply",
+      "time": "Day 10 14:00",
+      "arcTrucks": {"MSC->FSC_1": 0, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 0, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 0},
+      "nodes": {
+        "FSC_1": {"ccl": 0, "cclMax": 126},
+        "FSC_2": {"ccl": 33, "cclMax": 87},
+        "VUST": {"fw": 25874, "fwMax": 39054, "fuel": 9106, "fuelMax": 128526, "ammo": 4020, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 1537, "fwMax": 18627, "fuel": 4496, "fuelMax": 63216, "ammo": 6974, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 1398, "fwMax": 24258, "fuel": 2149, "fuelMax": 95079, "ammo": 446, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 621, "fwMax": 33591, "fuel": 3111, "fuelMax": 78381, "ammo": 268, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 1871, "fwMax": 28341, "fuel": 1657, "fuelMax": 93147, "ammo": 472, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 6668, "fwMax": 10428, "fuel": 2553, "fuelMax": 23763, "ammo": 17779, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 612, "fwMax": 7452, "fuel": 2714, "fuelMax": 23694, "ammo": 3674, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 2238, "fwMax": 20898, "fuel": 94, "fuelMax": 73674, "ammo": 668, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 12010, "fwMax": 34710, "fuel": 1598, "fuelMax": 100458, "ammo": 392, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 2543, "fwMax": 31053, "fuel": 393, "fuelMax": 95403, "ammo": 1064, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 5769, "fwMax": 9099, "fuel": 5604, "fuelMax": 28884, "ammo": 5627, "ammoMax": 49017}
+      }
+    },
+    {
+      "label": "t=10 MSC → FSC/VUST supply",
+      "time": "Day 10 20:00",
+      "arcTrucks": {"MSC->FSC_1": 0, "FSC_1->GN_CIE_1": 0, "FSC_1->PAINF_CIE_1": 0, "FSC_1->PAINF_CIE_2": 0, "FSC_1->PAINF_CIE_3": 0, "FSC_1->AT_CIE_1": 0, "FSC_1->AT_CIE_2": 0, "MSC->FSC_2": 0, "FSC_2->GN_CIE_2": 0, "FSC_2->PAINF_CIE_4": 0, "FSC_2->PAINF_CIE_5": 0, "FSC_2->AT_CIE_3": 0, "MSC->VUST": 0},
+      "nodes": {
+        "FSC_1": {"ccl": 0, "cclMax": 126},
+        "FSC_2": {"ccl": 33, "cclMax": 87},
+        "VUST": {"fw": 25874, "fwMax": 39054, "fuel": 9106, "fuelMax": 128526, "ammo": 4020, "ammoMax": 201420},
+        "GN_CIE_1": {"fw": 1537, "fwMax": 18627, "fuel": 4496, "fuelMax": 63216, "ammo": 6974, "ammoMax": 131154},
+        "PAINF_CIE_1": {"fw": 1398, "fwMax": 24258, "fuel": 2149, "fuelMax": 95079, "ammo": 446, "ammoMax": 174666},
+        "PAINF_CIE_2": {"fw": 621, "fwMax": 33591, "fuel": 3111, "fuelMax": 78381, "ammo": 268, "ammoMax": 182028},
+        "PAINF_CIE_3": {"fw": 1871, "fwMax": 28341, "fuel": 1657, "fuelMax": 93147, "ammo": 472, "ammoMax": 172512},
+        "AT_CIE_1": {"fw": 6668, "fwMax": 10428, "fuel": 2553, "fuelMax": 23763, "ammo": 17779, "ammoMax": 52809},
+        "AT_CIE_2": {"fw": 612, "fwMax": 7452, "fuel": 2714, "fuelMax": 23694, "ammo": 3674, "ammoMax": 55854},
+        "GN_CIE_2": {"fw": 2238, "fwMax": 20898, "fuel": 94, "fuelMax": 73674, "ammo": 668, "ammoMax": 118428},
+        "PAINF_CIE_4": {"fw": 12010, "fwMax": 34710, "fuel": 1598, "fuelMax": 100458, "ammo": 392, "ammoMax": 158832},
+        "PAINF_CIE_5": {"fw": 2543, "fwMax": 31053, "fuel": 393, "fuelMax": 95403, "ammo": 1064, "ammoMax": 167544},
+        "AT_CIE_3": {"fw": 5769, "fwMax": 9099, "fuel": 5604, "fuelMax": 28884, "ammo": 5627, "ammoMax": 49017}
+      }
+    }
+  ]
+}

@@ -242,6 +242,7 @@ public class EvaluationHeuristic {
             for (OperatingUnit ou : data.operatingUnits) {
                 double[] inv = ouInv.get(ou.operatingUnitName);
                 double[][] correlatedMultipliers = ouMultipliers.get(ou.operatingUnitName);
+                double[][] correlatedMultipliers = ouMultipliers.get(ou.operatingUnitName);
 
                 int dayIndex = t - 1;
                 double dFW = correlatedMultipliers[IDX_FW][dayIndex] * ou.dailyFoodWaterKg;

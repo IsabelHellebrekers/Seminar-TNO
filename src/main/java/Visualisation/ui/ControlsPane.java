@@ -20,9 +20,9 @@ public class ControlsPane extends HBox {
     private final Button pause    = new Button("Pause");
     private final Button reset    = new Button("Reset");
     private final Button debug    = new Button("Debug");
-    private final Button prevStep = new Button("◀ Prev");
-    private final Button nextStep = new Button("▶ Next");
-    private final Slider speed    = new Slider(0.5, 6.0, 1.5);
+    private final Button prevStep = new Button("<< Prev");
+    private final Button nextStep = new Button("Next >>");
+    private final Slider speed    = new Slider(0.03, 0.5, 0.265);
     private final Label  clock    = new Label("Day 1 09:00");
 
     public ControlsPane() {

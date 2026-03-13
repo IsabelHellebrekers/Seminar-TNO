@@ -5,16 +5,18 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 public class OperatingUnitPane extends VBox {
-    private static final double BAR_WIDTH   = 90.0;
+    private static final double BAR_WIDTH   = 75.0;
     private static final String FW_COLOR    = "#1F77B4";
     private static final String FUEL_COLOR  = "#2CA02C";
     private static final String AMMO_COLOR  = "#D62728";
-    private static final String OVERLAY_STYLE =
-            "-fx-text-fill: white; -fx-font-size: 8px; -fx-font-family: 'Consolas'; -fx-font-weight: bold;";
+    private static final String LABEL_STYLE =
+            "-fx-text-fill: #00FF88; -fx-font-size: 10px; -fx-font-family: 'Consolas'; -fx-font-weight: bold;" +
+            "-fx-background-color: #0A1A0F; -fx-padding: 1 4 1 4;" +
+            "-fx-border-color: #00FF88; -fx-border-width: 1; -fx-border-radius: 3; -fx-background-radius: 3;";
 
     private final String      ouName;
     private final ProgressBar fw       = new ProgressBar(0.0);
@@ -39,21 +41,20 @@ public class OperatingUnitPane extends VBox {
         initBar(ammo, AMMO_COLOR);
 
         for (Label lbl : new Label[]{fwLabel, fuelLabel, ammoLabel}) {
-            lbl.setStyle(OVERLAY_STYLE);
+            lbl.setStyle(LABEL_STYLE);
             lbl.setVisible(false);
         }
 
         getChildren().addAll(name,
-                makeBarStack(fw,   fwLabel),
-                makeBarStack(fuel, fuelLabel),
-                makeBarStack(ammo, ammoLabel));
+                makeBarRow(fw,   fwLabel),
+                makeBarRow(fuel, fuelLabel),
+                makeBarRow(ammo, ammoLabel));
     }
 
-    private static StackPane makeBarStack(ProgressBar bar, Label label) {
-        StackPane stack = new StackPane(bar, label);
-        StackPane.setAlignment(label, Pos.CENTER_RIGHT);
-        label.setPadding(new Insets(0, 4, 0, 0));
-        return stack;
+    private static HBox makeBarRow(ProgressBar bar, Label label) {
+        HBox row = new HBox(4, bar, label);
+        row.setAlignment(Pos.CENTER_LEFT);
+        return row;
     }
 
     /** Show or hide the exact kg value labels for each product. */

@@ -1,215 +1,155 @@
-# Seminar-TNO
+# The Capacitated Resupply Problem
 
-This project is a Java 17 + JavaFX + Gurobi project.
+Seminar research project — Master Econometrics & Operations Research, Erasmus University Rotterdam, in collaboration with TNO.
 
-This README is terminal-first: all setup/build/run steps below are done from the command line.
+## Case Description
 
-## 1. Prerequisites
+The full problem description and data are provided by TNO and included in this repository:
 
-Install these first on your machine:
+- [Case description TNO.pdf](src/main/resources/Case/Case%20description%20TNO.pdf) — problem background, supply chain structure, and modelling assumptions
+- [TNO_data_Erasmus_case.xlsx](src/main/resources/Case/TNO_data_Erasmus_case.xlsx) — instance data (demand, capacities, CCL compositions)
 
-1. JDK 17 (exactly Java 17 is recommended).
-2. Gurobi Optimizer 13.0.1 (or another 13.0.x version).
-3. Maven 3.9+.
-4. Git.
+## Final Report
 
-## 2. Install Java 17 (Terminal)
 
-### Windows (PowerShell)
+## Repository Structure
 
-Install Temurin JDK 17:
+```
+src/main/java/
+├── Objects/              # Data model: Instance, FSC, OperatingUnit, CCLpackage, Result
+├── DataUtils/            # Instance construction and CSV output
+├── Deterministic/        # MILP formulation (CapacitatedResupplyMILP)
+├── Stochastic/           # Stochastic fleet sizing, heuristic evaluation, sensitivity analysis
+├── Visualisation/        # JavaFX instance visualiser + JSON exporter for GitHub Page
+└── Main.java             # For running experiments
+```
+
+## Prerequisites
+
+| Tool             | Version      |
+| ---------------- | ------------ |
+| JDK              | 17 (exactly) |
+| Gurobi Optimizer | 13.0.x       |
+| Maven            | 3.9+         |
+| Git              | any          |
+
+## Setup
+
+### 1. Install JDK 17
+
+**Windows (PowerShell)**
 
 ```powershell
 winget install EclipseAdoptium.Temurin.17.JDK
-```
-
-Verify:
-
-```powershell
 java -version
-javac -version
 ```
 
-### macOS (Terminal)
-
-Install Temurin JDK 17:
+**macOS**
 
 ```bash
 brew install --cask temurin@17
-```
-
-Verify:
-
-```bash
 java -version
-javac -version
 ```
 
-### Already have a newer Java version installed?
+> If you already have a newer JDK installed, install 17 alongside it and point `JAVA_HOME` to it for this project only.
 
-You do not need to uninstall it. Install JDK 17 as well, and use Java 17 for this project only.
+### 2. Install Maven
 
-Windows PowerShell (current terminal session):
-
-```powershell
-$env:JAVA_HOME="C:\Program Files\Eclipse Adoptium\jdk-17..."
-$env:Path="$env:JAVA_HOME\bin;$env:Path"
-java -version
-mvn -version
-```
-
-macOS/Linux (current shell session):
-
-```bash
-export JAVA_HOME=$(/usr/libexec/java_home -v 17)
-export PATH="$JAVA_HOME/bin:$PATH"
-java -version
-mvn -version
-```
-
-## 3. Install Maven (Terminal)
-
-### Windows (PowerShell)
+**Windows**
 
 ```powershell
 winget install Apache.Maven
 mvn -version
 ```
 
-### macOS (Terminal)
+**macOS**
 
 ```bash
 brew install maven
 mvn -version
 ```
 
-## 4. Gurobi Setup (Most Important)
+### 3. Install and configure Gurobi
 
-### Windows (PowerShell)
+1. Download **Gurobi 13.0.x** from [gurobi.com](https://www.gurobi.com) and install it.
+2. Obtain an academic or commercial license and activate it:
+   ```bash
+   grbgetkey <your-license-key>
+   ```
+3. Set the `GUROBI_HOME` environment variable to the Gurobi installation folder (the one containing `lib/gurobi.jar` and `bin/`).
 
-1. Install Gurobi (default usually `C:\gurobi1301\win64`).
-2. Set machine-level environment variables:
+**Windows (PowerShell — persistent)**
 
 ```powershell
 [System.Environment]::SetEnvironmentVariable("GUROBI_HOME","C:\gurobi1301\win64","Machine")
 $path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
-$path = "$path;C:\gurobi1301\win64\bin;C:\gurobi1301\win64\lib"
-[System.Environment]::SetEnvironmentVariable("Path",$path,"Machine")
-```
-
-3. Close and reopen PowerShell.
-4. Activate license (example):
-
-```powershell
-grbgetkey <your-license-key>
-```
-
-5. Verify:
-
-```powershell
+[System.Environment]::SetEnvironmentVariable("Path","$path;C:\gurobi1301\win64\bin;C:\gurobi1301\win64\lib","Machine")
+# Restart PowerShell, then verify:
 echo $env:GUROBI_HOME
 gurobi_cl --version
 ```
 
-### macOS (MacBook Intel + Apple Silicon)
-
-1. Install Gurobi Optimizer 13.0.1 for macOS from the Gurobi website.
-2. Find your install path (example):
-   - `/Library/gurobi1301/macos_universal2`
-3. Add to shell profile (`~/.zshrc`):
+**macOS — add to `~/.zshrc`**
 
 ```bash
 export GUROBI_HOME="/Library/gurobi1301/macos_universal2"
 export PATH="$GUROBI_HOME/bin:$PATH"
 export DYLD_LIBRARY_PATH="$GUROBI_HOME/lib:$DYLD_LIBRARY_PATH"
-```
-
-4. Reload shell:
-
-```bash
 source ~/.zshrc
-```
-
-5. Set up license (academic/commercial), usually with:
-
-```bash
-grbgetkey <your-license-key>
-```
-
-6. Verify:
-
-```bash
-echo $GUROBI_HOME
 gurobi_cl --version
 ```
 
-### Linux
-
-1. Install Gurobi.
-2. Set:
-   - `GUROBI_HOME=/path/to/gurobi/linux64`
-3. Add to `PATH`:
-   - `$GUROBI_HOME/bin`
-4. Add to `LD_LIBRARY_PATH`:
-   - `$GUROBI_HOME/lib`
-5. Verify:
+**Linux — add to `~/.bashrc`**
 
 ```bash
-echo $GUROBI_HOME
-gurobi_cl --version
+export GUROBI_HOME="/opt/gurobi1301/linux64"
+export PATH="$GUROBI_HOME/bin:$PATH"
+export LD_LIBRARY_PATH="$GUROBI_HOME/lib:$LD_LIBRARY_PATH"
 ```
 
-## 5. Clone Project And Build (Terminal)
+### 4. Clone and build
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/IsabelHellebrekers/Seminar-TNO.git
 cd Seminar-TNO
 mvn clean compile
 ```
 
-## 6. Run The Project (Terminal)
+Maven reads `GUROBI_HOME` automatically and will fail early with a clear message if it is not set or points to the wrong folder.
 
-### Run the JavaFX visualizer
+## Running
 
-```bash
-mvn javafx:run
-```
-
-Main class used: `Visualisation.VisualiserApp`
-
-### Run the normal Java main
+### Experiments (`Main.java`)
 
 ```bash
 mvn exec:java -Dexec.mainClass=Main
 ```
 
-## 7. What Was Changed To Improve Portability
+The `main` method in `Main.java` contains several experiment blocks — uncomment the ones you want to run:
 
-`pom.xml` no longer contains a machine-specific hardcoded path like `C:/gurobi1301/win64/lib/gurobi.jar`.
+| Block                                           | Description                                                            |
+| ----------------------------------------------- | ---------------------------------------------------------------------- |
+| `CapacitatedResupplyMILP.solveInstances(...)` | Solve the deterministic MILP                                           |
+| `runDispersedExperiments()`                   | Solve all 512 dispersed partitions →`DispersedConceptSolutions.csv` |
+| `runStochasticExperiments(...)`               | Fleet sizing, weight tuning, CCL composition search, OOS evaluation    |
+| `runPerfectHindsightExperiments()`            | Perfect hindsight benchmark                                            |
+| `runSensitivityAnalysis(...)`                 | Sensitivity on correlation and demand distributions                    |
 
-Instead:
+### JavaFX visualiser
 
-1. It reads Gurobi from `GUROBI_HOME`.
-2. It validates setup during Maven `validate` phase:
-   - Fails early if `GUROBI_HOME` is missing.
-   - Fails early if `${GUROBI_HOME}/lib/gurobi.jar` is missing.
-3. JavaFX run uses `-Djava.library.path` based on `GUROBI_HOME`.
+```bash
+mvn javafx:run
+```
 
-## 8. Troubleshooting
+Opens an animated visualisation of the supply chain for both the FD and Dispersed concepts. Controls: Play/Pause, Prev/Next step, speed slider, Debug mode (shows exact truck counts and inventory values).
 
-### Error: `GUROBI_HOME is not set`
+Running the visualiser also re-exports `docs/sim_fd.json`, `docs/sim_dispersed.json`, and `docs/scenarios.json` for the web viewer.
 
-Set `GUROBI_HOME`, close terminal/IDE, reopen, run `mvn clean compile` again.
+## Web Visualiser (GitHub Pages)
 
-### Error: `Could not find .../lib/gurobi.jar`
+A static version of the visualiser is hosted at:
+**https://isabelhellebrekers.github.io/Seminar-TNO/**
 
-`GUROBI_HOME` points to wrong folder.  
-It must be the Gurobi folder containing `lib/gurobi.jar` and `bin`.
+Switch between scenarios using the dropdown in the top-left. Debug mode shows exact inventory levels and truck counts per arc.
 
-### Error about missing Gurobi native library (`gurobi130.dll`, `.so`, `.dylib`)
-
-Your OS library path is not configured correctly (`Path` / `LD_LIBRARY_PATH` / `DYLD_LIBRARY_PATH`).
-
-### Build fails because `mvn` is unknown
-
-Install Maven (`winget install Apache.Maven` or `brew install maven`) and open a new terminal.
+The JSON files under `docs/` are generated by `SimExporter` when the JavaFX app runs. To update the web viewer after changing the model, run `mvn javafx:run` and commit the updated `docs/` files.
