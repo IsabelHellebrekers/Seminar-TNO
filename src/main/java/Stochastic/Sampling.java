@@ -170,21 +170,6 @@ public final class Sampling {
     }
 
     /**
-     * Upper (1 - epsilon) quantile of Triangular(minTri, modeTri, maxTri).
-     * @param epsilon the epsilon value
-     * @return the upper (1 - epsilon) quantile
-     */
-    public double triangularQuantile(double epsilon) {
-        double alpha = 1.0 - epsilon;
-        if (alpha <= (modeTri - minTri) / (maxTri - minTri)) {
-            return minTri + Math.sqrt((maxTri - minTri) * (modeTri - minTri));
-        }
-        else {
-            return maxTri - Math.sqrt(epsilon * (maxTri - minTri) * (maxTri - modeTri));
-        }
-    }
-
-    /**
      * Generate a 10-day AMMO demand path in kg, by multiplying the deterministic daily demand
      * with i.i.d. Triangular multipliers.
      * @param dailyAmmoKg deterministic daily demand for AMMO
