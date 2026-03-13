@@ -4,11 +4,10 @@ import Deterministic.CapacitatedResupplyMILP;
 import Stochastic.*;
 import Stochastic.EvaluationHeuristic.EvaluationSummary;
 import Objects.*;
+import Analysis.*;
 import java.util.*;
 
 import com.gurobi.gurobi.GRBException;
-
-import Analysis.*;
 
 import java.io.IOException;
 
@@ -37,14 +36,10 @@ public class Main {
 
         // SENSITIVITY ANALYSIS (uncomment to run)
         List<InstanceConfig> sensitivityConfigs = buildSensitivityConfigs(fdInstance, dispersedInstance);
+        runExtendedTimeHorizon(sensitivityConfigs);
+        runVehicleBreakdownAnalysis(sensitivityConfigs);
         runCorrelationAnalysis(sensitivityConfigs);
         runDemandDistributionAnalysis(sensitivityConfigs);
-
-        // EXTENDED TIME HORIZON ANALYSIS
-        // runExtendedTimeHorizon();
-
-        // VEHICLE BREAKDOWN ANALYSIS
-        // runVehicleBreakdownAnalysis();
     }
 
     /**
@@ -189,8 +184,42 @@ public class Main {
         Map<String, Integer> dispersedK = buildProportionalK(dispersedInstance, 83);
 
         return List.of(
-                new InstanceConfig(fdInstance, 79, fdK, "FD"),
-                new InstanceConfig(dispersedInstance, 79, dispersedK, "Dispersed"));
+                InstanceConfig.of(fdInstance, 79, fdK, "FD"),
+                InstanceConfig.of(dispersedInstance, 79, dispersedK, "Dispersed"));
+    }
+
+    /**
+     * Builds InstanceConfigs for the vehicle breakdown analysis.
+     * Returns one config for the 3-CCL baseline and one for the 4-CCL variant.
+     */
+    private static List<InstanceConfig> buildVehicleBreakdownConfigs(Instance fdInstance) {
+        Map<String, Integer> fdK = new HashMap<>();
+        fdK.put("FSC_1", 48);
+        fdK.put("FSC_2", 35);
+
+        CCLpackage ccl4 = new CCLpackage(4, 2000, 6000, 2000);
+
+        Instance fdInstance4ccl = InstanceCreator.createFDInstance().get(0);
+        fdInstance4ccl.addCCLType(ccl4);
+
+        return List.of(
+                InstanceConfig.of(fdInstance, 79, fdK, "FD (3 CCL)"),
+                new InstanceConfig(fdInstance4ccl, 79, fdK, "FD (4 CCL)", ccl4));
+    }
+
+    /**
+     * Builds InstanceConfigs for the extended time horizon analysis.
+     * The fourth CCL is stored in the config so the analysis can add it to
+     * each internally-created instance at the right horizon.
+     */
+    private static List<InstanceConfig> buildExtendedHorizonConfigs(Instance fdInstance) {
+        Map<String, Integer> fdK = new HashMap<>();
+        fdK.put("FSC_1", 63);
+        fdK.put("FSC_2", 45);
+
+        CCLpackage ccl4 = new CCLpackage(4, 2000, 6000, 2000);
+
+        return List.of(new InstanceConfig(fdInstance, 127, fdK, "FD", ccl4));
     }
 
     /**
@@ -220,11 +249,11 @@ public class Main {
         DemandDistributionAnalysis.run(configs);
     }
 
-    private static void runExtendedTimeHorizon() {
-        ExtendedTimeHorizonAnalysis.run();
+    private static void runExtendedTimeHorizon(List<InstanceConfig> configs) {
+        ExtendedTimeHorizonAnalysis.run(configs);
     }
 
-    private static void runVehicleBreakdownAnalysis() {
-        VehicleBreakdownAnalysis.run();
+    private static void runVehicleBreakdownAnalysis(List<InstanceConfig> configs) {
+        VehicleBreakdownAnalysis.run(configs);
     }
 }
