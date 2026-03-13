@@ -2,6 +2,7 @@ package Analysis;
 
 import DataUtils.InstanceCreator;
 import Deterministic.CapacitatedResupplyMILP;
+import Objects.CCLpackage;
 import Objects.Instance;
 import Stochastic.EvaluationHeuristic;
 import Stochastic.EvaluationHeuristic.EvaluationSummary;
@@ -11,9 +12,8 @@ import com.gurobi.gurobi.GRBEnv;
 import com.gurobi.gurobi.GRBException;
 import com.gurobi.gurobi.GRBModel;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 
 public final class ExtendedTimeHorizonAnalysis {
 
@@ -25,14 +25,6 @@ public final class ExtendedTimeHorizonAnalysis {
 
     private static final double TIME_LIMIT_SECONDS = 300.0;
 
-    private static final int MSC_TRUCKS = 127;
-    private static final int FSC1_TRUCKS = 63;
-    private static final int FSC2_TRUCKS = 45;
-
-    private static final int CCL4_FW = 2000;
-    private static final int CCL4_FUEL = 6000;
-    private static final int CCL4_AMMO = 2000;
-
     private static final int OOS_SEED = 10042;
     private static final int N_SCENARIOS = 1000;
 
@@ -42,14 +34,14 @@ public final class ExtendedTimeHorizonAnalysis {
     private static final EvaluationHeuristic.TargetWeights VUST_WEIGHTS =
             new EvaluationHeuristic.TargetWeights(1.0, 1.0, 1.2);
 
-    public static void run() {
+    public static void run(List<InstanceConfig> configs) {
         System.out.println();
         System.out.println("============================================================");
         System.out.println("EXTENDED TIME HORIZON ANALYSIS");
         System.out.println("============================================================");
 
         runDeterministicExtendedHorizon();
-        runStochasticExtendedHorizon();
+        runStochasticExtendedHorizon(configs);
     }
 
     private static void runDeterministicExtendedHorizon() {
@@ -84,47 +76,51 @@ public final class ExtendedTimeHorizonAnalysis {
         }
     }
 
-    private static void runStochasticExtendedHorizon() {
+    private static void runStochasticExtendedHorizon(List<InstanceConfig> configs) {
         System.out.println();
         System.out.println("------------------------------------------------------------");
         System.out.println("STOCHASTIC EXTENDED HORIZON");
         System.out.println("------------------------------------------------------------");
 
-        int M = MSC_TRUCKS;
-        Map<String, Integer> K = new HashMap<>();
-        K.put("FSC_1", FSC1_TRUCKS);
-        K.put("FSC_2", FSC2_TRUCKS);
-
-        EvaluationHeuristic.WeightConfig cfg =
+        EvaluationHeuristic.WeightConfig weightCfg =
                 new EvaluationHeuristic.WeightConfig(OU_WEIGHTS, VUST_WEIGHTS);
 
-        System.out.println("Fixed fleet and heuristic settings:");
-        System.out.println("MSC trucks = " + M);
-        System.out.println("FSC_1 trucks = " + K.get("FSC_1"));
-        System.out.println("FSC_2 trucks = " + K.get("FSC_2"));
-        System.out.println("CCL4 = (" + CCL4_FW + " FW, " + CCL4_FUEL + " FUEL, " + CCL4_AMMO + " AMMO)");
         System.out.println("OU weights   = " + OU_WEIGHTS);
         System.out.println("VUST weights = " + VUST_WEIGHTS);
         System.out.println("OOS seed     = " + OOS_SEED);
         System.out.println("Scenarios    = " + N_SCENARIOS);
 
-        System.out.println();
-        System.out.printf("%-8s %-18s %-22s %-22s%n",
-                "H_eval", "No-stockout(%)", "Scenarios w/o stockout", "Avg total stockout kg");
+        for (InstanceConfig cfg : configs) {
+            System.out.println();
+            System.out.println("Instance: " + cfg.label());
+            System.out.println("MSC trucks = " + cfg.mscTrucks());
+            cfg.trucksPerFSC().entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .forEach(e -> System.out.println(e.getKey() + " trucks = " + e.getValue()));
+            CCLpackage ccl4 = cfg.fourthCCL();
+            if (ccl4 != null) {
+                System.out.println("CCL4 = (" + ccl4.foodWaterKg + " FW, " + ccl4.fuelKg + " FUEL, " + ccl4.ammoKg + " AMMO)");
+            }
 
-        for (int horizon : STOCHASTIC_EVAL_HORIZONS) {
-            Instance evalInst = InstanceCreator
-                    .createFDInstanceExtraType(CCL4_FW, CCL4_FUEL, CCL4_AMMO, horizon)
-                    .get(0);
+            System.out.printf("%-8s %-18s %-22s %-22s%n",
+                    "H_eval", "No-stockout(%)", "Scenarios w/o stockout", "Avg total stockout kg");
 
-            EvaluationSummary summary = EvaluationHeuristic.evaluate(
-                    evalInst, M, K, N_SCENARIOS, OOS_SEED, cfg, List.of(0.0, 0.0, 0.0, 0.0));
+            for (int horizon : STOCHASTIC_EVAL_HORIZONS) {
+                Instance evalInst = InstanceCreator.createFDInstance(horizon).get(0);
+                if (ccl4 != null) {
+                    evalInst.addCCLType(ccl4);
+                }
 
-            System.out.printf("%-8d %-18.2f %-22d %-22.2f%n",
-                    horizon,
-                    summary.noStockoutPercentage,
-                    summary.scenariosWithoutStockout,
-                    summary.avgTotalStockoutKg);
+                EvaluationSummary summary = EvaluationHeuristic.evaluate(
+                        evalInst, cfg.mscTrucks(), cfg.trucksPerFSC(),
+                        N_SCENARIOS, OOS_SEED, weightCfg, List.of(0.0, 0.0, 0.0, 0.0));
+
+                System.out.printf("%-8d %-18.2f %-22d %-22.2f%n",
+                        horizon,
+                        summary.noStockoutPercentage,
+                        summary.scenariosWithoutStockout,
+                        summary.avgTotalStockoutKg);
+            }
         }
     }
 
@@ -206,16 +202,12 @@ public final class ExtendedTimeHorizonAnalysis {
     }
 
     private static String formatDouble(Double x) {
-        if (x == null) {
-            return "-";
-        }
+        if (x == null) return "-";
         return String.format("%.2f", x);
     }
 
     private static String formatGapPercent(Double gap) {
-        if (gap == null) {
-            return "-";
-        }
+        if (gap == null) return "-";
         return String.format("%.2f", 100.0 * gap);
     }
 

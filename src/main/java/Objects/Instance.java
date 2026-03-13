@@ -1,5 +1,6 @@
 package Objects;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,10 +34,10 @@ public class Instance {
         this.operatingUnits = operatingUnits;
         this.FSCs = fscs;
         this.products = List.of("FW", "FUEL", "AMMO");
-        this.cclTypes = List.of(
+        this.cclTypes = new ArrayList<>(List.of(
                 new CCLpackage(1, 3000, 3000, 4000),
                 new CCLpackage(2, 1000, 4000, 5000),
-                new CCLpackage(3, 0, 2000, 8000));
+                new CCLpackage(3, 0, 2000, 8000)));
         this.ouTypes = List.of("VUST", "GN_CIE", "PAINF_CIE", "AT_CIE");
         this.timeHorizon = timeHorizon;
     }
@@ -62,7 +63,7 @@ public class Instance {
         this.operatingUnits = operatingUnits;
         this.FSCs = fscs;
         this.products = List.of("FW", "FUEL", "AMMO");
-        this.cclTypes = cclTypes;
+        this.cclTypes = new ArrayList<>(cclTypes);
         this.ouTypes = List.of("VUST", "GN_CIE", "PAINF_CIE", "AT_CIE");
         this.timeHorizon = timeHorizon;
     }
@@ -94,6 +95,18 @@ public class Instance {
                 maxFuelKg,
                 maxAmmoKg,
                 source));
+    }
+
+    /**
+     * Adds a CCL package type to the instance. If a CCL with the same type
+     * number already exists it is not added again.
+     * @param cclPackage the CCL package type to add
+     */
+    public void addCCLType(CCLpackage cclPackage) {
+        for (CCLpackage existing : this.cclTypes) {
+            if (existing.type == cclPackage.type) return;
+        }
+        this.cclTypes.add(cclPackage);
     }
 
     /**
