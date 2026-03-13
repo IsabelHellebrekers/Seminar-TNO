@@ -21,13 +21,13 @@ public final class ExtendedTimeHorizonAnalysis {
     }
 
     private static final int[] DETERMINISTIC_HORIZONS = {2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24};
-    private static final int[] STOCHASTIC_EVAL_HORIZONS = {2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30};
+    private static final int[] STOCHASTIC_EVAL_HORIZONS = {100};
 
     private static final double TIME_LIMIT_SECONDS = 300.0;
 
-    private static final int MSC_TRUCKS = 79;
-    private static final int FSC1_TRUCKS = 48;
-    private static final int FSC2_TRUCKS = 35;
+    private static final int MSC_TRUCKS = 127;
+    private static final int FSC1_TRUCKS = 63;
+    private static final int FSC2_TRUCKS = 45;
 
     private static final int CCL4_FW = 2000;
     private static final int CCL4_FUEL = 6000;
@@ -49,7 +49,7 @@ public final class ExtendedTimeHorizonAnalysis {
         System.out.println("============================================================");
 
         runDeterministicExtendedHorizon();
-        // runStochasticExtendedHorizon();
+        runStochasticExtendedHorizon();
     }
 
     private static void runDeterministicExtendedHorizon() {

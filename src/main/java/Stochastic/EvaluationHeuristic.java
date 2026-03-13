@@ -232,7 +232,8 @@ public class EvaluationHeuristic {
         Map<String, double[][]> ouMultipliers = new HashMap<>();
         for (OperatingUnit ou : data.operatingUnits) {
             ouMultipliers.put(ou.operatingUnitName, sampler.correlatedSamples(
-                    correlations.get(0), correlations.get(1), correlations.get(2), correlations.get(3), data.timeHorizon));
+                    correlations.get(0), correlations.get(1), correlations.get(2), correlations.get(3),
+                    data.timeHorizon));
         }
 
         // Simulate days t = 1,...,T
@@ -244,9 +245,18 @@ public class EvaluationHeuristic {
                 double[][] correlatedMultipliers = ouMultipliers.get(ou.operatingUnitName);
 
                 int dayIndex = t - 1;
-                double dFW = correlatedMultipliers[IDX_FW][dayIndex] * ou.dailyFoodWaterKg;
-                double dFUEL = correlatedMultipliers[IDX_FUEL][dayIndex] * ou.dailyFuelKg;
-                double dAMMO = correlatedMultipliers[IDX_AMMO][dayIndex] * ou.dailyAmmoKg;
+                double dFW, dFUEL, dAMMO;
+
+                if (correlations.equals(List.of(0.0, 0.0, 0.0, 0.0))) {
+                    dFW = sampler.uniform() * ou.dailyFoodWaterKg;
+                    dFUEL = sampler.binomial() * ou.dailyFuelKg;
+                    dAMMO = sampler.triangular() * ou.dailyAmmoKg;
+                } else {
+                    dFW = correlatedMultipliers[IDX_FW][dayIndex] * ou.dailyFoodWaterKg;
+                    dFUEL = correlatedMultipliers[IDX_FUEL][dayIndex] * ou.dailyFuelKg;
+                    dAMMO = correlatedMultipliers[IDX_AMMO][dayIndex] * ou.dailyAmmoKg;
+
+                }
 
                 totalStockoutKg += consumeAndRecordStockout(stockouts, ou.operatingUnitName, "FW", dFW, t, inv, IDX_FW);
                 totalStockoutKg += consumeAndRecordStockout(stockouts, ou.operatingUnitName, "FUEL", dFUEL, t, inv,

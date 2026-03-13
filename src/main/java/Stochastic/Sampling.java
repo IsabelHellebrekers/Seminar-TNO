@@ -83,16 +83,6 @@ public final class Sampling {
     }
 
     /**
-     * Upper (1 - epsilon) quantile of Uniform(minUni, maxUni).
-     * @param epsilon the epsilon value
-     * @return the upper (1 - epsilon) quantile
-     */
-    public double uniformQuantile(double epsilon) {
-        double alpha = 1.0 - epsilon;
-        return minUni + alpha * (maxUni - minUni);
-    }
-
-    /**
      * Generate a 10-day FW demand path in kg, by multiplying the deterministic daily demand
      * with i.i.d. Uniform multipliers.
      * @param dailyFoodWaterKg deterministic daily demand for FW
@@ -117,25 +107,6 @@ public final class Sampling {
             if (rng.nextDouble() < p) successes++;
         }
         return applyMultipliers(successes * 1.0 / 10);
-    }
-
-    /**
-     * Upper (1 - epsilon) quantile for the implemented Binomial(n, p) mechanism (scaled).
-     * Uses iterative CDF accumulation.
-     * @param epsilon the epsilon value
-     * @return the upper (1 - epsilon) quantile
-     */
-    public double binomialQuantile(double epsilon) {
-        double alpha = 1.0 - epsilon;
-        double prob = Math.pow(1-p, n);
-        double cdf = prob;
-        double i = 0.0;
-        while (cdf < alpha) {
-            prob = prob * (n - i) / (i + 1.0) * p / (1.0 - p);
-            cdf += prob;
-            i += 1.0;
-        }
-        return i / 10;
     }
 
     /**

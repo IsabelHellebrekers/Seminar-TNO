@@ -32,7 +32,7 @@ public class Main {
         // runDispersedExperiments();
 
         // STOCHASTIC EXPERIMENTS (uncomment to run)
-        // runStochasticExperiments(fdInstance);
+        runStochasticExperiments(fdInstance);
 
         // PERFECT HINDSIGHT EXPERIMENTS (uncomment to run)
         // runPerfectHindsightExperiments();
@@ -73,11 +73,11 @@ public class Main {
      */
     private static void runStochasticExperiments(Instance base) {
         final int nScenarios = 1000;
+        final int nOOS = 10000;
         final double serviceLevel = 0.95;
 
         final long seedSizingTrain = 42000;
         final long seedTuningTrain = 43000;
-        final long seedCompTrain = 44000;
         final int seedOOS = 10042;
 
         System.out.println();
@@ -120,29 +120,29 @@ public class Main {
 
         System.out.println();
         System.out.println("STEP 3 : OOS EVALUATION 3 CCLs (test)");
-        EvaluationSummary oosSummary = EvaluationHeuristic.evaluate(base, M, K, nScenarios, seedOOS, bestCfg,
-                List.of(0.0, 0.0, 0.0, 0.0)); 
+        EvaluationSummary oosSummary = EvaluationHeuristic.evaluate(base, M, K, nOOS, seedOOS, bestCfg,
+                List.of(0.0, 0.0, 0.0, 0.0));
         System.out.println(oosSummary);
 
-        int stepKg = 1000;
         System.out.println();
-        System.out.println("STEP 4 : CCL COMPOSITION GRID SEARCH (train)");
+        System.out.println("STEP 4 : TUNE WEIGHTS AGAIN BASED ON NEW CCL TYPE (train)");
 
-        var compRes = EvaluationHeuristic.gridSearchCCL(
-                M, K, nScenarios, (int) seedCompTrain, bestCfg, stepKg);
-        System.out.println("Chosen composition: " + compRes.bestComp);
-        System.out.println("Train summary: " + compRes.bestSummary);
+        Instance newInstance = InstanceCreator.createFDInstanceExtraType(2000, 7000, 1000).get(0);
 
-        Instance bestInst = InstanceCreator.createFDInstanceExtraType(
-                compRes.bestComp.fwKg(),
-                compRes.bestComp.fuelKg(),
-                compRes.bestComp.ammoKg()).get(0);
+        var tuning2 = EvaluationHeuristic.tuneWeights(
+                base, M, K, nScenarios, (int) seedTuningTrain,
+                lb, ub, step, defaultVust);
+
+        System.out.println("BEST CONFIG : OU=" + tuning2.bestCfg.ou() + " VUST=" +
+                tuning2.bestCfg.vust());
+
+        EvaluationHeuristic.WeightConfig bestCfg2 = tuning2.bestCfg;
 
         System.out.println();
         System.out.println("STEP 5 : OOS EVALUATION 4 CCLs (test)");
 
-        var oos2 = EvaluationHeuristic.evaluate(bestInst, M, K, nScenarios, seedOOS, bestCfg,
-                List.of(0.0, 0.0, 0.0, 0.0)); 
+        var oos2 = EvaluationHeuristic.evaluate(newInstance, M, K, nOOS, seedOOS, bestCfg2,
+                List.of(0.0, 0.0, 0.0, 0.0));
         System.out.println(oos2);
     }
 
