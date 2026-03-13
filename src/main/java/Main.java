@@ -5,6 +5,7 @@ import Stochastic.*;
 import Stochastic.EvaluationHeuristic.EvaluationSummary;
 import Objects.*;
 import java.util.*;
+import java.io.*;
 
 import com.gurobi.gurobi.GRBException;
 
@@ -16,8 +17,8 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
         Instance fdInstance = InstanceCreator.createFDInstance().get(0);
-        Instance dispersedInstance = InstanceCreator.contiguousPartitions().get(41); // Index of the instance with the
-                                                                                     // most FSCs and obj. 100
+        Instance dispersedInstance = InstanceCreator.contiguousPartitions().get(41);
+
         // MILP (uncomment to run)
         // List<Result> result = CapacitatedResupplyMILP.solveInstances(allInstances);
         // System.out.println();
@@ -36,9 +37,9 @@ public class Main {
         // runPerfectHindsightExperiments();
 
         // SENSITIVITY ANALYSIS (uncomment to run)
-        List<InstanceConfig> sensitivityConfigs = buildSensitivityConfigs(fdInstance, dispersedInstance);
-        runCorrelationAnalysis(sensitivityConfigs);
-        runDemandDistributionAnalysis(sensitivityConfigs);
+        // List<InstanceConfig> sensitivityConfigs = buildSensitivityConfigs(fdInstance, dispersedInstance);
+        // runCorrelationAnalysis(sensitivityConfigs);
+        // runDemandDistributionAnalysis(sensitivityConfigs);
 
         // EXTENDED TIME HORIZON ANALYSIS
         // runExtendedTimeHorizon();
@@ -71,7 +72,7 @@ public class Main {
      * 
      * @param base FD instance
      */
-    private static void runStochasticExperiments(Instance base) {
+    private static void runStochasticExperimentsOld(Instance base) {
         final int nScenarios = 1000;
         final int nOOS = 10000;
         final double serviceLevel = 0.95;
@@ -130,7 +131,7 @@ public class Main {
         Instance newInstance = InstanceCreator.createFDInstanceExtraType(2000, 7000, 1000).get(0);
 
         var tuning2 = EvaluationHeuristic.tuneWeights(
-                base, M, K, nScenarios, (int) seedTuningTrain,
+                newInstance, M, K, nScenarios, (int) seedTuningTrain,
                 lb, ub, step, defaultVust);
 
         System.out.println("BEST CONFIG : OU=" + tuning2.bestCfg.ou() + " VUST=" +
@@ -145,6 +146,158 @@ public class Main {
                 List.of(0.0, 0.0, 0.0, 0.0));
         System.out.println(oos2);
     }
+
+    private static void runStochasticExperiments(Instance base) {
+        final int nScenarios = 1000;
+        final int nOOS = 10000;
+        final double serviceLevel = 0.95;
+
+        final long seedSizingTrain = 42000;
+        final long seedTuningTrain = 43000;
+        final int seedOOS = 10042;
+
+        final String outputFile = "stochastic_experiments_log.txt";
+
+        try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(outputFile, true)))) {
+
+            log(writer, "");
+            log(writer, "STEP 1 : STOCHASTIC FLEET SIZING");
+
+            StochasticFleetSizerCorrected.FleetSizingResult fleet;
+            try {
+                long t0 = System.currentTimeMillis();
+                fleet = StochasticFleetSizerCorrected.estimateFleetSizes(
+                        base, nScenarios, serviceLevel, seedSizingTrain);
+                long t1 = System.currentTimeMillis();
+                long timeSeconds = (t1 - t0) / 1000;
+
+                log(writer, "Runtime (s) : " + timeSeconds);
+                log(writer, "Total trucks = " + fleet.totalTrucks);
+
+                int mscTrucks = fleet.trucksMSCtoFSC + fleet.trucksMSCtoVUST;
+                log(writer, "MSC = " + mscTrucks);
+
+                for (String w : new TreeSet<>(fleet.trucksAtFSC.keySet())) {
+                    log(writer, "  " + w + " = " + fleet.trucksAtFSC.get(w));
+                }
+            } catch (GRBException e) {
+                log(writer, "ERROR in STEP 1: " + e.getMessage());
+                throw new RuntimeException(e);
+            }
+
+            final int M = fleet.trucksMSCtoFSC + fleet.trucksMSCtoVUST;
+            final Map<String, Integer> K = new HashMap<>(fleet.trucksAtFSC);
+
+            log(writer, "");
+            log(writer, "STEP 2 : WEIGHT TUNING (train)");
+
+            double lb = 0.5, ub = 1.5, step = 0.1;
+            EvaluationHeuristic.TargetWeights defaultVust =
+                    new EvaluationHeuristic.TargetWeights(1.0, 1.0, 1.0);
+
+            var tuning = EvaluationHeuristic.tuneWeights(
+                    base, M, K, nScenarios, (int) seedTuningTrain,
+                    lb, ub, step, defaultVust);
+
+            log(writer, "BEST CONFIG : OU = " + tuning.bestCfg.ou() +
+                    " | VUST = " + tuning.bestCfg.vust());
+
+            EvaluationHeuristic.WeightConfig bestCfg = tuning.bestCfg;
+
+            log(writer, "");
+            log(writer, "STEP 3 : OOS EVALUATION 3 CCLs (test)");
+
+            EvaluationSummary oosSummary = EvaluationHeuristic.evaluate(
+                    base, M, K, nOOS, seedOOS, bestCfg,
+                    List.of(0.0, 0.0, 0.0, 0.0));
+
+            log(writer, oosSummary.toString());
+
+            log(writer, "");
+            log(writer, "STEP 4 + 5 : LOOP OVER 10 INSTANCES WITH DIFFERENT 4TH CCL COMPOSITIONS");
+
+            List<int[]> compositions = List.of(
+                    new int[]{3000, 7000, 0},
+                    new int[]{2000, 7000, 1000},
+                    new int[]{1000, 7000, 2000},
+                    new int[]{0, 7000, 3000},
+                    new int[]{2000, 8000, 0},
+                    new int[]{1000, 8000, 1000},
+                    new int[]{0, 8000, 2000},
+                    new int[]{1000, 9000, 0},
+                    new int[]{0, 9000, 1000},
+                    new int[]{0, 10000, 0}
+            );
+
+            List<ExperimentResult> results = new ArrayList<>();
+
+            for (int i = 0; i < compositions.size(); i++) {
+                int[] comp = compositions.get(i);
+
+                log(writer, "");
+                log(writer, "------------------------------------------------------------");
+                log(writer, "INSTANCE " + (i + 1));
+                log(writer, "Fourth CCL composition = [" + comp[0] + ", " + comp[1] + ", " + comp[2] + "]");
+                log(writer, "------------------------------------------------------------");
+
+                Instance inst = InstanceCreator.createFDInstanceExtraType(
+                        comp[0], comp[1], comp[2]).get(0);
+
+                // Same seeds for every instance, exactly as requested
+                var tuning4 = EvaluationHeuristic.tuneWeights(
+                        inst, M, K, nScenarios, (int) seedTuningTrain,
+                        lb, ub, step, defaultVust);
+
+                log(writer, "BEST CONFIG : OU = " + tuning4.bestCfg.ou() +
+                        " | VUST = " + tuning4.bestCfg.vust());
+
+                EvaluationHeuristic.WeightConfig bestCfg4 = tuning4.bestCfg;
+
+                EvaluationSummary oos4 = EvaluationHeuristic.evaluate(
+                        inst, M, K, nOOS, seedOOS, bestCfg4,
+                        List.of(0.0, 0.0, 0.0, 0.0));
+
+                log(writer, "OOS RESULT INSTANCE " + (i + 1) + ":");
+                log(writer, oos4.toString());
+
+                results.add(new ExperimentResult(i + 1, comp, bestCfg4, oos4));
+            }
+
+            log(writer, "");
+            log(writer, "============================================================");
+            log(writer, "SUMMARY OVER ALL 10 INSTANCES");
+            log(writer, "============================================================");
+
+            for (ExperimentResult r : results) {
+                log(writer, "Instance " + r.instanceId());
+                log(writer, "  Composition       = [" + r.composition()[0] + ", "
+                        + r.composition()[1] + ", " + r.composition()[2] + "]");
+                log(writer, "  Best OU weights   = " + r.bestCfg().ou());
+                log(writer, "  Best VUST weights = " + r.bestCfg().vust());
+                log(writer, "  OOS summary       = " + r.oosSummary());
+                log(writer, "");
+            }
+
+            log(writer, "Run finished successfully.");
+            writer.flush();
+
+        } catch (IOException e) {
+            throw new RuntimeException("Could not write log file.", e);
+        }
+    }
+
+    private static void log(PrintWriter writer, String message) {
+        System.out.println(message);
+        writer.println(message);
+        writer.flush(); 
+    }
+
+    private record ExperimentResult(
+            int instanceId,
+            int[] composition,
+            EvaluationHeuristic.WeightConfig bestCfg,
+            EvaluationSummary oosSummary
+    ) {}
 
     /**
      * Performs perfect hindsight experiments.
