@@ -18,8 +18,6 @@ public class Main {
         Instance fdInstance = InstanceCreator.createFDInstance().get(0);
         Instance dispersedInstance = InstanceCreator.contiguousPartitions().get(41); // Index of the instance with the
                                                                                      // most FSCs and obj. 100
-        List<Instance> allInstances = List.of(fdInstance, dispersedInstance);
-
         // MILP (uncomment to run)
         // List<Result> result = CapacitatedResupplyMILP.solveInstances(allInstances);
         // System.out.println();
@@ -38,7 +36,9 @@ public class Main {
         // runPerfectHindsightExperiments();
 
         // SENSITIVITY ANALYSIS (uncomment to run)
-        // runSensitivityAnalysis(allInstances);
+        List<InstanceConfig> sensitivityConfigs = buildSensitivityConfigs(fdInstance, dispersedInstance);
+        runCorrelationAnalysis(sensitivityConfigs);
+        runDemandDistributionAnalysis(sensitivityConfigs);
 
         // EXTENDED TIME HORIZON ANALYSIS
         // runExtendedTimeHorizon();
@@ -176,75 +176,48 @@ public class Main {
     }
 
     /**
-     * // STILL NEED TO IMPLEMENT AND MAYBE ADJUST THE COMMENTS BELOW
-     * 
-     * Performs a sensitivity analysis on our previous results. We study the effect
-     * of
-     * 1) The effect of a smaller fleet size
-     * 2) Different demand distributions
-     * 3) Correlation between products
-     * 4) Correlation between days
-     * 5) A longer time horizon
-     * 6) Making truck reallocation possible
+     * Builds the list of InstanceConfigs used for sensitivity analyses.
+     * The FD instance uses the fleet sizes from the stochastic fleet sizing step.
+     * The dispersed instance distributes the same total FSC truck budget
+     * proportionally across its FSCs based on their storage capacity.
      */
-    private static void runSensitivityAnalysis(List<Instance> instances) {
-        // CORRELATION
-        System.out.println("SENSITIVITY ANALYSIS : CORRELATION");
+    private static List<InstanceConfig> buildSensitivityConfigs(Instance fdInstance, Instance dispersedInstance) {
+        Map<String, Integer> fdK = new HashMap<>();
+        fdK.put("FSC_1", 48);
+        fdK.put("FSC_2", 35);
 
-        final int M = 79;
-        final Map<String, Integer> K = new HashMap<>();
-        K.put("FSC_1", 48);
-        K.put("FSC_2", 35);
+        Map<String, Integer> dispersedK = buildProportionalK(dispersedInstance, 83);
 
-        final int nScenarios = 1000;
-        final int seedOOS = 10042; // can be anything
+        return List.of(
+                new InstanceConfig(fdInstance, 79, fdK, "FD"),
+                new InstanceConfig(dispersedInstance, 79, dispersedK, "Dispersed"));
+    }
 
-        final EvaluationHeuristic.WeightConfig bestCfg = new EvaluationHeuristic.WeightConfig(
-                new EvaluationHeuristic.TargetWeights(1.3, 0.7, 1.3),
-                new EvaluationHeuristic.TargetWeights(1.0, 1.0, 1.2));
-
-        final List<List<Double>> correlationsList = List.of(
-                List.of(0.0, 0.0, 0.0, 0.0), // no correlation
-                List.of(0.5, 0.5, 0.5, 0.5),
-                List.of(0.1, 0.1, 0.1, 0.1));
-
-        for (List<Double> correlations : correlationsList) {
-            for (Instance instance : instances) {
-                EvaluationSummary oosSummary = EvaluationHeuristic.evaluate(instance, M, K, nScenarios, seedOOS,
-                        bestCfg, correlations);
-                System.out.println(oosSummary);
-            }
+    /**
+     * Distributes totalFscTrucks among the FSCs of the given instance proportional
+     * to each FSC's maximum storage capacity.
+     */
+    private static Map<String, Integer> buildProportionalK(Instance instance, int totalFscTrucks) {
+        int totalCap = instance.FSCs.stream().mapToInt(fsc -> fsc.maxStorageCapCcls).sum();
+        Map<String, Integer> K = new HashMap<>();
+        int assigned = 0;
+        for (int i = 0; i < instance.FSCs.size() - 1; i++) {
+            FSC fsc = instance.FSCs.get(i);
+            int trucks = (int) Math.round((double) fsc.maxStorageCapCcls / totalCap * totalFscTrucks);
+            K.put(fsc.FSCname, trucks);
+            assigned += trucks;
         }
+        FSC last = instance.FSCs.get(instance.FSCs.size() - 1);
+        K.put(last.FSCname, totalFscTrucks - assigned);
+        return K;
+    }
 
-        // DIFFERENT DEMAND DISTRIBUTIONS
-        // Investigate the effect of scaling the mean and standard deviation of the
-        // demand
-        // distributions independently, using multipliers applied around the base mean
-        // of 1.0.
-        System.out.println();
-        System.out.println("SENSITIVITY ANALYSIS : DEMAND DISTRIBUTIONS (no correlation)");
+    private static void runCorrelationAnalysis(List<InstanceConfig> configs) {
+        CorrelationAnalysis.run(configs);
+    }
 
-        final List<Double> demandMultipliers = List.of(0.9, 0.95, 1.0, 1.05, 1.1);
-
-        final String[] instanceLabels = { "FD", "Dispersed" };
-
-        System.out.println("--- Mean sensitivity (stdMult = 1.0) ---");
-        for (double mult : demandMultipliers) {
-            for (int i = 0; i < instances.size(); i++) {
-                EvaluationSummary summary = EvaluationHeuristic.evaluate(
-                        instances.get(i), M, K, nScenarios, seedOOS, bestCfg, List.of(0.0, 0.0, 0.0, 0.0), mult, 1.0);
-                System.out.println("meanMult=" + mult + " | " + instanceLabels[i] + " | " + summary);
-            }
-        }
-
-        System.out.println("--- Std sensitivity (meanMult = 1.0) ---");
-        for (double mult : demandMultipliers) {
-            for (int i = 0; i < instances.size(); i++) {
-                EvaluationSummary summary = EvaluationHeuristic.evaluate(
-                        instances.get(i), M, K, nScenarios, seedOOS, bestCfg, List.of(0.0, 0.0, 0.0, 0.0), 1.0, mult);
-                System.out.println("stdMult=" + mult + " | " + instanceLabels[i] + " | " + summary);
-            }
-        }
+    private static void runDemandDistributionAnalysis(List<InstanceConfig> configs) {
+        DemandDistributionAnalysis.run(configs);
     }
 
     private static void runExtendedTimeHorizon() {
