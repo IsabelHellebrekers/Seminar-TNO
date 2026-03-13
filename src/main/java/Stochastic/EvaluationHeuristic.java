@@ -7,17 +7,21 @@ import java.util.*;
 import DataUtils.InstanceCreator;
 
 /**
- * Simulation-based evaluation heurstic for the stochastic capacitated resupply problem
+ * Simulation-based evaluation heurstic for the stochastic capacitated resupply
+ * problem
  * 
- * This class simulates day-by-day inventory evolution under stochastic demand and a greedy
+ * This class simulates day-by-day inventory evolution under stochastic demand
+ * and a greedy
  * dispatch policy:
- *  1) Realize stochastic demand and consume inventory (record stockouts)
- *  2) Decide FSC -> OU deliveries subject to truck limits and FSC inventories.
- *  3) Decide MSC -> VUST replenishment up to a target level
- *  4) Use remaining MSC trucks to refill FSC inventories based on a refill rule.
- *  5) Apply scheduled arrivals (deliveries decided today arrive at start of next day).
+ * 1) Realize stochastic demand and consume inventory (record stockouts)
+ * 2) Decide FSC -> OU deliveries subject to truck limits and FSC inventories.
+ * 3) Decide MSC -> VUST replenishment up to a target level
+ * 4) Use remaining MSC trucks to refill FSC inventories based on a refill rule.
+ * 5) Apply scheduled arrivals (deliveries decided today arrive at start of next
+ * day).
  * 
- * The main output is an EvaluationSummary over many scenarios, and a ScenarioResult for a single run.
+ * The main output is an EvaluationSummary over many scenarios, and a
+ * ScenarioResult for a single run.
  */
 public class EvaluationHeuristic {
     // Inventory vector indices
@@ -25,12 +29,14 @@ public class EvaluationHeuristic {
     private static final int IDX_FUEL = 1;
     private static final int IDX_AMMO = 2;
 
-    // Multipliers used to approximate next-day maximum demand (policy urgency + targets)
+    // Multipliers used to approximate next-day maximum demand (policy urgency +
+    // targets)
     private static final double MAX_MULT_FW = 1.2;
     private static final double MAX_MULT_FUEL = 2.5;
     private static final double MAX_MULT_AMMO = 2.0;
 
-    // Penalty weight for balancing fuel vs ammo fill ratios inside the OU scoring rule
+    // Penalty weight for balancing fuel vs ammo fill ratios inside the OU scoring
+    // rule
     private static final double BALANCE_PENALTY_LAMBDA = 1.0;
 
     // Numerical tolerance for comparisons
@@ -59,7 +65,8 @@ public class EvaluationHeuristic {
     }
 
     /**
-     * Result of a single scenario (stockout presence + magnitude+ detailed records).
+     * Result of a single scenario (stockout presence + magnitude+ detailed
+     * records).
      */
     public static final class ScenarioResult {
         public final boolean hasStockout;
@@ -68,9 +75,10 @@ public class EvaluationHeuristic {
 
         /**
          * Result of a single scenario.
-         * @param hasStockout       true if anu stockout occured in the scenario
-         * @param totalStockoutKg   total unmet demand over all products/days in kg
-         * @param stockouts         list of per OU, product, day stockout records
+         * 
+         * @param hasStockout     true if anu stockout occured in the scenario
+         * @param totalStockoutKg total unmet demand over all products/days in kg
+         * @param stockouts       list of per OU, product, day stockout records
          */
         public ScenarioResult(boolean hasStockout, double totalStockoutKg, List<Stockout> stockouts) {
             this.hasStockout = hasStockout;
@@ -90,10 +98,12 @@ public class EvaluationHeuristic {
 
         /**
          * Aggregate metrics over many scenarios.
-         * @param totalScenarios            number of simulated scenarios
-         * @param scenariosWithoutStockout  count of scenarios with zero stockouts
-         * @param noStockoutPercentage      scenariosWithoutStockout / totalScenarios * 100
-         * @param avgTotalStockoutKg        average stockout mass across scenarios
+         * 
+         * @param totalScenarios           number of simulated scenarios
+         * @param scenariosWithoutStockout count of scenarios with zero stockouts
+         * @param noStockoutPercentage     scenariosWithoutStockout / totalScenarios *
+         *                                 100
+         * @param avgTotalStockoutKg       average stockout mass across scenarios
          */
         private EvaluationSummary(int totalScenarios, int scenariosWithoutStockout, double noStockoutPercentage,
                 double avgTotalStockoutKg) {
@@ -104,7 +114,7 @@ public class EvaluationHeuristic {
         }
 
         /**
-         * String representation of an EvaluationSummary 
+         * String representation of an EvaluationSummary
          */
         @Override
         public String toString() {
@@ -115,14 +125,17 @@ public class EvaluationHeuristic {
     }
 
     /**
-     * Evaluate a fixed fleet sizing decision (M trucks at MSC, K trucks at each FSC)
+     * Evaluate a fixed fleet sizing decision (M trucks at MSC, K trucks at each
+     * FSC)
      * over nScenarios independent stochastic scenarios.
-     * @param data          problem instance (network, OUs, FSCs, CCL types, capacities)
-     * @param M             trucks available at MSC per day
-     * @param K             trucks available at each FSC per day
-     * @param nScenarios    number of Monte Carlo scenarios
-     * @param baseSeed      base seed; scenario s used (baseSeed + s)
-     * @param cfg           target / urgency weight configuration
+     * 
+     * @param data       problem instance (network, OUs, FSCs, CCL types,
+     *                   capacities)
+     * @param M          trucks available at MSC per day
+     * @param K          trucks available at each FSC per day
+     * @param nScenarios number of Monte Carlo scenarios
+     * @param baseSeed   base seed; scenario s used (baseSeed + s)
+     * @param cfg        target / urgency weight configuration
      * @return aggregated evaluation summary
      */
     public static EvaluationSummary evaluate(Instance data, int M, Map<String, Integer> K, int nScenarios,
@@ -132,8 +145,11 @@ public class EvaluationHeuristic {
 
     /**
      * Evaluate with explicit demand distribution multipliers.
-     * @param meanMult multiplier applied to the mean of every demand distribution (base mean = 1.0)
-     * @param stdMult  multiplier applied to the spread of every demand distribution around its mean
+     * 
+     * @param meanMult multiplier applied to the mean of every demand distribution
+     *                 (base mean = 1.0)
+     * @param stdMult  multiplier applied to the spread of every demand distribution
+     *                 around its mean
      */
     public static EvaluationSummary evaluate(Instance data, int M, Map<String, Integer> K, int nScenarios,
             long baseSeed, WeightConfig cfg, List<Double> correlations, double meanMult, double stdMult) {
@@ -141,7 +157,8 @@ public class EvaluationHeuristic {
         double sumStockoutKg = 0.0;
 
         for (int s = 1; s <= nScenarios; s++) {
-            ScenarioResult result = evaluateSingleScenario(data, M, K, baseSeed + s, cfg, correlations, meanMult, stdMult);
+            ScenarioResult result = evaluateSingleScenario(data, M, K, baseSeed + s, cfg, correlations, meanMult,
+                    stdMult);
             if (!result.hasStockout) {
                 noStockoutCount++;
             }
@@ -156,13 +173,15 @@ public class EvaluationHeuristic {
 
     /**
      * Run a single scenario simulation and return stockout diagnostics.
-     * The simulation uses a one-day travel-time assumption: decisions made on day t arrive
+     * The simulation uses a one-day travel-time assumption: decisions made on day t
+     * arrive
      * at the start of day t+1.
-     * @param data          the problem instance
-     * @param M             #trucks at the MSC
-     * @param K             #trucks at each FSC
-     * @param scenarioSeed  baseSeed + s
-     * @param cfg           target / urgency weight configuration
+     * 
+     * @param data         the problem instance
+     * @param M            #trucks at the MSC
+     * @param K            #trucks at each FSC
+     * @param scenarioSeed baseSeed + s
+     * @param cfg          target / urgency weight configuration
      * @return a single ScenarioResult
      */
     public static ScenarioResult evaluateSingleScenario(Instance data, int M, Map<String, Integer> K, long scenarioSeed,
@@ -210,8 +229,11 @@ public class EvaluationHeuristic {
         sampler.setMeanMultiplier(meanMult);
         sampler.setStdMultiplier(stdMult);
 
-        double[][] correlatedMultipliers = sampler.correlatedSamples(
-                correlations.get(0), correlations.get(1), correlations.get(2), correlations.get(3));
+        Map<String, double[][]> ouMultipliers = new HashMap<>();
+        for (OperatingUnit ou : data.operatingUnits) {
+            ouMultipliers.put(ou.operatingUnitName, sampler.correlatedSamples(
+                    correlations.get(0), correlations.get(1), correlations.get(2), correlations.get(3), data.timeHorizon));
+        }
 
         // Simulate days t = 1,...,T
         for (int t = 1; t <= data.timeHorizon; t++) {
@@ -219,12 +241,12 @@ public class EvaluationHeuristic {
             // 1) Realize and consume demand on day t
             for (OperatingUnit ou : data.operatingUnits) {
                 double[] inv = ouInv.get(ou.operatingUnitName);
+                double[][] correlatedMultipliers = ouMultipliers.get(ou.operatingUnitName);
 
                 int dayIndex = t - 1;
                 double dFW = correlatedMultipliers[IDX_FW][dayIndex] * ou.dailyFoodWaterKg;
                 double dFUEL = correlatedMultipliers[IDX_FUEL][dayIndex] * ou.dailyFuelKg;
                 double dAMMO = correlatedMultipliers[IDX_AMMO][dayIndex] * ou.dailyAmmoKg;
-
 
                 totalStockoutKg += consumeAndRecordStockout(stockouts, ou.operatingUnitName, "FW", dFW, t, inv, IDX_FW);
                 totalStockoutKg += consumeAndRecordStockout(stockouts, ou.operatingUnitName, "FUEL", dFUEL, t, inv,
@@ -346,10 +368,13 @@ public class EvaluationHeuristic {
     }
 
     /**
-     * Compute VUST order-up-to target levels for the next day, expressed in kg per product.
-     * The target is based on (daily demand * MAX_MULT * weight) capped by OU storage capacity.
-     * @param vust  the VUST operating unit
-     * @param w     target weight multipliers for VUST
+     * Compute VUST order-up-to target levels for the next day, expressed in kg per
+     * product.
+     * The target is based on (daily demand * MAX_MULT * weight) capped by OU
+     * storage capacity.
+     * 
+     * @param vust the VUST operating unit
+     * @param w    target weight multipliers for VUST
      * @return target vector [FW, FUEL, AMMO] in kg
      */
     private static double[] computeVustNextDayMaxDemandTarget(OperatingUnit vust, TargetWeights w) {
@@ -361,10 +386,12 @@ public class EvaluationHeuristic {
     }
 
     /**
-     * Check whether the current level plus scheduled arrivals meets the target vector. 
-     * @param inv       current inventory vector [FW, FUEL, AMMO]
-     * @param add       scheduled arrivals for next day [FW, FUEL, AMMO]
-     * @param target    order-up-to targets [FW,, FUEL, AMMO]
+     * Check whether the current level plus scheduled arrivals meets the target
+     * vector.
+     * 
+     * @param inv    current inventory vector [FW, FUEL, AMMO]
+     * @param add    scheduled arrivals for next day [FW, FUEL, AMMO]
+     * @param target order-up-to targets [FW,, FUEL, AMMO]
      * @return true if (inv + add) >= target component-wise
      */
     private static boolean meetsTarget(double[] inv, double[] add, double[] target) {
@@ -374,14 +401,18 @@ public class EvaluationHeuristic {
     }
 
     /**
-     * Select a CCL type for MSC -> VUST that yields the largest improvement towards the VUST target.
-     * Uses the relative deficit sum to compare candidate CCLs, and requires strict improvement.
-     * @param vust      VUST operating unit
-     * @param inv       current inventory at VUST
-     * @param add       scheduled arrivals at VUST (decided earlier today)
-     * @param cclTypes  available CCL package types
-     * @param target    order-up-to target vector for VUST
-     * @return chosen CCL type id, or -1 if none improves feasibility/target satisfaction
+     * Select a CCL type for MSC -> VUST that yields the largest improvement towards
+     * the VUST target.
+     * Uses the relative deficit sum to compare candidate CCLs, and requires strict
+     * improvement.
+     * 
+     * @param vust     VUST operating unit
+     * @param inv      current inventory at VUST
+     * @param add      scheduled arrivals at VUST (decided earlier today)
+     * @param cclTypes available CCL package types
+     * @param target   order-up-to target vector for VUST
+     * @return chosen CCL type id, or -1 if none improves feasibility/target
+     *         satisfaction
      */
     private static int selectBestFeasibleCCLTypeForVustTarget(
             OperatingUnit vust,
@@ -418,9 +449,10 @@ public class EvaluationHeuristic {
     /**
      * Compute the sum of relative deficits w.r.t. a target vector:
      * deficit(p) = max(0, target_p - level_p) / max (1, target_p).
-     * @param inv       current inventory vector
-     * @param add       scheduled arrivals vector
-     * @param target    target vector
+     * 
+     * @param inv    current inventory vector
+     * @param add    scheduled arrivals vector
+     * @param target target vector
      * @return scalar deficit score (lower is better)
      */
     private static double relativeDeficitSum(double[] inv, double[] add, double[] target) {
@@ -436,11 +468,13 @@ public class EvaluationHeuristic {
     }
 
     /**
-     * Same as relativeDeficitSum, but evaluated after adding a candidate CCL package.
-     * @param inv       current inventory vector
-     * @param add       scheduled arrivals vector
-     * @param target    target vector
-     * @param ccl       candidate CCL package
+     * Same as relativeDeficitSum, but evaluated after adding a candidate CCL
+     * package.
+     * 
+     * @param inv    current inventory vector
+     * @param add    scheduled arrivals vector
+     * @param target target vector
+     * @param ccl    candidate CCL package
      * @return scalar deficit score after hypothetical delivery
      */
     private static double relativeDeficitSumAfter(double[] inv, double[] add, double[] target, CCLpackage ccl) {
@@ -456,8 +490,10 @@ public class EvaluationHeuristic {
     }
 
     /**
-     * Consume demand from inventory and record a stockout if inventory becomes negative.
-     * Inventory is truncated at zero after recording unmet demand. 
+     * Consume demand from inventory and record a stockout if inventory becomes
+     * negative.
+     * Inventory is truncated at zero after recording unmet demand.
+     * 
      * @param stockouts output list to append a Stockout record to
      * @param ouName    operating unit
      * @param product   product name
@@ -490,8 +526,9 @@ public class EvaluationHeuristic {
     }
 
     /**
-     * Initialize OU inventories at the start of the horizon. 
+     * Initialize OU inventories at the start of the horizon.
      * OUs start full at their storage capacities.
+     * 
      * @param data instance data containing OUs and capacity limits
      * @return map OUName -> inventory vector [FW, FUEL, AMMO]
      */
@@ -504,7 +541,9 @@ public class EvaluationHeuristic {
     }
 
     /**
-     * Initialize FSC inventories using the instance's initialStorageLevels per OU type and CCL type. 
+     * Initialize FSC inventories using the instance's initialStorageLevels per OU
+     * type and CCL type.
+     * 
      * @param data instance containing FSCs and OU type list
      * @return map FSCName -> (map OUType -> counts per CCL type)
      */
@@ -528,16 +567,19 @@ public class EvaluationHeuristic {
     }
 
     /**
-     * Select the most urgent OU among candidates using a minimum demand cover ratio.
+     * Select the most urgent OU among candidates using a minimum demand cover
+     * ratio.
      * urgency(ou) = min_p ( (inv_p + add_p) / (w_p * dmax_p) )
      * Lower ratio means less coverage => higher urgency.
-     * @param candidates            OUs supplied by the same FSC
-     * @param ouInv                 current inventories
-     * @param scheduledDeliveries   already scheduled arrivals for next day
-     * @param blocked               set of OUs that currently cannot receive a feasible CCL
-     * @param ouMaxDemand           next day max demand vector per OU
-     * @param rng                   RNG for tie-breaking
-     * @param w                     target/urgency weights for OUs
+     * 
+     * @param candidates          OUs supplied by the same FSC
+     * @param ouInv               current inventories
+     * @param scheduledDeliveries already scheduled arrivals for next day
+     * @param blocked             set of OUs that currently cannot receive a
+     *                            feasible CCL
+     * @param ouMaxDemand         next day max demand vector per OU
+     * @param rng                 RNG for tie-breaking
+     * @param w                   target/urgency weights for OUs
      * @return the chosen OU, or null if no feasible candidate remains
      */
     private static OperatingUnit selectMostUrgentOU(
@@ -581,11 +623,12 @@ public class EvaluationHeuristic {
 
     /**
      * Compute the minimum weighted cover ratio across products:
-     * r_p = (inv_p + add_p) / max(1, w_p * dmax_p), then return min_p r_p 
-     * @param inv   current inventory vector
-     * @param add   scheduled arrivals vector
-     * @param dmax  next day demand vector
-     * @param w     weights that scale urgency/targets per product
+     * r_p = (inv_p + add_p) / max(1, w_p * dmax_p), then return min_p r_p
+     * 
+     * @param inv  current inventory vector
+     * @param add  scheduled arrivals vector
+     * @param dmax next day demand vector
+     * @param w    weights that scale urgency/targets per product
      * @return scalar cover ratio (lower => most urgent)
      */
     private static double minDemandCoverRatio(double[] inv, double[] add, double[] dmax, TargetWeights w) {
@@ -596,7 +639,8 @@ public class EvaluationHeuristic {
     }
 
     /**
-     * Compute the maximum next day demand for an OU. 
+     * Compute the maximum next day demand for an OU.
+     * 
      * @param ou operating unit
      * @return dmax vector [FW, FUEL, AMMO] in kg
      */
@@ -609,16 +653,19 @@ public class EvaluationHeuristic {
     }
 
     /**
-     * Choose a feasible CCL type for FSC -> OU that maximizes a post-delivery improvement score.
-     * Requires (i) FSC stock availability for the OU type and (ii) OU capacity feasibility.
-     * @param ou                target operating unit
-     * @param fscInvByOuType    FSC inventory map keyed by OU type
-     * @param inv               current OU inventory vector
-     * @param add               scheduled arrivals vector
-     * @param cclTypes          available CCL types
-     * @param dmax              maximum next day demand vector for OU
-     * @param rng               RNG for tie-breaking
-     * @param cfg               weight configuration (uses OU weights for scoring)
+     * Choose a feasible CCL type for FSC -> OU that maximizes a post-delivery
+     * improvement score.
+     * Requires (i) FSC stock availability for the OU type and (ii) OU capacity
+     * feasibility.
+     * 
+     * @param ou             target operating unit
+     * @param fscInvByOuType FSC inventory map keyed by OU type
+     * @param inv            current OU inventory vector
+     * @param add            scheduled arrivals vector
+     * @param cclTypes       available CCL types
+     * @param dmax           maximum next day demand vector for OU
+     * @param rng            RNG for tie-breaking
+     * @param cfg            weight configuration (uses OU weights for scoring)
      * @return chosen CCL type id, or -1 if none is feasible/available
      */
     private static int selectBestFeasibleCCLTypeAllProducts(
@@ -666,13 +713,15 @@ public class EvaluationHeuristic {
     /**
      * Score a candidate FSC -> OU delivery as:
      * baseScore = (normalized deficit before) - (normalized deficit after),
-     * then substract a balance penalty that discourages diverging fill ratios of fuel vs ammo.
-     * @param ou    target operating unit
-     * @param inv   current inventory
-     * @param add   scheduled arrivals
-     * @param ccl   candidate package
-     * @param dmax  maximum next-day demand
-     * @param w     OU target weights
+     * then substract a balance penalty that discourages diverging fill ratios of
+     * fuel vs ammo.
+     * 
+     * @param ou   target operating unit
+     * @param inv  current inventory
+     * @param add  scheduled arrivals
+     * @param ccl  candidate package
+     * @param dmax maximum next-day demand
+     * @param w    OU target weights
      * @return the post delivery deficit reduction score
      */
     private static double postDeliveryDeficitReductionScore(
@@ -709,8 +758,9 @@ public class EvaluationHeuristic {
 
     /**
      * Compute normalized deficit to a target.
-     * @param level     current level (kg)
-     * @param target    desired target (kg)
+     * 
+     * @param level  current level (kg)
+     * @param target desired target (kg)
      * @return normalized deficit
      */
     private static double normalizedDeficit(double level, double target) {
@@ -719,12 +769,14 @@ public class EvaluationHeuristic {
     }
 
     /**
-     * Check whether adding the candidate CCL to current inventory + scheduled arrivals
+     * Check whether adding the candidate CCL to current inventory + scheduled
+     * arrivals
      * stays within OU storage capacity for all products.
-     * @param ou    operating unit with product capacity limits
-     * @param inv   current inventory vector
-     * @param add   scheduled arrivals vector
-     * @param ccl   candidate package
+     * 
+     * @param ou  operating unit with product capacity limits
+     * @param inv current inventory vector
+     * @param add scheduled arrivals vector
+     * @param ccl candidate package
      * @return true if all products remain <= max capacity
      */
     private static boolean fitsCapacity(OperatingUnit ou, double[] inv, double[] add, CCLpackage ccl) {
@@ -738,11 +790,12 @@ public class EvaluationHeuristic {
     }
 
     /**
-     * Add the contents of a CCL type to a scheduled deliveries vector. 
-     * Looks up the CCL package by type id in the provided list. 
-     * @param add       scheduled deliveries vector to mutate
-     * @param cclTypes  list of available CCL packages
-     * @param cclType   hosen type id
+     * Add the contents of a CCL type to a scheduled deliveries vector.
+     * Looks up the CCL package by type id in the provided list.
+     * 
+     * @param add      scheduled deliveries vector to mutate
+     * @param cclTypes list of available CCL packages
+     * @param cclType  hosen type id
      */
     private static void addCclToscheduledDeliveries(double[] add, List<CCLpackage> cclTypes, int cclType) {
         CCLpackage chosen = null;
@@ -760,9 +813,11 @@ public class EvaluationHeuristic {
     }
 
     /**
-     * Compute total CCL cont currently stores at an FSC across all OU types and CCL types.
-     * @param fsc       the FSC to inspect
-     * @param fscInv    FSC inventories
+     * Compute total CCL cont currently stores at an FSC across all OU types and CCL
+     * types.
+     * 
+     * @param fsc    the FSC to inspect
+     * @param fscInv FSC inventories
      * @return total number of CCLs at this FSC
      */
     private static int totalCclsAtFsc(FSC fsc, Map<String, Map<String, int[]>> fscInv) {
@@ -790,9 +845,10 @@ public class EvaluationHeuristic {
 
         /**
          * Constructor.
-         * @param fsc       the FSC
-         * @param ouType    the OU type
-         * @param cclType   the CCL type
+         * 
+         * @param fsc     the FSC
+         * @param ouType  the OU type
+         * @param cclType the CCL type
          */
         RefillChoice(FSC fsc, String ouType, int cclType) {
             this.fsc = fsc;
@@ -803,10 +859,12 @@ public class EvaluationHeuristic {
 
     /**
      * Select the FSC refill action with the lowest current / initial ratio:
-     * ratio = currentCount / initialCount, considering all FSCs, OU types and CCL types.
+     * ratio = currentCount / initialCount, considering all FSCs, OU types and CCL
+     * types.
      * Replenish the most depleted one relative to its baseline.
-     * @param fscs      list of FSCs
-     * @param fscInv    current FSC inventories
+     * 
+     * @param fscs   list of FSCs
+     * @param fscInv current FSC inventories
      * @return best refill choice
      */
     private static RefillChoice selectLowestRatioRefill(List<FSC> fscs, Map<String, Map<String, int[]>> fscInv) {
@@ -868,16 +926,18 @@ public class EvaluationHeuristic {
 
     /**
      * Grid search over OU target weights while keeping VUST weights fixed.
-     * Objective: maximize scenariosWithoutStockou; break ties by minimizing avgTotalStockoutKg.
-     * @param data              instance
-     * @param M                 MSC trucks
-     * @param K                 FSC trucks
-     * @param nTrainScenarios   number of training scenarios
-     * @param baseSeedTrain     base seed for training set
-     * @param fixedVust         fixed VUST weights
-     * @param ouFW              candidate FW weights
-     * @param ouFUEL            candidate FUEL weights
-     * @param ouAMMO            candidate AMMO weights
+     * Objective: maximize scenariosWithoutStockou; break ties by minimizing
+     * avgTotalStockoutKg.
+     * 
+     * @param data            instance
+     * @param M               MSC trucks
+     * @param K               FSC trucks
+     * @param nTrainScenarios number of training scenarios
+     * @param baseSeedTrain   base seed for training set
+     * @param fixedVust       fixed VUST weights
+     * @param ouFW            candidate FW weights
+     * @param ouFUEL          candidate FUEL weights
+     * @param ouAMMO          candidate AMMO weights
      * @return best OU weight configuration under the training evaluation metric
      */
     public static GridSearchResult gridSearchOuWeights(
@@ -898,7 +958,8 @@ public class EvaluationHeuristic {
                             new TargetWeights(aFW, aFU, aAM),
                             fixedVust);
 
-                    EvaluationSummary s = evaluate(data, M, K, nTrainScenarios, baseSeedTrain, cfg, List.of(0.0, 0.0, 0.0, 0.0)); // no correlation
+                    EvaluationSummary s = evaluate(data, M, K, nTrainScenarios, baseSeedTrain, cfg,
+                            List.of(0.0, 0.0, 0.0, 0.0)); // no correlation
 
                     if (best == null
                             || s.scenariosWithoutStockout > best.scenariosWithoutStockout
@@ -914,16 +975,18 @@ public class EvaluationHeuristic {
 
     /**
      * Grid search over VUST target weights while keeping OU weights fixed.
-     * Objective: maximize scenariosWithoutStockout; break ties by minimizing avgTotalStockoutKg.
-     * @param data              instance
-     * @param M                 MSC trucks      
-     * @param K                 FSC trucks
-     * @param nTrainScenarios   number of training scenarios
-     * @param baseSeedTrain     base seed for training set
-     * @param fixedOu           fixed OU weights
-     * @param vFW               candidate FW weights
-     * @param vFUEL             candidate FUEL weights
-     * @param vAMMO             candidate AMMO weights
+     * Objective: maximize scenariosWithoutStockout; break ties by minimizing
+     * avgTotalStockoutKg.
+     * 
+     * @param data            instance
+     * @param M               MSC trucks
+     * @param K               FSC trucks
+     * @param nTrainScenarios number of training scenarios
+     * @param baseSeedTrain   base seed for training set
+     * @param fixedOu         fixed OU weights
+     * @param vFW             candidate FW weights
+     * @param vFUEL           candidate FUEL weights
+     * @param vAMMO           candidate AMMO weights
      * @return best VUST weight configuration under the training evaluation metric
      */
     public static GridSearchResult gridSearchVustWeights(
@@ -944,7 +1007,8 @@ public class EvaluationHeuristic {
                             fixedOu,
                             new TargetWeights(v1, v2, v3));
 
-                    EvaluationSummary s = evaluate(data, M, K, nTrainScenarios, baseSeedTrain, cfg, List.of(0.0, 0.0, 0.0, 0.0)); // no correlation
+                    EvaluationSummary s = evaluate(data, M, K, nTrainScenarios, baseSeedTrain, cfg,
+                            List.of(0.0, 0.0, 0.0, 0.0)); // no correlation
 
                     if (best == null
                             || s.scenariosWithoutStockout > best.scenariosWithoutStockout
@@ -975,17 +1039,19 @@ public class EvaluationHeuristic {
 
     /**
      * Two-phase grid search:
-     *  Phase 1: tune OU weights on a cubic grid, keeping VUST weights fixed.
-     *  Phase 2: tune VUST weights on the same grid, keeping the best OU weights fixed.
-     * @param data                  instance
-     * @param M                     MSC trucks
-     * @param K                     FSC trucks
-     * @param nTrainScenarios       number of scenarios in the tuning set
-     * @param baseSeedTrain         base seed for tuning set
-     * @param lb                    lower bound for weights
-     * @param ub                    upper bound for weights
-     * @param step                  grid step size
-     * @param defaultVustWeights    fixed VUST weights for Phase 1 
+     * Phase 1: tune OU weights on a cubic grid, keeping VUST weights fixed.
+     * Phase 2: tune VUST weights on the same grid, keeping the best OU weights
+     * fixed.
+     * 
+     * @param data               instance
+     * @param M                  MSC trucks
+     * @param K                  FSC trucks
+     * @param nTrainScenarios    number of scenarios in the tuning set
+     * @param baseSeedTrain      base seed for tuning set
+     * @param lb                 lower bound for weights
+     * @param ub                 upper bound for weights
+     * @param step               grid step size
+     * @param defaultVustWeights fixed VUST weights for Phase 1
      * @return final best configuration + summaries for both phases
      */
     public static TuningResult tuneWeights(
@@ -1017,7 +1083,8 @@ public class EvaluationHeuristic {
                             new TargetWeights(aFW, aFUEL, aAMMO),
                             defaultVustWeights);
 
-                    EvaluationSummary s = evaluate(data, M, K, nTrainScenarios, baseSeedTrain, cfg, List.of(0.0, 0.0, 0.0, 0.0)); // no correlation
+                    EvaluationSummary s = evaluate(data, M, K, nTrainScenarios, baseSeedTrain, cfg,
+                            List.of(0.0, 0.0, 0.0, 0.0)); // no correlation
 
                     if (isBetter(s, bestSumOU)) {
                         bestSumOU = s;
@@ -1049,7 +1116,8 @@ public class EvaluationHeuristic {
                             bestCfgOU.ou(),
                             new TargetWeights(vFW, vFUEL, vAMMO));
 
-                    EvaluationSummary s = evaluate(data, M, K, nTrainScenarios, baseSeedTrain, cfg, List.of(0.0, 0.0, 0.0, 0.0)); // no correlation
+                    EvaluationSummary s = evaluate(data, M, K, nTrainScenarios, baseSeedTrain, cfg,
+                            List.of(0.0, 0.0, 0.0, 0.0)); // no correlation
 
                     if (isBetter(s, bestSumV)) {
                         bestSumV = s;
@@ -1076,8 +1144,9 @@ public class EvaluationHeuristic {
      * Compare two summaries under the tuning objective:
      * primary: maximize scenariosWithoutStockout
      * secondary: minimize avgTotalStockoutKg
-     * @param cand  candidate summary
-     * @param best  current best summary
+     * 
+     * @param cand candidate summary
+     * @param best current best summary
      * @return true if candidate is strictly better under the objective
      */
     private static boolean isBetter(EvaluationSummary cand, EvaluationSummary best) {
@@ -1094,9 +1163,10 @@ public class EvaluationHeuristic {
 
     /**
      * Build a numeric grid [lb, lb+step, ..., ub].
-     * @param lb    lower bound
-     * @param ub    upper bound
-     * @param step  step size
+     * 
+     * @param lb   lower bound
+     * @param ub   upper bound
+     * @param step step size
      * @return array of grid points
      */
     private static double[] buildGrid(double lb, double ub, double step) {
@@ -1112,10 +1182,11 @@ public class EvaluationHeuristic {
 
     /**
      * Print a single-line console progress bar.
-     * @param label         phase label shown before the bar
-     * @param current       current iteration count
-     * @param total         total iterations
-     * @param startTimeMs   start time in ms for ETA estimation
+     * 
+     * @param label       phase label shown before the bar
+     * @param current     current iteration count
+     * @param total       total iterations
+     * @param startTimeMs start time in ms for ETA estimation
      */
     private static void printProgressBar(String label, int current, int total, long startTimeMs) {
         int barWidth = 40;
@@ -1156,15 +1227,16 @@ public class EvaluationHeuristic {
     }
 
     /**
-     * Grid search over a new CCL composition under a fixed total weight. 
+     * Grid search over a new CCL composition under a fixed total weight.
      * Iterates over feasible splits (fw, fuel, ammo) in increments of stepKg.
      * For each candidate, constructs a variant instance and evaluates it.
-     * @param M             MSC trucks
-     * @param K             FSC trucks
-     * @param nScenarios    number of evaluation scenarios
-     * @param baseSeed      base seed for scenario generation
-     * @param cfg           weight configuration used by the heuristic
-     * @param stepKg        step size in kg
+     * 
+     * @param M          MSC trucks
+     * @param K          FSC trucks
+     * @param nScenarios number of evaluation scenarios
+     * @param baseSeed   base seed for scenario generation
+     * @param cfg        weight configuration used by the heuristic
+     * @param stepKg     step size in kg
      * @return best composition found and its evaluation summary
      */
     public static CCLGridSearchResult gridSearchCCL(
@@ -1194,7 +1266,8 @@ public class EvaluationHeuristic {
                 int ammo = TOTAL - fw - fuel;
 
                 Instance variant = InstanceCreator.createFDInstanceExtraType(fw, fuel, ammo).get(0);
-                EvaluationSummary s = evaluate(variant, M, K, nScenarios, baseSeed, cfg, List.of(0.0, 0.0, 0.0, 0.0)); // no correlation
+                EvaluationSummary s = evaluate(variant, M, K, nScenarios, baseSeed, cfg, List.of(0.0, 0.0, 0.0, 0.0)); // no
+                                                                                                                       // correlation
 
                 if (best == null
                         || s.scenariosWithoutStockout > best.scenariosWithoutStockout

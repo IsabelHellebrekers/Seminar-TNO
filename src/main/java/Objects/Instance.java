@@ -15,39 +15,56 @@ public class Instance {
     public final int timeHorizon;
 
     /**
-     * Presents an instance for the capacitated resupply problem. 
+     * Baseline constructor with default 10-day horizon.
      * @param operatingUnits    the operating units (OUs)
      * @param fscs              the forward supply centres (FSCs)
      */
     public Instance(List<OperatingUnit> operatingUnits, List<FSC> fscs) {
+        this(operatingUnits, fscs, 10);
+    }
+
+    /**
+     * Constructor with custom time horizon.
+     * @param operatingUnits    the operating units (OUs)
+     * @param fscs              the forward supply centres (FSCs)
+     * @param timeHorizon       planning horizon in days
+     */
+    public Instance(List<OperatingUnit> operatingUnits, List<FSC> fscs, int timeHorizon) {
         this.operatingUnits = operatingUnits;
         this.FSCs = fscs;
-        // Different products in the CCL packages
         this.products = List.of("FW", "FUEL", "AMMO");
-        // Three standard CCL packages and the amount (kg) of each product
         this.cclTypes = List.of(
                 new CCLpackage(1, 3000, 3000, 4000),
                 new CCLpackage(2, 1000, 4000, 5000),
                 new CCLpackage(3, 0, 2000, 8000));
-        // The operating unit types
         this.ouTypes = List.of("VUST", "GN_CIE", "PAINF_CIE", "AT_CIE");
-        // Time horizon of ten days (baseline)
-        this.timeHorizon = 10;
+        this.timeHorizon = timeHorizon;
     }
 
     /**
-     * Constructor
+     * Baseline constructor with custom CCL types and default 10-day horizon.
      * @param operatingUnits    the operating units (OUs)
      * @param fscs              the forward supply centres (FSCs)
      * @param cclTypes          the CCL types (differ in amount (kg) of each product)
      */
     public Instance(List<OperatingUnit> operatingUnits, List<FSC> fscs, List<CCLpackage> cclTypes) {
+        this(operatingUnits, fscs, cclTypes, 10);
+    }
+
+    /**
+     * Constructor with custom CCL types and custom time horizon.
+     * @param operatingUnits    the operating units (OUs)
+     * @param fscs              the forward supply centres (FSCs)
+     * @param cclTypes          the CCL types (differ in amount (kg) of each product)
+     * @param timeHorizon       planning horizon in days
+     */
+    public Instance(List<OperatingUnit> operatingUnits, List<FSC> fscs, List<CCLpackage> cclTypes, int timeHorizon) {
         this.operatingUnits = operatingUnits;
         this.FSCs = fscs;
         this.products = List.of("FW", "FUEL", "AMMO");
         this.cclTypes = cclTypes;
         this.ouTypes = List.of("VUST", "GN_CIE", "PAINF_CIE", "AT_CIE");
-        this.timeHorizon = 10;
+        this.timeHorizon = timeHorizon;
     }
 
     /**
@@ -67,8 +84,16 @@ public class Instance {
             double dailyFoodWaterKg, double dailyFuelKg, double dailyAmmoKg,
             double maxFoodWaterKg, double maxFuelKg, double maxAmmoKg,
             String source) {
-        this.operatingUnits.add(new OperatingUnit(operatingUnitName, ouType, dailyFoodWaterKg, dailyFuelKg, dailyAmmoKg,
-                maxFoodWaterKg, maxFuelKg, maxAmmoKg, source));
+        this.operatingUnits.add(new OperatingUnit(
+                operatingUnitName,
+                ouType,
+                dailyFoodWaterKg,
+                dailyFuelKg,
+                dailyAmmoKg,
+                maxFoodWaterKg,
+                maxFuelKg,
+                maxAmmoKg,
+                source));
     }
 
     /**

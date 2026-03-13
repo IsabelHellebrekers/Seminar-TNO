@@ -91,9 +91,9 @@ public final class StochasticFleetSizerCorrected {
                     String ouName = ou.operatingUnitName;
 
                     // Sample realized daily demand arrays (length T)
-                    double[] dFW = sampler.stochasticFW((int) Math.round(ou.dailyFoodWaterKg));
-                    double[] dFUEL = sampler.stochasticFUEL((int) Math.round(ou.dailyFuelKg));
-                    double[] dAMMO = sampler.stochasticAMMO((int) Math.round(ou.dailyAmmoKg));
+                    double[] dFW = sampler.stochasticFW((int) Math.round(ou.dailyFoodWaterKg), instance.timeHorizon);
+                    double[] dFUEL = sampler.stochasticFUEL((int) Math.round(ou.dailyFuelKg), instance.timeHorizon);
+                    double[] dAMMO = sampler.stochasticAMMO((int) Math.round(ou.dailyAmmoKg), instance.timeHorizon);
 
                     for (int t = 0; t < T; t++) {
                         // Convert demand to minimum #CCLs (min trucks)

@@ -98,8 +98,8 @@ public final class Sampling {
      * @param dailyFoodWaterKg deterministic daily demand for FW
      * @return 10-day FW demand path in kg
      */
-    public double[] stochasticFW(int dailyFoodWaterKg) {
-        double[] FW = new double[10];
+    public double[] stochasticFW(int dailyFoodWaterKg, int horizon) {
+        double[] FW = new double[horizon];
         for (int i = 0; i < FW.length; i++) {
             FW[i] = (dailyFoodWaterKg * uniform());
         }
@@ -144,8 +144,8 @@ public final class Sampling {
      * @param dailyFuelKg deterministic daily demand for FUEL
      * @return 10-day FUEL demand path in kg
      */
-    public double[] stochasticFUEL(int dailyFuelKg) {
-        double[] FUEL = new double[10];
+    public double[] stochasticFUEL(int dailyFuelKg, int horizon) {
+        double[] FUEL = new double[horizon];
         for (int i = 0; i < FUEL.length; i++) {
             FUEL[i] = (dailyFuelKg * binomial());
         }
@@ -190,8 +190,8 @@ public final class Sampling {
      * @param dailyAmmoKg deterministic daily demand for AMMO
      * @return 10-day AMMO demand path in kg
      */
-    public double[] stochasticAMMO(int dailyAmmoKg) {
-        double[] AMMO = new double[10];
+    public double[] stochasticAMMO(int dailyAmmoKg, int horizon) {
+        double[] AMMO = new double[horizon];
         for (int i = 0; i < AMMO.length; i++) {
             AMMO[i] = (dailyAmmoKg * triangular());
         }
@@ -210,9 +210,9 @@ public final class Sampling {
      * @param rhoFUELAMMO   correlation between FUEL and AMMO
      * @return              3x10 matrix of multipliers where the first index is the product
      */
-    public double[][] correlatedSamples(double rhoDays, double rhoFWFUEL, double rhoFWAMMO, double rhoFUELAMMO) {
+    public double[][] correlatedSamples(double rhoDays, double rhoFWFUEL, double rhoFWAMMO, double rhoFUELAMMO, int horizon) {
         final int products = 3;
-        final int days = 10;
+        final int days = horizon;
         double[][] samples = new double[products][days];
 
         double[][] correlation = {

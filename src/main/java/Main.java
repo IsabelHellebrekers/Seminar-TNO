@@ -8,6 +8,8 @@ import java.util.*;
 
 import com.gurobi.gurobi.GRBException;
 
+import Analysis.*;
+
 import java.io.IOException;
 
 public class Main {
@@ -23,7 +25,7 @@ public class Main {
         // System.out.println();
 
         // for (Result res : result) {
-        //     System.out.println(res.getTruckVector());
+        // System.out.println(res.getTruckVector());
         // }
 
         // DISPERSED EXPERIMENTS (uncomment to run)
@@ -36,7 +38,13 @@ public class Main {
         // runPerfectHindsightExperiments();
 
         // SENSITIVITY ANALYSIS (uncomment to run)
-        runSensitivityAnalysis(allInstances);
+        // runSensitivityAnalysis(allInstances);
+
+        // EXTENDED TIME HORIZON ANALYSIS
+        // runExtendedTimeHorizon();
+
+        // VEHICLE BREAKDOWN ANALYSIS
+        // runVehicleBreakdownAnalysis();
     }
 
     /**
@@ -113,7 +121,7 @@ public class Main {
         System.out.println();
         System.out.println("STEP 3 : OOS EVALUATION 3 CCLs (test)");
         EvaluationSummary oosSummary = EvaluationHeuristic.evaluate(base, M, K, nScenarios, seedOOS, bestCfg,
-                List.of(0.0, 0.0, 0.0, 0.0)); // no correlation
+                List.of(0.0, 0.0, 0.0, 0.0)); 
         System.out.println(oosSummary);
 
         int stepKg = 1000;
@@ -134,7 +142,7 @@ public class Main {
         System.out.println("STEP 5 : OOS EVALUATION 4 CCLs (test)");
 
         var oos2 = EvaluationHeuristic.evaluate(bestInst, M, K, nScenarios, seedOOS, bestCfg,
-                List.of(0.0, 0.0, 0.0, 0.0)); // no correlation
+                List.of(0.0, 0.0, 0.0, 0.0)); 
         System.out.println(oos2);
     }
 
@@ -202,20 +210,23 @@ public class Main {
 
         for (List<Double> correlations : correlationsList) {
             for (Instance instance : instances) {
-                EvaluationSummary oosSummary = EvaluationHeuristic.evaluate(instance, M, K, nScenarios, seedOOS, bestCfg, correlations);
+                EvaluationSummary oosSummary = EvaluationHeuristic.evaluate(instance, M, K, nScenarios, seedOOS,
+                        bestCfg, correlations);
                 System.out.println(oosSummary);
             }
         }
 
         // DIFFERENT DEMAND DISTRIBUTIONS
-        // Investigate the effect of scaling the mean and standard deviation of the demand
-        // distributions independently, using multipliers applied around the base mean of 1.0.
+        // Investigate the effect of scaling the mean and standard deviation of the
+        // demand
+        // distributions independently, using multipliers applied around the base mean
+        // of 1.0.
         System.out.println();
         System.out.println("SENSITIVITY ANALYSIS : DEMAND DISTRIBUTIONS (no correlation)");
 
         final List<Double> demandMultipliers = List.of(0.9, 0.95, 1.0, 1.05, 1.1);
 
-        final String[] instanceLabels = {"FD", "Dispersed"};
+        final String[] instanceLabels = { "FD", "Dispersed" };
 
         System.out.println("--- Mean sensitivity (stdMult = 1.0) ---");
         for (double mult : demandMultipliers) {
@@ -234,5 +245,13 @@ public class Main {
                 System.out.println("stdMult=" + mult + " | " + instanceLabels[i] + " | " + summary);
             }
         }
+    }
+
+    private static void runExtendedTimeHorizon() {
+        ExtendedTimeHorizonAnalysis.run();
+    }
+
+    private static void runVehicleBreakdownAnalysis() {
+        VehicleBreakdownAnalysis.run();
     }
 }

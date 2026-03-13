@@ -274,7 +274,7 @@ public class PerfectHindsight {
             scenarioFscs.add(new FSC(f.FSCname, f.maxStorageCapCcls, copy));
         }
 
-        return new Instance(scenarioOus, scenarioFscs);
+        return new Instance(scenarioOus, scenarioFscs, base.timeHorizon);
     }
 
     /**

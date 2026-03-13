@@ -16,10 +16,19 @@ import java.util.Map;
 public class InstanceCreator {
 
     /**
-     * Creates a list containing a single deterministic instance for the FD concept.
-     * @return list containing the FD instance with 10 operating units distributed over 2 FSCs
+     * Creates FD instance with a default time horizon of 10 days.
+     * @return FD instance
      */
     public static List<Instance> createFDInstance() {
+        return createFDInstance(10);
+    }
+
+    /**
+     * Creates FD instance with a custom time horizon. 
+     * @param timeHorizon time horizon in days
+     * @return FD instance with custom time horizon
+     */
+    public static List<Instance> createFDInstance(int timeHorizon) {
         List<OperatingUnit> operatingUnits = new ArrayList<>();
         operatingUnits.add(new OperatingUnit("VUST", "VUST", 13018, 42842, 67140, 39054, 128526, 201420, "MSC"));
         operatingUnits.add(new OperatingUnit("GN_CIE_1", "GN_CIE", 6209, 21072, 43718, 18627, 63216, 131154, "FSC_1"));
@@ -41,58 +50,74 @@ public class InstanceCreator {
         List<FSC> fscs = new ArrayList<>();
 
         // Make FSC1
-        Map<String, int[]> initialStorageLevelsFSC1 = new HashMap<String, int[]>();
+        Map<String, int[]> initialStorageLevelsFSC1 = new HashMap<>();
         initialStorageLevelsFSC1.put("GN_CIE", new int[] { 7, 7, 7 });
         initialStorageLevelsFSC1.put("PAINF_CIE", new int[] { 29, 29, 29 });
         initialStorageLevelsFSC1.put("AT_CIE", new int[] { 6, 6, 6 });
         fscs.add(new FSC("FSC_1", 126, initialStorageLevelsFSC1));
 
         // Make FSC2
-        Map<String, int[]> initialStorageLevelsFSC2 = new HashMap<String, int[]>();
+        Map<String, int[]> initialStorageLevelsFSC2 = new HashMap<>();
         initialStorageLevelsFSC2.put("GN_CIE", new int[] { 7, 7, 7 });
         initialStorageLevelsFSC2.put("PAINF_CIE", new int[] { 19, 19, 19 });
         initialStorageLevelsFSC2.put("AT_CIE", new int[] { 3, 3, 3 });
         fscs.add(new FSC("FSC_2", 87, initialStorageLevelsFSC2));
 
         List<Instance> instanceList = new ArrayList<>();
-        instanceList.add(new Instance(operatingUnits, fscs));
+        instanceList.add(new Instance(operatingUnits, fscs, timeHorizon));
         return instanceList;
     }
 
     /**
-     * Creates a list containing a single deterministic instance with the FD case data extended with a 
-     * fourth CCL type. The fourth CCL type has customizable capacity for FW, FUEL and AMMO.
-     * @param fw4   amount of FW in the fourth CCL type (kg)
-     * @param fuel4 amount of FUEL in the fourth CCL type (kg)
-     * @param ammo4 amount of AMMO in the fourth CCL type (kg)
-     * @return list containing the extended FD instance with 4 CCL types
+     * Creates FD instance with a fourth CCL type and a default time horizon of 10 days.
+     * @param fw4       amount of FW (kg)
+     * @param fuel4     amount of FUEL (kg)
+     * @param ammo4     amount of AMMO (kg)
+     * @return
      */
     public static List<Instance> createFDInstanceExtraType(int fw4, int fuel4, int ammo4) {
+        return createFDInstanceExtraType(fw4, fuel4, ammo4, 10);
+    }
+
+    /**
+     * Creates FD instance with a fourth CCL type and a custom time horizon.
+     * @param fw4           amount of FW (kg)
+     * @param fuel4         amount of FUEL (kg)
+     * @param ammo4         amount of AMMO (kg)
+     * @param timeHorizon   time horizon in days
+     * @return
+     */
+    public static List<Instance> createFDInstanceExtraType(int fw4, int fuel4, int ammo4, int timeHorizon) {
         List<OperatingUnit> operatingUnits = new ArrayList<>();
         operatingUnits.add(new OperatingUnit("VUST", "VUST", 13018, 42842, 67140, 39054, 128526, 201420, "MSC"));
         operatingUnits.add(new OperatingUnit("GN_CIE_1", "GN_CIE", 6209, 21072, 43718, 18627, 63216, 131154, "FSC_1"));
-        operatingUnits.add(new OperatingUnit("PAINF_CIE_1", "PAINF_CIE", 8086, 31693, 58222, 24258, 95079, 174666, "FSC_1"));
-        operatingUnits.add(new OperatingUnit("PAINF_CIE_2", "PAINF_CIE", 11197, 26127, 60676, 33591, 78381, 182028, "FSC_1"));
-        operatingUnits.add(new OperatingUnit("PAINF_CIE_3", "PAINF_CIE", 9447, 31049, 57504, 28341, 93147, 172512, "FSC_1"));
+        operatingUnits
+                .add(new OperatingUnit("PAINF_CIE_1", "PAINF_CIE", 8086, 31693, 58222, 24258, 95079, 174666, "FSC_1"));
+        operatingUnits
+                .add(new OperatingUnit("PAINF_CIE_2", "PAINF_CIE", 11197, 26127, 60676, 33591, 78381, 182028, "FSC_1"));
+        operatingUnits
+                .add(new OperatingUnit("PAINF_CIE_3", "PAINF_CIE", 9447, 31049, 57504, 28341, 93147, 172512, "FSC_1"));
         operatingUnits.add(new OperatingUnit("AT_CIE_1", "AT_CIE", 3476, 7921, 17603, 10428, 23763, 52809, "FSC_1"));
         operatingUnits.add(new OperatingUnit("AT_CIE_2", "AT_CIE", 2484, 7898, 18618, 7452, 23694, 55854, "FSC_1"));
         operatingUnits.add(new OperatingUnit("GN_CIE_2", "GN_CIE", 6966, 24558, 39476, 20898, 73674, 118428, "FSC_2"));
-        operatingUnits.add(new OperatingUnit("PAINF_CIE_4", "PAINF_CIE", 11570, 33486, 52944, 34710, 100458, 158832, "FSC_2"));
-        operatingUnits.add(new OperatingUnit("PAINF_CIE_5", "PAINF_CIE", 10351, 31801, 55848, 31053, 95403, 167544, "FSC_2"));
+        operatingUnits.add(
+                new OperatingUnit("PAINF_CIE_4", "PAINF_CIE", 11570, 33486, 52944, 34710, 100458, 158832, "FSC_2"));
+        operatingUnits
+                .add(new OperatingUnit("PAINF_CIE_5", "PAINF_CIE", 10351, 31801, 55848, 31053, 95403, 167544, "FSC_2"));
         operatingUnits.add(new OperatingUnit("AT_CIE_3", "AT_CIE", 3033, 9628, 16339, 9099, 28884, 49017, "FSC_2"));
 
         List<FSC> fscs = new ArrayList<>();
 
         Map<String, int[]> initialStorageLevelsFSC1 = new HashMap<>();
-        initialStorageLevelsFSC1.put("GN_CIE", new int[] { 5, 5, 5, 6 }); // 5 5 5 6 
-        initialStorageLevelsFSC1.put("PAINF_CIE", new int[] { 21, 22, 22, 22 }); // 21 22 22 22
-        initialStorageLevelsFSC1.put("AT_CIE", new int[] { 4, 4, 5, 5 }); // 4 4 5 5 
+        initialStorageLevelsFSC1.put("GN_CIE", new int[] { 5, 5, 5, 6 });
+        initialStorageLevelsFSC1.put("PAINF_CIE", new int[] { 21, 22, 22, 22 });
+        initialStorageLevelsFSC1.put("AT_CIE", new int[] { 4, 4, 5, 5 });
         fscs.add(new FSC("FSC_1", 126, initialStorageLevelsFSC1));
 
         Map<String, int[]> initialStorageLevelsFSC2 = new HashMap<>();
-        initialStorageLevelsFSC2.put("GN_CIE", new int[] { 5, 5, 5, 6 }); // 5 5 5 6
-        initialStorageLevelsFSC2.put("PAINF_CIE", new int[] { 14, 14, 14, 15 }); // 14 14 14 15
-        initialStorageLevelsFSC2.put("AT_CIE", new int[] { 2, 2, 2, 3 }); // 2 2 2 3
+        initialStorageLevelsFSC2.put("GN_CIE", new int[] { 5, 5, 5, 6 });
+        initialStorageLevelsFSC2.put("PAINF_CIE", new int[] { 14, 14, 14, 15 });
+        initialStorageLevelsFSC2.put("AT_CIE", new int[] { 2, 2, 2, 3 });
         fscs.add(new FSC("FSC_2", 87, initialStorageLevelsFSC2));
 
         List<CCLpackage> cclTypes = List.of(
@@ -102,14 +127,17 @@ public class InstanceCreator {
                 new CCLpackage(4, fw4, fuel4, ammo4));
 
         List<Instance> instanceList = new ArrayList<>();
-        instanceList.add(new Instance(operatingUnits, fscs, cclTypes));
+        instanceList.add(new Instance(operatingUnits, fscs, cclTypes, timeHorizon));
         return instanceList;
     }
 
     /**
-     * Creates all contiguous partition instances of the FD case. 
-     * Each partition represents a valid assignment of operating units to FSCs where OUs
-     * supplied by the same FSC form a contiguous group. Vust is added to every partition.
+     * Creates all contiguous partition instances of the FD case.
+     * Each partition represents a valid assignment of operating units to FSCs where
+     * OUs
+     * supplied by the same FSC form a contiguous group. Vust is added to every
+     * partition.
+     * 
      * @return list of all contiguous partition instances
      */
     public static List<Instance> contiguousPartitions() {
@@ -150,12 +178,15 @@ public class InstanceCreator {
     }
 
     /**
-     * Recursively generates all contiguous partitions of operating units into FSCs. 
-     * At each recursion level, the first batch of OUs is assigned to an FSC, and the 
+     * Recursively generates all contiguous partitions of operating units into FSCs.
+     * At each recursion level, the first batch of OUs is assigned to an FSC, and
+     * the
      * remaining OUs are partitione recursively at the next FSC level.
-     * @param remainingOUs  list of OUs not yet assigned to any FSC
-     * @param depth         the FSC level (FSC_1, FSC_2, etc.)
-     * @return list of all valid instanced that can be constructed from the remaining OUs
+     * 
+     * @param remainingOUs list of OUs not yet assigned to any FSC
+     * @param depth        the FSC level (FSC_1, FSC_2, etc.)
+     * @return list of all valid instanced that can be constructed from the
+     *         remaining OUs
      */
     public static ArrayList<Instance> makePartition(List<OperatingUnit> remainingOUs, int depth) {
         if (remainingOUs.isEmpty()) {
@@ -187,10 +218,12 @@ public class InstanceCreator {
     }
 
     /**
-     * Adds operating units to an instance, all assigned to the specified source FSC.
-     * @param inst          the instance to add operating units to
-     * @param subList       the list of operating units to add
-     * @param sourceName    the FSC name that will supply these operating units
+     * Adds operating units to an instance, all assigned to the specified source
+     * FSC.
+     * 
+     * @param inst       the instance to add operating units to
+     * @param subList    the list of operating units to add
+     * @param sourceName the FSC name that will supply these operating units
      */
     public static void addOperatingUnitsToNode(Instance inst, List<OperatingUnit> subList, String sourceName) {
         for (OperatingUnit ou : subList) {
@@ -203,11 +236,14 @@ public class InstanceCreator {
     // correct capacity and initial storage levels based on the OUs in the sublist.
 
     /**
-     * Adds an FSC to an instance with automatically calculated capacity and initial inventory levels.
-     * Initial storage levels are calculated based on the count and types of operating units in the sublist.
-     * @param inst      the instance to add the FSC to
-     * @param depth     the FSC level number, used to create FSC name (FSC_depth)
-     * @param subList   the list of OUs that this FSC will supply
+     * Adds an FSC to an instance with automatically calculated capacity and initial
+     * inventory levels.
+     * Initial storage levels are calculated based on the count and types of
+     * operating units in the sublist.
+     * 
+     * @param inst    the instance to add the FSC to
+     * @param depth   the FSC level number, used to create FSC name (FSC_depth)
+     * @param subList the list of OUs that this FSC will supply
      */
     public static void addFSCToNode(Instance inst, int depth, List<OperatingUnit> subList) {
         // Calculate initialStorageLevels
