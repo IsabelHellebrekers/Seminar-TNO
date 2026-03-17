@@ -17,6 +17,7 @@ public class InstanceCreator {
 
     /**
      * Creates FD instance with a default time horizon of 10 days.
+     * 
      * @return FD instance
      */
     public static List<Instance> createFDInstance() {
@@ -24,7 +25,8 @@ public class InstanceCreator {
     }
 
     /**
-     * Creates FD instance with a custom time horizon. 
+     * Creates FD instance with a custom time horizon.
+     * 
      * @param timeHorizon time horizon in days
      * @return FD instance with custom time horizon
      */
@@ -69,10 +71,12 @@ public class InstanceCreator {
     }
 
     /**
-     * Creates FD instance with a fourth CCL type and a default time horizon of 10 days.
-     * @param fw4       amount of FW (kg)
-     * @param fuel4     amount of FUEL (kg)
-     * @param ammo4     amount of AMMO (kg)
+     * Creates FD instance with a fourth CCL type and a default time horizon of 10
+     * days.
+     * 
+     * @param fw4   amount of FW (kg)
+     * @param fuel4 amount of FUEL (kg)
+     * @param ammo4 amount of AMMO (kg)
      * @return
      */
     public static List<Instance> createFDInstanceExtraType(int fw4, int fuel4, int ammo4) {
@@ -81,10 +85,11 @@ public class InstanceCreator {
 
     /**
      * Creates FD instance with a fourth CCL type and a custom time horizon.
-     * @param fw4           amount of FW (kg)
-     * @param fuel4         amount of FUEL (kg)
-     * @param ammo4         amount of AMMO (kg)
-     * @param timeHorizon   time horizon in days
+     * 
+     * @param fw4         amount of FW (kg)
+     * @param fuel4       amount of FUEL (kg)
+     * @param ammo4       amount of AMMO (kg)
+     * @param timeHorizon time horizon in days
      * @return
      */
     public static List<Instance> createFDInstanceExtraType(int fw4, int fuel4, int ammo4, int timeHorizon) {
@@ -119,6 +124,68 @@ public class InstanceCreator {
         initialStorageLevelsFSC2.put("PAINF_CIE", new int[] { 14, 14, 14, 15 });
         initialStorageLevelsFSC2.put("AT_CIE", new int[] { 2, 2, 2, 3 });
         fscs.add(new FSC("FSC_2", 87, initialStorageLevelsFSC2));
+
+        List<CCLpackage> cclTypes = List.of(
+                new CCLpackage(1, 3000, 3000, 4000),
+                new CCLpackage(2, 1000, 4000, 5000),
+                new CCLpackage(3, 0, 2000, 8000),
+                new CCLpackage(4, fw4, fuel4, ammo4));
+
+        List<Instance> instanceList = new ArrayList<>();
+        instanceList.add(new Instance(operatingUnits, fscs, cclTypes, timeHorizon));
+        return instanceList;
+    }
+
+    public static List<Instance> createDispersedInstanceExtraType(int fw4, int fuel4, int ammo4, int timeHorizon) {
+        List<OperatingUnit> operatingUnits = new ArrayList<>();
+        operatingUnits.add(new OperatingUnit("VUST", "VUST", 13018, 42842, 67140, 39054, 128526, 201420, "MSC"));
+        operatingUnits.add(new OperatingUnit("GN_CIE_1", "GN_CIE", 6209, 21072, 43718, 18627, 63216, 131154, "FSC_1"));
+        operatingUnits
+                .add(new OperatingUnit("PAINF_CIE_1", "PAINF_CIE", 8086, 31693, 58222, 24258, 95079, 174666, "FSC_1"));
+        operatingUnits
+                .add(new OperatingUnit("PAINF_CIE_2", "PAINF_CIE", 11197, 26127, 60676, 33591, 78381, 182028, "FSC_1"));
+        operatingUnits
+                .add(new OperatingUnit("PAINF_CIE_3", "PAINF_CIE", 9447, 31049, 57504, 28341, 93147, 172512, "FSC_2"));
+        operatingUnits.add(new OperatingUnit("AT_CIE_1", "AT_CIE", 3476, 7921, 17603, 10428, 23763, 52809, "FSC_2"));
+        operatingUnits.add(new OperatingUnit("AT_CIE_2", "AT_CIE", 2484, 7898, 18618, 7452, 23694, 55854, "FSC_3"));
+        operatingUnits.add(new OperatingUnit("GN_CIE_2", "GN_CIE", 6966, 24558, 39476, 20898, 73674, 118428, "FSC_3"));
+        operatingUnits.add(
+                new OperatingUnit("PAINF_CIE_4", "PAINF_CIE", 11570, 33486, 52944, 34710, 100458, 158832, "FSC_4"));
+        operatingUnits
+                .add(new OperatingUnit("PAINF_CIE_5", "PAINF_CIE", 10351, 31801, 55848, 31053, 95403, 167544, "FSC_4"));
+        operatingUnits.add(new OperatingUnit("AT_CIE_3", "AT_CIE", 3033, 9628, 16339, 9099, 28884, 49017, "FSC_4"));
+
+        List<FSC> fscs = new ArrayList<>();
+
+        Map<String, int[]> initialStorageLevelsFSC1 = new HashMap<>();
+        initialStorageLevelsFSC1.put("GN_CIE", new int[] { 5, 5, 5, 6 });
+        initialStorageLevelsFSC1.put("PAINF_CIE", new int[] { 14, 14, 14, 15 });
+        initialStorageLevelsFSC1.put("AT_CIE", new int[] { 0, 0, 0, 0 });
+        fscs.add(new FSC("FSC_1",78, initialStorageLevelsFSC1));
+
+        Map<String, int[]> initialStorageLevelsFSC2 = new HashMap<>();
+        initialStorageLevelsFSC2.put("GN_CIE", new int[] { 0, 0, 0, 0 });
+        initialStorageLevelsFSC2.put("PAINF_CIE", new int[] { 7, 7, 8, 8 });
+        initialStorageLevelsFSC2.put("AT_CIE", new int[] { 2, 2, 2, 3 });
+        fscs.add(new FSC("FSC_2", 39, initialStorageLevelsFSC2));
+
+        Map<String, int[]> initialStorageLevelsFSC3 = new HashMap<>();
+        initialStorageLevelsFSC3.put("GN_CIE", new int[] { 5, 5, 5, 6 });
+        initialStorageLevelsFSC3.put("PAINF_CIE", new int[] { 0, 0, 0, 0 });
+        initialStorageLevelsFSC3.put("AT_CIE", new int[] { 2, 2, 2, 3 });
+        fscs.add(new FSC("FSC_3", 30, initialStorageLevelsFSC3));
+
+        Map<String, int[]> initialStorageLevelsFSC4 = new HashMap<>();
+        initialStorageLevelsFSC4.put("GN_CIE", new int[] { 0, 0, 0, 0 });
+        initialStorageLevelsFSC4.put("PAINF_CIE", new int[] { 14, 14, 14, 15 });
+        initialStorageLevelsFSC4.put("AT_CIE", new int[] { 2, 2, 2, 3 });
+        fscs.add(new FSC("FSC_4", 66, initialStorageLevelsFSC4));
+
+        // Map<String, int[]> initialStorageLevelsFSC5 = new HashMap<>();
+        // initialStorageLevelsFSC5.put("GN_CIE", new int[] { 0, 0, 0, 0 });
+        // initialStorageLevelsFSC5.put("PAINF_CIE", new int[] { 7, 7, 8, 8 });
+        // initialStorageLevelsFSC5.put("AT_CIE", new int[] { 2, 2, 2, 3});
+        // fscs.add(new FSC("FSC_5", 39, initialStorageLevelsFSC5));
 
         List<CCLpackage> cclTypes = List.of(
                 new CCLpackage(1, 3000, 3000, 4000),

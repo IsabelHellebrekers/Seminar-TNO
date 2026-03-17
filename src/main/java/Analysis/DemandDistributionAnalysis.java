@@ -9,16 +9,16 @@ public final class DemandDistributionAnalysis {
 
     private DemandDistributionAnalysis() {}
 
-    private static final int N_SCENARIOS = 1000;
+    private static final int N_SCENARIOS = 10000;
     private static final int OOS_SEED = 10042;
 
     private static final EvaluationHeuristic.WeightConfig BEST_CFG = new EvaluationHeuristic.WeightConfig(
-            new EvaluationHeuristic.TargetWeights(1.3, 0.7, 1.3),
-            new EvaluationHeuristic.TargetWeights(1.0, 1.0, 1.2));
+            new EvaluationHeuristic.TargetWeights(1.2, 0.6, 0.9),
+            new EvaluationHeuristic.TargetWeights(1.0, 1.0, 1.0));
 
     private static final List<Double> NO_CORRELATION = List.of(0.0, 0.0, 0.0, 0.0);
 
-    private static final List<Double> DEMAND_MULTIPLIERS = List.of(0.9, 0.95, 1.0, 1.05, 1.1);
+    private static final List<Double> DEMAND_MULTIPLIERS = List.of(0.85, 0.9, 0.95, 1.0, 1.05, 1.1, 1.15);
 
     public static void run(List<InstanceConfig> configs) {
         System.out.println();

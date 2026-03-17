@@ -9,15 +9,16 @@ public final class CorrelationAnalysis {
 
     private CorrelationAnalysis() {}
 
-    private static final int N_SCENARIOS = 5000;
+    private static final int N_SCENARIOS = 10000;
     private static final int OOS_SEED = 10042;
 
     private static final EvaluationHeuristic.WeightConfig BEST_CFG = new EvaluationHeuristic.WeightConfig(
-            new EvaluationHeuristic.TargetWeights(1.3, 0.7, 1.3),
-            new EvaluationHeuristic.TargetWeights(1.0, 1.0, 1.2));
+            new EvaluationHeuristic.TargetWeights(1.2, 0.6, 0.9),
+            new EvaluationHeuristic.TargetWeights(1.0, 1.0, 1.0));
 
     // Correlation values swept in each experiment: from independent to strong
-    private static final double[] RHO_VALUES = {0.0, 0.25, 0.5, 0.75};
+    private static final double[] RHO_VALUES_DAYS = {0.0, 0.05, 0.10, 0.15};
+    private static final double[] RHO_VALUES_PRODUCTS = {0.0, 0.25, 0.5, 0.75, 1.0};
 
     public static void run(List<InstanceConfig> configs) {
         System.out.println();
@@ -41,7 +42,7 @@ public final class CorrelationAnalysis {
         System.out.println("--- Day-to-day correlation (products independent) ---");
         printHeader("rhoDays");
 
-        for (double rho : RHO_VALUES) {
+        for (double rho : RHO_VALUES_DAYS) {
             List<Double> correlations = List.of(rho, 0.0, 0.0, 0.0);
             printRows(configs, "rhoDays", rho, correlations);
         }
@@ -59,7 +60,7 @@ public final class CorrelationAnalysis {
         System.out.printf("--- Product correlation: %s (days independent, other pairs at 0) ---%n", pairName);
         printHeader("rho_" + pairName);
 
-        for (double rho : RHO_VALUES) {
+        for (double rho : RHO_VALUES_PRODUCTS) {
             double[] c = {0.0, 0.0, 0.0, 0.0};
             c[index] = rho;
             List<Double> correlations = List.of(c[0], c[1], c[2], c[3]);

@@ -12,27 +12,27 @@ import com.gurobi.gurobi.GRBEnv;
 import com.gurobi.gurobi.GRBException;
 import com.gurobi.gurobi.GRBModel;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.io.*;
 
 public final class ExtendedTimeHorizonAnalysis {
 
     private ExtendedTimeHorizonAnalysis() {
     }
 
-    private static final int[] DETERMINISTIC_HORIZONS = {2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24};
-    private static final int[] STOCHASTIC_EVAL_HORIZONS = {100};
+    private static final int[] DETERMINISTIC_HORIZONS = { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24 };
+    private static final int[] STOCHASTIC_EVAL_HORIZONS = { 20 };
 
     private static final double TIME_LIMIT_SECONDS = 300.0;
 
-    private static final int OOS_SEED = 10042;
-    private static final int N_SCENARIOS = 1000;
+    private static final int OOS_SEED = 20000;
+    private static final int N_SCENARIOS = 10000;
 
-    private static final EvaluationHeuristic.TargetWeights OU_WEIGHTS =
-            new EvaluationHeuristic.TargetWeights(1.3, 0.7, 1.3);
+    private static final EvaluationHeuristic.TargetWeights OU_WEIGHTS = new EvaluationHeuristic.TargetWeights(1.2, 0.6,
+            0.9);
 
-    private static final EvaluationHeuristic.TargetWeights VUST_WEIGHTS =
-            new EvaluationHeuristic.TargetWeights(1.0, 1.0, 1.2);
+    private static final EvaluationHeuristic.TargetWeights VUST_WEIGHTS = new EvaluationHeuristic.TargetWeights(1.0,
+            1.0, 1.0);
 
     public static void run(List<InstanceConfig> configs) {
         System.out.println();
@@ -40,7 +40,7 @@ public final class ExtendedTimeHorizonAnalysis {
         System.out.println("EXTENDED TIME HORIZON ANALYSIS");
         System.out.println("============================================================");
 
-        runDeterministicExtendedHorizon();
+        // runDeterministicExtendedHorizon();
         runStochasticExtendedHorizon(configs);
     }
 
@@ -82,8 +82,7 @@ public final class ExtendedTimeHorizonAnalysis {
         System.out.println("STOCHASTIC EXTENDED HORIZON");
         System.out.println("------------------------------------------------------------");
 
-        EvaluationHeuristic.WeightConfig weightCfg =
-                new EvaluationHeuristic.WeightConfig(OU_WEIGHTS, VUST_WEIGHTS);
+        EvaluationHeuristic.WeightConfig weightCfg = new EvaluationHeuristic.WeightConfig(OU_WEIGHTS, VUST_WEIGHTS);
 
         System.out.println("OU weights   = " + OU_WEIGHTS);
         System.out.println("VUST weights = " + VUST_WEIGHTS);
@@ -91,35 +90,86 @@ public final class ExtendedTimeHorizonAnalysis {
         System.out.println("Scenarios    = " + N_SCENARIOS);
 
         for (InstanceConfig cfg : configs) {
-            System.out.println();
-            System.out.println("Instance: " + cfg.label());
-            System.out.println("MSC trucks = " + cfg.mscTrucks());
-            cfg.trucksPerFSC().entrySet().stream()
-                    .sorted(Map.Entry.comparingByKey())
-                    .forEach(e -> System.out.println(e.getKey() + " trucks = " + e.getValue()));
-            CCLpackage ccl4 = cfg.fourthCCL();
-            if (ccl4 != null) {
-                System.out.println("CCL4 = (" + ccl4.foodWaterKg + " FW, " + ccl4.fuelKg + " FUEL, " + ccl4.ammoKg + " AMMO)");
-            }
 
-            System.out.printf("%-8s %-18s %-22s %-22s%n",
-                    "H_eval", "No-stockout(%)", "Scenarios w/o stockout", "Avg total stockout kg");
+            CCLpackage ccl4 = cfg.fourthCCL();
 
             for (int horizon : STOCHASTIC_EVAL_HORIZONS) {
-                Instance evalInst = InstanceCreator.createFDInstance(horizon).get(0);
+
+                Instance evalInst;
                 if (ccl4 != null) {
-                    evalInst.addCCLType(ccl4);
+                    evalInst = InstanceCreator.createFDInstanceExtraType(
+                            (int) ccl4.foodWaterKg,
+                            (int) ccl4.fuelKg,
+                            (int) ccl4.ammoKg,
+                            horizon).get(0);
+                } else {
+                    evalInst = InstanceCreator.createFDInstance(horizon).get(0);
                 }
 
-                EvaluationSummary summary = EvaluationHeuristic.evaluate(
-                        evalInst, cfg.mscTrucks(), cfg.trucksPerFSC(),
-                        N_SCENARIOS, OOS_SEED, weightCfg, List.of(0.0, 0.0, 0.0, 0.0));
+                String csvFile = "stochastic_extended_horizon_H" + horizon + ".csv";
 
-                System.out.printf("%-8d %-18.2f %-22d %-22.2f%n",
-                        horizon,
-                        summary.noStockoutPercentage,
-                        summary.scenariosWithoutStockout,
-                        summary.avgTotalStockoutKg);
+                int scenariosWithoutStockout = 0;
+                int scenariosWithStockout = 0;
+                double sumTotalStockoutKg = 0.0;
+
+                try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(csvFile)))) {
+
+                    writer.println(
+                            "has_stockout,total_stockout_kg,first_stockout_day,number_of_stockout_days,"
+                                    + "fw_stockout_days,fuel_stockout_days,ammo_stockout_days,"
+                                    + "total_fw_stockout_kg,total_fuel_stockout_kg,total_ammo_stockout_kg");
+
+                    for (int s = 1; s <= N_SCENARIOS; s++) {
+
+                        long scenarioSeed = OOS_SEED + s;
+
+                        EvaluationHeuristic.ScenarioResult result = EvaluationHeuristic.evaluateSingleScenario(
+                                evalInst,
+                                cfg.mscTrucks(),
+                                cfg.trucksPerFSC(),
+                                scenarioSeed,
+                                weightCfg,
+                                List.of(0.0, 0.0, 0.0, 0.0));
+
+                        if (result.hasStockout) {
+
+                            scenariosWithStockout++;
+
+                            writer.printf(Locale.US,
+                                    "%s,%.6f,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f%n",
+                                    result.hasStockout,
+                                    result.totalStockoutKg,
+                                    result.firstStockoutDay,
+                                    result.numberOfStockoutDays,
+                                    result.fwStockoutDays,
+                                    result.fuelStockoutDays,
+                                    result.ammoStockoutDays,
+                                    result.totalFwStockoutKg,
+                                    result.totalFuelStockoutKg,
+                                    result.totalAmmoStockoutKg);
+
+                        } else {
+                            scenariosWithoutStockout++;
+                        }
+
+                        sumTotalStockoutKg += result.totalStockoutKg;
+                    }
+
+                    double avgTotalStockoutKg = sumTotalStockoutKg / N_SCENARIOS;
+                    double noStockoutPct = 100.0 * scenariosWithoutStockout / N_SCENARIOS;
+
+                    System.out.println("Written: " + csvFile);
+                    System.out.printf(
+                            "H=%d | no stockout=%d | with stockout=%d | no-stockout%%=%.2f | avg total stockout kg=%.2f%n",
+                            horizon,
+                            scenariosWithoutStockout,
+                            scenariosWithStockout,
+                            noStockoutPct,
+                            avgTotalStockoutKg);
+
+                } catch (IOException e) {
+                    throw new RuntimeException("Failed to write CSV for H=" + horizon, e);
+                }
             }
         }
     }
@@ -172,7 +222,8 @@ public final class ExtendedTimeHorizonAnalysis {
                     gap);
 
         } catch (GRBException e) {
-            throw new RuntimeException("Deterministic solve failed for H=" + inst.timeHorizon + ": " + e.getMessage(), e);
+            throw new RuntimeException("Deterministic solve failed for H=" + inst.timeHorizon + ": " + e.getMessage(),
+                    e);
         } finally {
             if (milp != null) {
                 try {
@@ -202,12 +253,14 @@ public final class ExtendedTimeHorizonAnalysis {
     }
 
     private static String formatDouble(Double x) {
-        if (x == null) return "-";
+        if (x == null)
+            return "-";
         return String.format("%.2f", x);
     }
 
     private static String formatGapPercent(Double gap) {
-        if (gap == null) return "-";
+        if (gap == null)
+            return "-";
         return String.format("%.2f", 100.0 * gap);
     }
 
@@ -222,13 +275,13 @@ public final class ExtendedTimeHorizonAnalysis {
         final Double gap;
 
         DeterministicRunSummary(int horizon,
-                                int statusCode,
-                                String statusName,
-                                double runtimeSeconds,
-                                boolean hasIncumbent,
-                                Double upperBound,
-                                Double lowerBound,
-                                Double gap) {
+                int statusCode,
+                String statusName,
+                double runtimeSeconds,
+                boolean hasIncumbent,
+                Double upperBound,
+                Double lowerBound,
+                Double gap) {
             this.horizon = horizon;
             this.statusCode = statusCode;
             this.statusName = statusName;

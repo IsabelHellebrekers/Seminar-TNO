@@ -64,26 +64,73 @@ public class EvaluationHeuristic {
     private record UsedKey(String fsc, String ouType, int cclType) {
     }
 
-    /**
-     * Result of a single scenario (stockout presence + magnitude+ detailed
-     * records).
-     */
     public static final class ScenarioResult {
         public final boolean hasStockout;
         public final double totalStockoutKg;
         public final List<Stockout> stockouts;
 
-        /**
-         * Result of a single scenario.
-         * 
-         * @param hasStockout     true if anu stockout occured in the scenario
-         * @param totalStockoutKg total unmet demand over all products/days in kg
-         * @param stockouts       list of per OU, product, day stockout records
-         */
-        public ScenarioResult(boolean hasStockout, double totalStockoutKg, List<Stockout> stockouts) {
+        public final int firstStockoutDay;
+        public final int numberOfStockoutDays;
+
+        public final int fwStockoutDays;
+        public final int fuelStockoutDays;
+        public final int ammoStockoutDays;
+
+        public final double totalFwStockoutKg;
+        public final double totalFuelStockoutKg;
+        public final double totalAmmoStockoutKg;
+
+        public ScenarioResult(
+                boolean hasStockout,
+                double totalStockoutKg,
+                List<Stockout> stockouts,
+                int firstStockoutDay,
+                int numberOfStockoutDays,
+                int fwStockoutDays,
+                int fuelStockoutDays,
+                int ammoStockoutDays,
+                double totalFwStockoutKg,
+                double totalFuelStockoutKg,
+                double totalAmmoStockoutKg) {
+
             this.hasStockout = hasStockout;
             this.totalStockoutKg = totalStockoutKg;
             this.stockouts = stockouts;
+
+            this.firstStockoutDay = firstStockoutDay;
+            this.numberOfStockoutDays = numberOfStockoutDays;
+
+            this.fwStockoutDays = fwStockoutDays;
+            this.fuelStockoutDays = fuelStockoutDays;
+            this.ammoStockoutDays = ammoStockoutDays;
+
+            this.totalFwStockoutKg = totalFwStockoutKg;
+            this.totalFuelStockoutKg = totalFuelStockoutKg;
+            this.totalAmmoStockoutKg = totalAmmoStockoutKg;
+        }
+    }
+
+    public static final class DemandMultiplierConfig {
+        public final double meanFw;
+        public final double meanFuel;
+        public final double meanAmmo;
+        public final double stdFw;
+        public final double stdFuel;
+        public final double stdAmmo;
+
+        public DemandMultiplierConfig(
+                double meanFw, double meanFuel, double meanAmmo,
+                double stdFw, double stdFuel, double stdAmmo) {
+            this.meanFw = meanFw;
+            this.meanFuel = meanFuel;
+            this.meanAmmo = meanAmmo;
+            this.stdFw = stdFw;
+            this.stdFuel = stdFuel;
+            this.stdAmmo = stdAmmo;
+        }
+
+        public static DemandMultiplierConfig baseline() {
+            return new DemandMultiplierConfig(1.0, 1.0, 1.0, 1.0, 1.0, 1.0);
         }
     }
 
@@ -236,6 +283,11 @@ public class EvaluationHeuristic {
                     data.timeHorizon));
         }
 
+        double[] fwStockoutByDay = new double[data.timeHorizon + 1];
+        double[] fuelStockoutByDay = new double[data.timeHorizon + 1];
+        double[] ammoStockoutByDay = new double[data.timeHorizon + 1];
+        boolean[] anyStockoutDay = new boolean[data.timeHorizon + 1];
+
         // Simulate days t = 1,...,T
         for (int t = 1; t <= data.timeHorizon; t++) {
 
@@ -258,11 +310,28 @@ public class EvaluationHeuristic {
 
                 }
 
-                totalStockoutKg += consumeAndRecordStockout(stockouts, ou.operatingUnitName, "FW", dFW, t, inv, IDX_FW);
-                totalStockoutKg += consumeAndRecordStockout(stockouts, ou.operatingUnitName, "FUEL", dFUEL, t, inv,
+                double fwSo = consumeAndRecordStockout(stockouts, ou.operatingUnitName, "FW", dFW, t, inv, IDX_FW);
+                double fuelSo = consumeAndRecordStockout(stockouts, ou.operatingUnitName, "FUEL", dFUEL, t, inv,
                         IDX_FUEL);
-                totalStockoutKg += consumeAndRecordStockout(stockouts, ou.operatingUnitName, "AMMO", dAMMO, t, inv,
+                double ammoSo = consumeAndRecordStockout(stockouts, ou.operatingUnitName, "AMMO", dAMMO, t, inv,
                         IDX_AMMO);
+
+                totalStockoutKg += fwSo + fuelSo + ammoSo;
+
+                if (fwSo > 0) {
+                    fwStockoutByDay[t] += fwSo;
+                    anyStockoutDay[t] = true;
+                }
+
+                if (fuelSo > 0) {
+                    fuelStockoutByDay[t] += fuelSo;
+                    anyStockoutDay[t] = true;
+                }
+
+                if (ammoSo > 0) {
+                    ammoStockoutByDay[t] += ammoSo;
+                    anyStockoutDay[t] = true;
+                }
             }
 
             // No dispatch on the final day
@@ -374,7 +443,55 @@ public class EvaluationHeuristic {
         }
 
         boolean hasStockout = !stockouts.isEmpty();
-        return new ScenarioResult(hasStockout, totalStockoutKg, stockouts);
+
+        int firstStockoutDay = 0;
+        int numberOfStockoutDays = 0;
+
+        int fwStockoutDays = 0;
+        int fuelStockoutDays = 0;
+        int ammoStockoutDays = 0;
+
+        double totalFwStockoutKg = 0;
+        double totalFuelStockoutKg = 0;
+        double totalAmmoStockoutKg = 0;
+
+        for (int t = 1; t <= data.timeHorizon; t++) {
+
+            if (anyStockoutDay[t]) {
+                numberOfStockoutDays++;
+                if (firstStockoutDay == 0) {
+                    firstStockoutDay = t;
+                }
+            }
+
+            if (fwStockoutByDay[t] > 0) {
+                fwStockoutDays++;
+                totalFwStockoutKg += fwStockoutByDay[t];
+            }
+
+            if (fuelStockoutByDay[t] > 0) {
+                fuelStockoutDays++;
+                totalFuelStockoutKg += fuelStockoutByDay[t];
+            }
+
+            if (ammoStockoutByDay[t] > 0) {
+                ammoStockoutDays++;
+                totalAmmoStockoutKg += ammoStockoutByDay[t];
+            }
+        }
+
+        return new ScenarioResult(
+                hasStockout,
+                totalStockoutKg,
+                stockouts,
+                firstStockoutDay,
+                numberOfStockoutDays,
+                fwStockoutDays,
+                fuelStockoutDays,
+                ammoStockoutDays,
+                totalFwStockoutKg,
+                totalFuelStockoutKg,
+                totalAmmoStockoutKg);
     }
 
     /**

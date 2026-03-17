@@ -15,17 +15,17 @@ public final class VehicleBreakdownAnalysis {
     }
 
     private static final EvaluationHeuristic.TargetWeights OU_WEIGHTS =
-            new EvaluationHeuristic.TargetWeights(1.3, 0.7, 1.3);
+            new EvaluationHeuristic.TargetWeights(1.2, 0.6, 0.9);
 
     private static final EvaluationHeuristic.TargetWeights VUST_WEIGHTS =
-            new EvaluationHeuristic.TargetWeights(1.0, 1.0, 1.2);
+            new EvaluationHeuristic.TargetWeights(1.0, 1.0, 1.0);
 
-    private static final int N_SCENARIOS = 1000;
-    private static final long OOS_SEED = 10042L;
+    private static final int N_SCENARIOS = 10000;
+    private static final int OOS_SEED = 10042;
 
     private static final List<Double> ZERO_CORRELATIONS = List.of(0.0, 0.0, 0.0, 0.0);
 
-    private static final double[] BREAKDOWN_RATES = {0.00, 0.01, 0.05, 0.10, 0.15};
+    private static final double[] BREAKDOWN_RATES = {0.00, 0.01, 0.05, 0.10, 0.15, 0.20, 0.25};
 
     public static void run(List<InstanceConfig> configs) {
         System.out.println();

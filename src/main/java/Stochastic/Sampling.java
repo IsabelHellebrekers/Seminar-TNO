@@ -1,13 +1,15 @@
 package Stochastic;
+
 import java.util.Random;
 
 /**
- * Random demand sampler used for scenario generation in the stochastic evaluation.
+ * Random demand sampler used for scenario generation in the stochastic
+ * evaluation.
  * 
  * Distributions (multipliers applied to deterministic daily demand in kg):
- *  - Food & Water (FW): Uniform[minUni, maxUni]
- *  - Fuel (FUEL): Binomial(n, p) approximated via Bernoulli trials (scaled)
- *  - Ammunition (AMMO): Triangular(minTri, modeTri, maxTri) via inverse CDF
+ * - Food & Water (FW): Uniform[minUni, maxUni]
+ * - Fuel (FUEL): Binomial(n, p) approximated via Bernoulli trials (scaled)
+ * - Ammunition (AMMO): Triangular(minTri, modeTri, maxTri) via inverse CDF
  */
 public final class Sampling {
 
@@ -27,10 +29,12 @@ public final class Sampling {
     private final double maxTri = 2.0;
     private final double modeTri = 0.8;
 
-    // Sensitivity multipliers: meanMult shifts the mean, stdMult scales the spread around the mean.
-    // All base distributions have mean = 1.0, so: result = meanMult + stdMult * (raw - 1.0).
+    // Sensitivity multipliers: meanMult shifts the mean, stdMult scales the spread
+    // around the mean.
+    // All base distributions have mean = 1.0, so: result = meanMult + stdMult *
+    // (raw - 1.0).
     private double meanMult = 1.0;
-    private double stdMult  = 1.0;
+    private double stdMult = 1.0;
 
     /**
      * Construct a sampler with a non-deterministic seed.
@@ -41,6 +45,7 @@ public final class Sampling {
 
     /**
      * Construct a sampler with a fixed seed to ensure reproducibility across runs.
+     * 
      * @param seed the fixed seed
      */
     public Sampling(long seed) {
@@ -50,6 +55,7 @@ public final class Sampling {
     /**
      * Set the mean multiplier. A value of m shifts the mean of every distribution
      * from 1.0 to m while keeping the spread unchanged (stdMult = 1.0 by default).
+     * 
      * @param m the mean multiplier
      */
     public void setMeanMultiplier(double m) {
@@ -57,9 +63,12 @@ public final class Sampling {
     }
 
     /**
-     * Set the standard-deviation multiplier. A value of s scales the spread of every
-     * distribution around its mean by s while keeping the mean unchanged (meanMult = 1.0
+     * Set the standard-deviation multiplier. A value of s scales the spread of
+     * every
+     * distribution around its mean by s while keeping the mean unchanged (meanMult
+     * = 1.0
      * by default).
+     * 
      * @param s the standard-deviation multiplier
      */
     public void setStdMultiplier(double s) {
@@ -67,7 +76,8 @@ public final class Sampling {
     }
 
     /**
-     * Apply the mean/std multipliers to a raw multiplier drawn from a base distribution
+     * Apply the mean/std multipliers to a raw multiplier drawn from a base
+     * distribution
      * whose mean is 1.0: result = meanMult + stdMult * (raw - 1.0).
      */
     private double applyMultipliers(double raw) {
@@ -80,11 +90,14 @@ public final class Sampling {
     public double uniform() {
         double raw = minUni + rng.nextDouble() * (maxUni - minUni);
         return applyMultipliers(raw);
+        // return raw;
     }
 
     /**
-     * Generate a 10-day FW demand path in kg, by multiplying the deterministic daily demand
+     * Generate a 10-day FW demand path in kg, by multiplying the deterministic
+     * daily demand
      * with i.i.d. Uniform multipliers.
+     * 
      * @param dailyFoodWaterKg deterministic daily demand for FW
      * @return 10-day FW demand path in kg
      */
@@ -104,14 +117,19 @@ public final class Sampling {
     public double binomial() {
         int successes = 0;
         for (int i = 0; i < n; i++) {
-            if (rng.nextDouble() < p) successes++;
+            if (rng.nextDouble() < p)
+                successes++;
         }
         return applyMultipliers(successes * 1.0 / 10);
+        // return successes * 1.0 / 10;
+
     }
 
     /**
-     * Generate a 10-day FUEL demand path in kg, by multiplying the deterministic daily demand
+     * Generate a 10-day FUEL demand path in kg, by multiplying the deterministic
+     * daily demand
      * with i.i.d. Binomial-based multipliers.
+     * 
      * @param dailyFuelKg deterministic daily demand for FUEL
      * @return 10-day FUEL demand path in kg
      */
@@ -125,7 +143,8 @@ public final class Sampling {
     }
 
     /**
-     * Draw a Triangular(minTri, modeTri, maxTri) multiplier via inverse CDF sampling.
+     * Draw a Triangular(minTri, modeTri, maxTri) multiplier via inverse CDF
+     * sampling.
      * Requires minTri <= modeTri <= maxTri
      */
     public double triangular() {
@@ -138,11 +157,14 @@ public final class Sampling {
             raw = maxTri - Math.sqrt((1.0 - u) * (maxTri - minTri) * (maxTri - modeTri));
         }
         return applyMultipliers(raw);
+        // return raw;
     }
 
     /**
-     * Generate a 10-day AMMO demand path in kg, by multiplying the deterministic daily demand
+     * Generate a 10-day AMMO demand path in kg, by multiplying the deterministic
+     * daily demand
      * with i.i.d. Triangular multipliers.
+     * 
      * @param dailyAmmoKg deterministic daily demand for AMMO
      * @return 10-day AMMO demand path in kg
      */
@@ -157,16 +179,19 @@ public final class Sampling {
 
     /**
      * Generate a 10-day correlated samples for FW, FUEL, and AMMO.
-     * Day-to-day correlation is enforced through an AR(1) process with parameter {@code rhoDays}, while
-     * product-wise correlation is introduced via a Gaussian copula with the provided pairwise rhos.
+     * Day-to-day correlation is enforced through an AR(1) process with parameter
+     * {@code rhoDays}, while
+     * product-wise correlation is introduced via a Gaussian copula with the
+     * provided pairwise rhos.
      *
-     * @param rhoDays       AR(1) persistence between consecutive days
-     * @param rhoFWFUEL     correlation between FW and FUEL
-     * @param rhoFWAMMO     correlation between FW and AMMO
-     * @param rhoFUELAMMO   correlation between FUEL and AMMO
-     * @return              3x10 matrix of multipliers where the first index is the product
+     * @param rhoDays     AR(1) persistence between consecutive days
+     * @param rhoFWFUEL   correlation between FW and FUEL
+     * @param rhoFWAMMO   correlation between FW and AMMO
+     * @param rhoFUELAMMO correlation between FUEL and AMMO
+     * @return 3x10 matrix of multipliers where the first index is the product
      */
-    public double[][] correlatedSamples(double rhoDays, double rhoFWFUEL, double rhoFWAMMO, double rhoFUELAMMO, int horizon) {
+    public double[][] correlatedSamples(double rhoDays, double rhoFWFUEL, double rhoFWAMMO, double rhoFUELAMMO,
+            int horizon) {
         final int products = 3;
         final int days = horizon;
         double[][] samples = new double[products][days];

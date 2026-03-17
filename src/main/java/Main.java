@@ -2,7 +2,7 @@ import DataUtils.InstanceCreator;
 import DataUtils.OutputCreator;
 import Deterministic.CapacitatedResupplyMILP;
 import Stochastic.*;
-import Stochastic.EvaluationHeuristic.EvaluationSummary;
+import Stochastic.EvaluationHeuristic.*;
 import Objects.*;
 import Analysis.*;
 import java.util.*;
@@ -10,12 +10,10 @@ import java.io.*;
 
 import com.gurobi.gurobi.GRBException;
 
-import java.io.IOException;
-
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        Instance fdInstance = InstanceCreator.createFDInstance().get(0);
+        Instance fdInstance = InstanceCreator.createFDInstance(10).get(0);
         Instance dispersedInstance = InstanceCreator.contiguousPartitions().get(41);
 
         // MILP (uncomment to run)
@@ -30,26 +28,27 @@ public class Main {
         // runDispersedExperiments();
 
         // STOCHASTIC EXPERIMENTS (uncomment to run)
-        runStochasticExperiments(fdInstance);
+        // runStochasticExperiments(fdInstance);
 
         // PERFECT HINDSIGHT EXPERIMENTS (uncomment to run)
         // runPerfectHindsightExperiments();
 
         // SENSITIVITY ANALYSIS (uncomment to run)
-        // List<InstanceConfig> sensitivityConfigs = buildSensitivityConfigs(fdInstance, dispersedInstance);
+        // List<InstanceConfig> sensitivityConfigs = buildExtendedHorizonConfigs();
         // runCorrelationAnalysis(sensitivityConfigs);
         // runDemandDistributionAnalysis(sensitivityConfigs);
 
-        // EXTENDED TIME HORIZON ANALYSIS
-        // runExtendedTimeHorizon();
+        // List<InstanceConfig> timeHorizonConfigs = buildExtendedHorizonConfigs();
+        // runExtendedTimeHorizon(timeHorizonConfigs);
 
-        // VEHICLE BREAKDOWN ANALYSIS
-        // runVehicleBreakdownAnalysis();
-        List<InstanceConfig> sensitivityConfigs = buildSensitivityConfigs(fdInstance, dispersedInstance);
-        runExtendedTimeHorizon(sensitivityConfigs);
-        runVehicleBreakdownAnalysis(sensitivityConfigs);
-        runCorrelationAnalysis(sensitivityConfigs);
-        runDemandDistributionAnalysis(sensitivityConfigs);
+        // List<InstanceConfig> vehicleBreakdownConfigs = buildExtendedHorizonConfigs();
+        // runVehicleBreakdownAnalysis(vehicleBreakdownConfigs);
+
+        // Extended time horizon fleet size heuristic
+        // runFleetSizing(fdInstance);
+
+        Instance dispInstance = InstanceCreator.createDispersedInstanceExtraType(2000, 7000, 1000, 10).get(0);
+        runStochasticDispersed(dispInstance);
     }
 
     /**
@@ -66,27 +65,13 @@ public class Main {
         new OutputCreator().createCSV(results);
     }
 
-    /**
-     * Runs the stochastic experiments. The method follows the steps:
-     * 1) Determine fleet size
-     * 2) Tune target level weights
-     * 3) Out-of-sample evaluation
-     * 4) Tune composition new CCL type
-     * 5) Out-of-sample evaluation
-     * 
-     * @param base FD instance
-     */
-    private static void runStochasticExperimentsOld(Instance base) {
+    private static void runFleetSizing(Instance base) {
         final int nScenarios = 1000;
-        final int nOOS = 10000;
         final double serviceLevel = 0.95;
-
         final long seedSizingTrain = 42000;
-        final long seedTuningTrain = 43000;
-        final int seedOOS = 10042;
 
         System.out.println();
-        System.out.println("STEP 1 : STOCHASTIC FLEET SIZING");
+        System.out.println("STOCHASTIC FLEET SIZING, time horizon = " + base.timeHorizon);
         StochasticFleetSizerCorrected.FleetSizingResult fleet;
         try {
             long t0 = System.currentTimeMillis();
@@ -104,51 +89,6 @@ public class Main {
         } catch (GRBException e) {
             throw new RuntimeException();
         }
-
-        final int M = fleet.trucksMSCtoFSC + fleet.trucksMSCtoVUST;
-        final Map<String, Integer> K = new HashMap<>(fleet.trucksAtFSC);
-
-        System.out.println();
-        System.out.println("STEP 2 : WEIGHT TUNING (train)");
-
-        double lb = 0.5, ub = 1.5, step = 0.1;
-        EvaluationHeuristic.TargetWeights defaultVust = new EvaluationHeuristic.TargetWeights(1.0, 1.0, 1.0);
-
-        var tuning = EvaluationHeuristic.tuneWeights(
-                base, M, K, nScenarios, (int) seedTuningTrain,
-                lb, ub, step, defaultVust);
-
-        System.out.println("BEST CONFIG : OU=" + tuning.bestCfg.ou() + " VUST=" +
-                tuning.bestCfg.vust());
-
-        EvaluationHeuristic.WeightConfig bestCfg = tuning.bestCfg;
-
-        System.out.println();
-        System.out.println("STEP 3 : OOS EVALUATION 3 CCLs (test)");
-        EvaluationSummary oosSummary = EvaluationHeuristic.evaluate(base, M, K, nOOS, seedOOS, bestCfg,
-                List.of(0.0, 0.0, 0.0, 0.0));
-        System.out.println(oosSummary);
-
-        System.out.println();
-        System.out.println("STEP 4 : TUNE WEIGHTS AGAIN BASED ON NEW CCL TYPE (train)");
-
-        Instance newInstance = InstanceCreator.createFDInstanceExtraType(2000, 7000, 1000).get(0);
-
-        var tuning2 = EvaluationHeuristic.tuneWeights(
-                newInstance, M, K, nScenarios, (int) seedTuningTrain,
-                lb, ub, step, defaultVust);
-
-        System.out.println("BEST CONFIG : OU=" + tuning2.bestCfg.ou() + " VUST=" +
-                tuning2.bestCfg.vust());
-
-        EvaluationHeuristic.WeightConfig bestCfg2 = tuning2.bestCfg;
-
-        System.out.println();
-        System.out.println("STEP 5 : OOS EVALUATION 4 CCLs (test)");
-
-        var oos2 = EvaluationHeuristic.evaluate(newInstance, M, K, nOOS, seedOOS, bestCfg2,
-                List.of(0.0, 0.0, 0.0, 0.0));
-        System.out.println(oos2);
     }
 
     private static void runStochasticExperiments(Instance base) {
@@ -196,8 +136,7 @@ public class Main {
             log(writer, "STEP 2 : WEIGHT TUNING (train)");
 
             double lb = 0.5, ub = 1.5, step = 0.1;
-            EvaluationHeuristic.TargetWeights defaultVust =
-                    new EvaluationHeuristic.TargetWeights(1.0, 1.0, 1.0);
+            EvaluationHeuristic.TargetWeights defaultVust = new EvaluationHeuristic.TargetWeights(1.0, 1.0, 1.0);
 
             var tuning = EvaluationHeuristic.tuneWeights(
                     base, M, K, nScenarios, (int) seedTuningTrain,
@@ -221,17 +160,16 @@ public class Main {
             log(writer, "STEP 4 + 5 : LOOP OVER 10 INSTANCES WITH DIFFERENT 4TH CCL COMPOSITIONS");
 
             List<int[]> compositions = List.of(
-                    new int[]{3000, 7000, 0},
-                    new int[]{2000, 7000, 1000},
-                    new int[]{1000, 7000, 2000},
-                    new int[]{0, 7000, 3000},
-                    new int[]{2000, 8000, 0},
-                    new int[]{1000, 8000, 1000},
-                    new int[]{0, 8000, 2000},
-                    new int[]{1000, 9000, 0},
-                    new int[]{0, 9000, 1000},
-                    new int[]{0, 10000, 0}
-            );
+                    new int[] { 3000, 7000, 0 },
+                    new int[] { 2000, 7000, 1000 },
+                    new int[] { 1000, 7000, 2000 },
+                    new int[] { 0, 7000, 3000 },
+                    new int[] { 2000, 8000, 0 },
+                    new int[] { 1000, 8000, 1000 },
+                    new int[] { 0, 8000, 2000 },
+                    new int[] { 1000, 9000, 0 },
+                    new int[] { 0, 9000, 1000 },
+                    new int[] { 0, 10000, 0 });
 
             List<ExperimentResult> results = new ArrayList<>();
 
@@ -290,24 +228,47 @@ public class Main {
         }
     }
 
+    private static void runStochasticDispersed(Instance instance) {
+        int seedOOS = 10042;
+        int nOOS = 10000;
+
+        int M = 88;
+        Map<String, Integer> K = new HashMap<>();
+        K.put("FSC_1", 33);
+        K.put("FSC_2", 18);
+        K.put("FSC_3", 24);
+        K.put("FSC_4", 17);
+        // K.put("FSC_5", 17);
+
+        EvaluationHeuristic.WeightConfig config = new WeightConfig(
+            new TargetWeights(1.2, 0.6, 0.9),
+            new TargetWeights(1.0, 1.0, 1.0)
+        );
+
+        EvaluationSummary OOS = EvaluationHeuristic.evaluate(
+            instance, M, K, nOOS, seedOOS, config, List.of(0.0, 0.0, 0.0, 0.0));
+
+        System.out.println(OOS);
+    }
+
     private static void log(PrintWriter writer, String message) {
         System.out.println(message);
         writer.println(message);
-        writer.flush(); 
+        writer.flush();
     }
 
     private record ExperimentResult(
             int instanceId,
             int[] composition,
             EvaluationHeuristic.WeightConfig bestCfg,
-            EvaluationSummary oosSummary
-    ) {}
+            EvaluationSummary oosSummary) {
+    }
 
     /**
      * Performs perfect hindsight experiments.
      */
     private static void runPerfectHindsightExperiments() {
-        final int N = 1000;
+        final int N = 10000;
         final int oosSeed = 10042;
 
         final int M = 79;
@@ -323,10 +284,10 @@ public class Main {
 
         PerfectHindsight.run(base3, N, oosSeed, M, K);
 
-        Instance base4 = InstanceCreator.createFDInstanceExtraType(2000, 6000, 2000).get(0);
+        Instance base4 = InstanceCreator.createFDInstanceExtraType(2000, 7000, 1000).get(0);
 
         System.out.println();
-        System.out.println("--- Perfect hindsight: 4 CCL types (CCL4=2000/6000/2000) ---");
+        System.out.println("--- Perfect hindsight: 4 CCL types (CCL4=2000/7000/1000) ---");
         System.out.println("N=" + N + " | seed=" + oosSeed + " | fixed fleet: M=" + M + " K=" + K);
 
         PerfectHindsight.run(base4, N, oosSeed, M, K);
@@ -343,11 +304,11 @@ public class Main {
         fdK.put("FSC_1", 48);
         fdK.put("FSC_2", 35);
 
-        Map<String, Integer> dispersedK = buildProportionalK(dispersedInstance, 83);
+        // Map<String, Integer> dispersedK = buildProportionalK(dispersedInstance, 83);
 
         return List.of(
-                InstanceConfig.of(fdInstance, 79, fdK, "FD"),
-                InstanceConfig.of(dispersedInstance, 79, dispersedK, "Dispersed"));
+                InstanceConfig.of(fdInstance, 79, fdK, "FD"));
+                // InstanceConfig.of(dispersedInstance, 79, dispersedK, "Dispersed"));
     }
 
     /**
@@ -359,7 +320,7 @@ public class Main {
         fdK.put("FSC_1", 48);
         fdK.put("FSC_2", 35);
 
-        CCLpackage ccl4 = new CCLpackage(4, 2000, 6000, 2000);
+        CCLpackage ccl4 = new CCLpackage(4, 2000, 7000, 1000);
 
         Instance fdInstance4ccl = InstanceCreator.createFDInstance().get(0);
         fdInstance4ccl.addCCLType(ccl4);
@@ -374,14 +335,15 @@ public class Main {
      * The fourth CCL is stored in the config so the analysis can add it to
      * each internally-created instance at the right horizon.
      */
-    private static List<InstanceConfig> buildExtendedHorizonConfigs(Instance fdInstance) {
+    private static List<InstanceConfig> buildExtendedHorizonConfigs() {
         Map<String, Integer> fdK = new HashMap<>();
-        fdK.put("FSC_1", 63);
-        fdK.put("FSC_2", 45);
+        fdK.put("FSC_1", 48);
+        fdK.put("FSC_2", 35);
 
-        CCLpackage ccl4 = new CCLpackage(4, 2000, 6000, 2000);
+        CCLpackage ccl4 = new CCLpackage(4, 2000, 7000, 1000);
+        Instance fdInstance4 = InstanceCreator.createFDInstanceExtraType(2000, 7000, 1000, 10).get(0);
 
-        return List.of(new InstanceConfig(fdInstance, 127, fdK, "FD", ccl4));
+        return List.of(new InstanceConfig(fdInstance4, 79, fdK, "FD (4 CCL)", ccl4));
     }
 
     /**

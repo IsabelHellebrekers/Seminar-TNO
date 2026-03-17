@@ -1,0 +1,160 @@
+
+STEP 1 : STOCHASTIC FLEET SIZING
+Runtime (s) : 98
+Total trucks = 162
+MSC = 79
+  FSC_1 = 48
+  FSC_2 = 35
+
+STEP 2 : WEIGHT TUNING (train)
+BEST CONFIG : OU = TargetWeights[fw=1.3, fuel=0.6, ammo=1.3] | VUST = TargetWeights[fw=1.0, fuel=0.8, ammo=1.0]
+
+STEP 3 : OOS EVALUATION 3 CCLs (test)
+EvaluationSummary{totalScenarios=10000, scenariosWithoutStockout=8633, noStockoutPercentage=86,33%, avgTotalStockoutKg=1644,98}
+
+STEP 4 + 5 : LOOP OVER 10 INSTANCES WITH DIFFERENT 4TH CCL COMPOSITIONS
+
+------------------------------------------------------------
+INSTANCE 1
+Fourth CCL composition = [3000, 7000, 0]
+------------------------------------------------------------
+BEST CONFIG : OU = TargetWeights[fw=1.3, fuel=0.6, ammo=1.3] | VUST = TargetWeights[fw=1.1, fuel=0.6, ammo=1.5]
+OOS RESULT INSTANCE 1:
+EvaluationSummary{totalScenarios=10000, scenariosWithoutStockout=9047, noStockoutPercentage=90,47%, avgTotalStockoutKg=1187,48}
+
+------------------------------------------------------------
+INSTANCE 2
+Fourth CCL composition = [2000, 7000, 1000]
+------------------------------------------------------------
+BEST CONFIG : OU = TargetWeights[fw=1.2, fuel=0.6, ammo=0.9] | VUST = TargetWeights[fw=1.0, fuel=1.0, ammo=1.0]
+OOS RESULT INSTANCE 2:
+EvaluationSummary{totalScenarios=10000, scenariosWithoutStockout=9275, noStockoutPercentage=92,75%, avgTotalStockoutKg=926,88}
+
+------------------------------------------------------------
+INSTANCE 3
+Fourth CCL composition = [1000, 7000, 2000]
+------------------------------------------------------------
+BEST CONFIG : OU = TargetWeights[fw=1.2, fuel=0.7, ammo=1.0] | VUST = TargetWeights[fw=1.4, fuel=0.9, ammo=1.0]
+OOS RESULT INSTANCE 3:
+EvaluationSummary{totalScenarios=10000, scenariosWithoutStockout=9172, noStockoutPercentage=91,72%, avgTotalStockoutKg=1048,23}
+
+------------------------------------------------------------
+INSTANCE 4
+Fourth CCL composition = [0, 7000, 3000]
+------------------------------------------------------------
+BEST CONFIG : OU = TargetWeights[fw=1.2, fuel=0.7, ammo=1.0] | VUST = TargetWeights[fw=1.0, fuel=0.8, ammo=1.0]
+OOS RESULT INSTANCE 4:
+EvaluationSummary{totalScenarios=10000, scenariosWithoutStockout=9087, noStockoutPercentage=90,87%, avgTotalStockoutKg=1166,64}
+
+------------------------------------------------------------
+INSTANCE 5
+Fourth CCL composition = [2000, 8000, 0]
+------------------------------------------------------------
+BEST CONFIG : OU = TargetWeights[fw=1.2, fuel=0.7, ammo=1.0] | VUST = TargetWeights[fw=1.0, fuel=0.8, ammo=1.0]
+OOS RESULT INSTANCE 5:
+EvaluationSummary{totalScenarios=10000, scenariosWithoutStockout=9196, noStockoutPercentage=91,96%, avgTotalStockoutKg=978,77}
+
+------------------------------------------------------------
+INSTANCE 6
+Fourth CCL composition = [1000, 8000, 1000]
+------------------------------------------------------------
+BEST CONFIG : OU = TargetWeights[fw=1.2, fuel=0.7, ammo=1.0] | VUST = TargetWeights[fw=1.4, fuel=0.7, ammo=1.5]
+OOS RESULT INSTANCE 6:
+EvaluationSummary{totalScenarios=10000, scenariosWithoutStockout=9151, noStockoutPercentage=91,51%, avgTotalStockoutKg=1037,90}
+
+------------------------------------------------------------
+INSTANCE 7
+Fourth CCL composition = [0, 8000, 2000]
+------------------------------------------------------------
+BEST CONFIG : OU = TargetWeights[fw=1.2, fuel=0.5, ammo=1.3] | VUST = TargetWeights[fw=1.0, fuel=0.8, ammo=1.0]
+OOS RESULT INSTANCE 7:
+EvaluationSummary{totalScenarios=10000, scenariosWithoutStockout=9059, noStockoutPercentage=90,59%, avgTotalStockoutKg=1207,67}
+
+------------------------------------------------------------
+INSTANCE 8
+Fourth CCL composition = [1000, 9000, 0]
+------------------------------------------------------------
+BEST CONFIG : OU = TargetWeights[fw=1.2, fuel=0.5, ammo=1.0] | VUST = TargetWeights[fw=1.0, fuel=0.8, ammo=1.0]
+OOS RESULT INSTANCE 8:
+EvaluationSummary{totalScenarios=10000, scenariosWithoutStockout=9127, noStockoutPercentage=91,27%, avgTotalStockoutKg=1064,87}
+
+------------------------------------------------------------
+INSTANCE 9
+Fourth CCL composition = [0, 9000, 1000]
+------------------------------------------------------------
+BEST CONFIG : OU = TargetWeights[fw=1.2, fuel=0.7, ammo=1.0] | VUST = TargetWeights[fw=1.0, fuel=0.9, ammo=1.0]
+OOS RESULT INSTANCE 9:
+EvaluationSummary{totalScenarios=10000, scenariosWithoutStockout=9029, noStockoutPercentage=90,29%, avgTotalStockoutKg=1200,05}
+
+------------------------------------------------------------
+INSTANCE 10
+Fourth CCL composition = [0, 10000, 0]
+------------------------------------------------------------
+BEST CONFIG : OU = TargetWeights[fw=1.3, fuel=0.7, ammo=1.2] | VUST = TargetWeights[fw=1.0, fuel=0.7, ammo=1.0]
+OOS RESULT INSTANCE 10:
+EvaluationSummary{totalScenarios=10000, scenariosWithoutStockout=9115, noStockoutPercentage=91,15%, avgTotalStockoutKg=1207,71}
+
+============================================================
+SUMMARY OVER ALL 10 INSTANCES
+============================================================
+Instance 1
+  Composition       = [3000, 7000, 0]
+  Best OU weights   = TargetWeights[fw=1.3, fuel=0.6, ammo=1.3]
+  Best VUST weights = TargetWeights[fw=1.1, fuel=0.6, ammo=1.5]
+  OOS summary       = EvaluationSummary{totalScenarios=10000, scenariosWithoutStockout=9047, noStockoutPercentage=90,47%, avgTotalStockoutKg=1187,48}
+
+Instance 2
+  Composition       = [2000, 7000, 1000]
+  Best OU weights   = TargetWeights[fw=1.2, fuel=0.6, ammo=0.9]
+  Best VUST weights = TargetWeights[fw=1.0, fuel=1.0, ammo=1.0]
+  OOS summary       = EvaluationSummary{totalScenarios=10000, scenariosWithoutStockout=9275, noStockoutPercentage=92,75%, avgTotalStockoutKg=926,88}
+
+Instance 3
+  Composition       = [1000, 7000, 2000]
+  Best OU weights   = TargetWeights[fw=1.2, fuel=0.7, ammo=1.0]
+  Best VUST weights = TargetWeights[fw=1.4, fuel=0.9, ammo=1.0]
+  OOS summary       = EvaluationSummary{totalScenarios=10000, scenariosWithoutStockout=9172, noStockoutPercentage=91,72%, avgTotalStockoutKg=1048,23}
+
+Instance 4
+  Composition       = [0, 7000, 3000]
+  Best OU weights   = TargetWeights[fw=1.2, fuel=0.7, ammo=1.0]
+  Best VUST weights = TargetWeights[fw=1.0, fuel=0.8, ammo=1.0]
+  OOS summary       = EvaluationSummary{totalScenarios=10000, scenariosWithoutStockout=9087, noStockoutPercentage=90,87%, avgTotalStockoutKg=1166,64}
+
+Instance 5
+  Composition       = [2000, 8000, 0]
+  Best OU weights   = TargetWeights[fw=1.2, fuel=0.7, ammo=1.0]
+  Best VUST weights = TargetWeights[fw=1.0, fuel=0.8, ammo=1.0]
+  OOS summary       = EvaluationSummary{totalScenarios=10000, scenariosWithoutStockout=9196, noStockoutPercentage=91,96%, avgTotalStockoutKg=978,77}
+
+Instance 6
+  Composition       = [1000, 8000, 1000]
+  Best OU weights   = TargetWeights[fw=1.2, fuel=0.7, ammo=1.0]
+  Best VUST weights = TargetWeights[fw=1.4, fuel=0.7, ammo=1.5]
+  OOS summary       = EvaluationSummary{totalScenarios=10000, scenariosWithoutStockout=9151, noStockoutPercentage=91,51%, avgTotalStockoutKg=1037,90}
+
+Instance 7
+  Composition       = [0, 8000, 2000]
+  Best OU weights   = TargetWeights[fw=1.2, fuel=0.5, ammo=1.3]
+  Best VUST weights = TargetWeights[fw=1.0, fuel=0.8, ammo=1.0]
+  OOS summary       = EvaluationSummary{totalScenarios=10000, scenariosWithoutStockout=9059, noStockoutPercentage=90,59%, avgTotalStockoutKg=1207,67}
+
+Instance 8
+  Composition       = [1000, 9000, 0]
+  Best OU weights   = TargetWeights[fw=1.2, fuel=0.5, ammo=1.0]
+  Best VUST weights = TargetWeights[fw=1.0, fuel=0.8, ammo=1.0]
+  OOS summary       = EvaluationSummary{totalScenarios=10000, scenariosWithoutStockout=9127, noStockoutPercentage=91,27%, avgTotalStockoutKg=1064,87}
+
+Instance 9
+  Composition       = [0, 9000, 1000]
+  Best OU weights   = TargetWeights[fw=1.2, fuel=0.7, ammo=1.0]
+  Best VUST weights = TargetWeights[fw=1.0, fuel=0.9, ammo=1.0]
+  OOS summary       = EvaluationSummary{totalScenarios=10000, scenariosWithoutStockout=9029, noStockoutPercentage=90,29%, avgTotalStockoutKg=1200,05}
+
+Instance 10
+  Composition       = [0, 10000, 0]
+  Best OU weights   = TargetWeights[fw=1.3, fuel=0.7, ammo=1.2]
+  Best VUST weights = TargetWeights[fw=1.0, fuel=0.7, ammo=1.0]
+  OOS summary       = EvaluationSummary{totalScenarios=10000, scenariosWithoutStockout=9115, noStockoutPercentage=91,15%, avgTotalStockoutKg=1207,71}
+
+Run finished successfully.
