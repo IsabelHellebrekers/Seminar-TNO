@@ -58,7 +58,7 @@ public class EvaluationHeuristic {
     /**
      * The amount of each product (kg) in the new CCL package.
      */
-    public record newCCLComposition(int fwKg, int fuelKg, int ammoKg) {
+    public record NewCclComposition(int fwKg, int fuelKg, int ammoKg) {
     }
 
     private record UsedKey(String fsc, String ouType, int cclType) {
@@ -391,7 +391,7 @@ public class EvaluationHeuristic {
                     String ouType = chosenOu.ouType;
                     fscInv.get(w).get(ouType)[chosenC - 1]--;
 
-                    addCclToscheduledDeliveries(scheduledDeliveries.get(chosenOu.operatingUnitName), data.cclTypes,
+                    addCclToScheduledDeliveries(scheduledDeliveries.get(chosenOu.operatingUnitName), data.cclTypes,
                             chosenC);
 
                     usedToday.merge(new UsedKey(w, ouType, chosenC), 1, Integer::sum);
@@ -412,7 +412,7 @@ public class EvaluationHeuristic {
                         break;
                     }
 
-                    addCclToscheduledDeliveries(add, data.cclTypes, bestC);
+                    addCclToScheduledDeliveries(add, data.cclTypes, bestC);
                     mRemaining--;
                 }
             }
@@ -545,14 +545,14 @@ public class EvaluationHeuristic {
             OperatingUnit vust,
             double[] inv,
             double[] add,
-            List<CCLpackage> cclTypes,
+            List<CCLPackage> cclTypes,
             double[] target) {
         double before = relativeDeficitSum(inv, add, target);
 
         int bestC = -1;
         double bestAfter = Double.POSITIVE_INFINITY;
 
-        for (CCLpackage ccl : cclTypes) {
+        for (CCLPackage ccl : cclTypes) {
             int c = ccl.type;
 
             if (!fitsCapacity(vust, inv, add, ccl)) {
@@ -604,7 +604,7 @@ public class EvaluationHeuristic {
      * @param ccl    candidate CCL package
      * @return scalar deficit score after hypothetical delivery
      */
-    private static double relativeDeficitSumAfter(double[] inv, double[] add, double[] target, CCLpackage ccl) {
+    private static double relativeDeficitSumAfter(double[] inv, double[] add, double[] target, CCLPackage ccl) {
         double fwLvl = inv[IDX_FW] + add[IDX_FW] + ccl.foodWaterKg;
         double fuelLvl = inv[IDX_FUEL] + add[IDX_FUEL] + ccl.fuelKg;
         double ammoLvl = inv[IDX_AMMO] + add[IDX_AMMO] + ccl.ammoKg;
@@ -800,7 +800,7 @@ public class EvaluationHeuristic {
             Map<String, int[]> fscInvByOuType,
             double[] inv,
             double[] add,
-            List<CCLpackage> cclTypes,
+            List<CCLPackage> cclTypes,
             double[] dmax,
             Random rng,
             WeightConfig cfg) {
@@ -813,7 +813,7 @@ public class EvaluationHeuristic {
 
         int ties = 0;
 
-        for (CCLpackage ccl : cclTypes) {
+        for (CCLPackage ccl : cclTypes) {
             int c = ccl.type;
             if (stock[c - 1] <= 0)
                 continue;
@@ -855,7 +855,7 @@ public class EvaluationHeuristic {
             OperatingUnit ou,
             double[] inv,
             double[] add,
-            CCLpackage ccl,
+            CCLPackage ccl,
             double[] dmax,
             TargetWeights w) {
         double targetFW = Math.min(ou.maxFoodWaterKg, Math.max(0.0, w.fw() * dmax[IDX_FW]));
@@ -906,7 +906,7 @@ public class EvaluationHeuristic {
      * @param ccl candidate package
      * @return true if all products remain <= max capacity
      */
-    private static boolean fitsCapacity(OperatingUnit ou, double[] inv, double[] add, CCLpackage ccl) {
+    private static boolean fitsCapacity(OperatingUnit ou, double[] inv, double[] add, CCLPackage ccl) {
         double fw = inv[IDX_FW] + add[IDX_FW] + ccl.foodWaterKg;
         double fuel = inv[IDX_FUEL] + add[IDX_FUEL] + ccl.fuelKg;
         double ammo = inv[IDX_AMMO] + add[IDX_AMMO] + ccl.ammoKg;
@@ -924,9 +924,9 @@ public class EvaluationHeuristic {
      * @param cclTypes list of available CCL packages
      * @param cclType  hosen type id
      */
-    private static void addCclToscheduledDeliveries(double[] add, List<CCLpackage> cclTypes, int cclType) {
-        CCLpackage chosen = null;
-        for (CCLpackage c : cclTypes) {
+    private static void addCclToScheduledDeliveries(double[] add, List<CCLPackage> cclTypes, int cclType) {
+        CCLPackage chosen = null;
+        for (CCLPackage c : cclTypes) {
             if (c.type == cclType) {
                 chosen = c;
                 break;
@@ -1091,7 +1091,7 @@ public class EvaluationHeuristic {
                     if (best == null
                             || s.scenariosWithoutStockout > best.scenariosWithoutStockout
                             || (s.scenariosWithoutStockout == best.scenariosWithoutStockout
-                                    && s.avgTotalStockoutKg + 1e-9 < best.avgTotalStockoutKg)) {
+                                    && s.avgTotalStockoutKg + EPS < best.avgTotalStockoutKg)) {
                         best = s;
                         bestCfg = cfg;
                     }
@@ -1140,7 +1140,7 @@ public class EvaluationHeuristic {
                     if (best == null
                             || s.scenariosWithoutStockout > best.scenariosWithoutStockout
                             || (s.scenariosWithoutStockout == best.scenariosWithoutStockout
-                                    && s.avgTotalStockoutKg + 1e-9 < best.avgTotalStockoutKg)) {
+                                    && s.avgTotalStockoutKg + EPS < best.avgTotalStockoutKg)) {
                         best = s;
                         bestCfg = cfg;
                     }
@@ -1285,7 +1285,7 @@ public class EvaluationHeuristic {
         if (cand.scenariosWithoutStockout < best.scenariosWithoutStockout)
             return false;
 
-        return cand.avgTotalStockoutKg + 1e-9 < best.avgTotalStockoutKg;
+        return cand.avgTotalStockoutKg + EPS < best.avgTotalStockoutKg;
     }
 
     /**
@@ -1344,10 +1344,10 @@ public class EvaluationHeuristic {
      * Output for a grid search over a new CCL composition.
      */
     public static final class CCLGridSearchResult {
-        public final newCCLComposition bestComp;
+        public final NewCclComposition bestComp;
         public final EvaluationSummary bestSummary;
 
-        public CCLGridSearchResult(newCCLComposition bestComp, EvaluationSummary bestSummary) {
+        public CCLGridSearchResult(NewCclComposition bestComp, EvaluationSummary bestSummary) {
             this.bestComp = bestComp;
             this.bestSummary = bestSummary;
         }
@@ -1381,7 +1381,7 @@ public class EvaluationHeuristic {
         long start = System.currentTimeMillis();
         int counter = 0;
 
-        newCCLComposition bestComp = null;
+        NewCclComposition bestComp = null;
         EvaluationSummary best = null;
 
         for (int fwU = 0; fwU <= units; fwU++) {
@@ -1399,9 +1399,9 @@ public class EvaluationHeuristic {
                 if (best == null
                         || s.scenariosWithoutStockout > best.scenariosWithoutStockout
                         || (s.scenariosWithoutStockout == best.scenariosWithoutStockout
-                                && s.avgTotalStockoutKg + 1e-9 < best.avgTotalStockoutKg)) {
+                                && s.avgTotalStockoutKg + EPS < best.avgTotalStockoutKg)) {
                     best = s;
-                    bestComp = new newCCLComposition(fw, fuel, ammo);
+                    bestComp = new NewCclComposition(fw, fuel, ammo);
                 }
 
                 counter++;

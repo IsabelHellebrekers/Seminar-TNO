@@ -1,6 +1,6 @@
 package DataUtils;
 
-import Objects.CCLpackage;
+import Objects.CCLPackage;
 import Objects.FSC;
 import Objects.Instance;
 import Objects.OperatingUnit;
@@ -125,11 +125,11 @@ public class InstanceCreator {
         initialStorageLevelsFSC2.put("AT_CIE", new int[] { 2, 2, 2, 3 });
         fscs.add(new FSC("FSC_2", 87, initialStorageLevelsFSC2));
 
-        List<CCLpackage> cclTypes = List.of(
-                new CCLpackage(1, 3000, 3000, 4000),
-                new CCLpackage(2, 1000, 4000, 5000),
-                new CCLpackage(3, 0, 2000, 8000),
-                new CCLpackage(4, fw4, fuel4, ammo4));
+        List<CCLPackage> cclTypes = List.of(
+                new CCLPackage(1, 3000, 3000, 4000),
+                new CCLPackage(2, 1000, 4000, 5000),
+                new CCLPackage(3, 0, 2000, 8000),
+                new CCLPackage(4, fw4, fuel4, ammo4));
 
         List<Instance> instanceList = new ArrayList<>();
         instanceList.add(new Instance(operatingUnits, fscs, cclTypes, timeHorizon));
@@ -187,11 +187,11 @@ public class InstanceCreator {
         // initialStorageLevelsFSC5.put("AT_CIE", new int[] { 2, 2, 2, 3});
         // fscs.add(new FSC("FSC_5", 39, initialStorageLevelsFSC5));
 
-        List<CCLpackage> cclTypes = List.of(
-                new CCLpackage(1, 3000, 3000, 4000),
-                new CCLpackage(2, 1000, 4000, 5000),
-                new CCLpackage(3, 0, 2000, 8000),
-                new CCLpackage(4, fw4, fuel4, ammo4));
+        List<CCLPackage> cclTypes = List.of(
+                new CCLPackage(1, 3000, 3000, 4000),
+                new CCLPackage(2, 1000, 4000, 5000),
+                new CCLPackage(3, 0, 2000, 8000),
+                new CCLPackage(4, fw4, fuel4, ammo4));
 
         List<Instance> instanceList = new ArrayList<>();
         instanceList.add(new Instance(operatingUnits, fscs, cclTypes, timeHorizon));

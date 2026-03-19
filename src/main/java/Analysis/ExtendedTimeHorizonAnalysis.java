@@ -2,10 +2,9 @@ package Analysis;
 
 import DataUtils.InstanceCreator;
 import Deterministic.CapacitatedResupplyMILP;
-import Objects.CCLpackage;
+import Objects.CCLPackage;
 import Objects.Instance;
 import Stochastic.EvaluationHeuristic;
-import Stochastic.EvaluationHeuristic.EvaluationSummary;
 
 import com.gurobi.gurobi.GRB;
 import com.gurobi.gurobi.GRBEnv;
@@ -91,7 +90,7 @@ public final class ExtendedTimeHorizonAnalysis {
 
         for (InstanceConfig cfg : configs) {
 
-            CCLpackage ccl4 = cfg.fourthCCL();
+            CCLPackage ccl4 = cfg.fourthCCL();
 
             for (int horizon : STOCHASTIC_EVAL_HORIZONS) {
 
@@ -266,7 +265,6 @@ public final class ExtendedTimeHorizonAnalysis {
 
     private static final class DeterministicRunSummary {
         final int horizon;
-        final int statusCode;
         final String statusName;
         final double runtimeSeconds;
         final boolean hasIncumbent;
@@ -283,7 +281,6 @@ public final class ExtendedTimeHorizonAnalysis {
                 Double lowerBound,
                 Double gap) {
             this.horizon = horizon;
-            this.statusCode = statusCode;
             this.statusName = statusName;
             this.runtimeSeconds = runtimeSeconds;
             this.hasIncumbent = hasIncumbent;

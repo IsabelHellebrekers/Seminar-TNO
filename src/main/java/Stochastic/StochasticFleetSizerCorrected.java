@@ -1,7 +1,6 @@
 package Stochastic;
 
-import DataUtils.InstanceCreator;
-import Objects.CCLpackage;
+import Objects.CCLPackage;
 import Objects.FSC;
 import Objects.Instance;
 import Objects.OperatingUnit;
@@ -54,8 +53,8 @@ public final class StochasticFleetSizerCorrected {
         if (serviceLevel <= 0.0 || serviceLevel > 1.0)
             throw new IllegalArgumentException("serviceLevel must be in (0,1]");
 
-        final int T = instance.timeHorizon;
-        final List<CCLpackage> ccls = instance.cclTypes;
+        final int timeHorizon = instance.timeHorizon;
+        final List<CCLPackage> ccls = instance.cclTypes;
 
         // FSC names (for consistent indexing)
         List<String> fscNames = new ArrayList<>();
@@ -81,10 +80,10 @@ public final class StochasticFleetSizerCorrected {
 
                 // Daily FSC workloads (FSC->OU)
                 Map<String, int[]> dailyWorkloadFsc = new HashMap<>();
-                for (String w : fscNames) dailyWorkloadFsc.put(w, new int[T]);
+                for (String w : fscNames) dailyWorkloadFsc.put(w, new int[timeHorizon]);
 
                 // Daily MSC->VUST workload
-                int[] dailyWorkloadVust = new int[T];
+                int[] dailyWorkloadVust = new int[timeHorizon];
 
                 // Loop OUs
                 for (OperatingUnit ou : instance.operatingUnits) {
@@ -95,7 +94,7 @@ public final class StochasticFleetSizerCorrected {
                     double[] dFUEL = sampler.stochasticFUEL((int) Math.round(ou.dailyFuelKg), instance.timeHorizon);
                     double[] dAMMO = sampler.stochasticAMMO((int) Math.round(ou.dailyAmmoKg), instance.timeHorizon);
 
-                    for (int t = 0; t < T; t++) {
+                    for (int t = 0; t < timeHorizon; t++) {
                         // Convert demand to minimum #CCLs (min trucks)
                         int shipments = ilp.minCclsToCover(dFW[t], dFUEL[t], dAMMO[t]);
 
@@ -103,7 +102,7 @@ public final class StochasticFleetSizerCorrected {
                             dailyWorkloadVust[t] += shipments;
                         } else {
                             String w = ou.source;
-                            int[] arr = dailyWorkloadFsc.computeIfAbsent(w, __ -> new int[T]);
+                            int[] arr = dailyWorkloadFsc.computeIfAbsent(w, __ -> new int[timeHorizon]);
                             arr[t] += shipments;
                         }
                     }
@@ -121,44 +120,44 @@ public final class StochasticFleetSizerCorrected {
 
             // Quantiles over raw number of trucks
             // Raw MSC->VUST comes from scenario peak quantiles
-            int raw_M_VUST = empiricalQuantile(peakSamplesMSCtoVUST, serviceLevel);
+            int rawMscVustTrucks = empiricalQuantile(peakSamplesMSCtoVUST, serviceLevel);
 
             // Raw FSC fleets (per FSC) come from scenario peak quantiles
-            Map<String, Integer> raw_K_FSC = new HashMap<>();
+            Map<String, Integer> rawFscTrucks = new HashMap<>();
             for (Map.Entry<String, List<Integer>> e : peakSamplesPerFsc.entrySet()) {
                 int q = e.getValue().isEmpty() ? 0 : empiricalQuantile(e.getValue(), serviceLevel);
-                raw_K_FSC.put(e.getKey(), q);
+                rawFscTrucks.put(e.getKey(), q);
             }
 
             // Apply inventory correction
 
             // 1) Correct FSC fleets first (FSC->OU) using OU inventory credits
-            Map<String, Integer> corr_K_FSC = new HashMap<>();
+            Map<String, Integer> correctedFscTrucks = new HashMap<>();
             for (String w : fscNames) {
-                int rawKw = raw_K_FSC.getOrDefault(w, 0);
+                int rawKw = rawFscTrucks.getOrDefault(w, 0);
                 int creditKw = credits.ouCreditPerDayByFsc.getOrDefault(w, 0);
-                double OU_CREDIT_FACTOR = 0.95;
-                int scaledCreditKw = (int) Math.floor(OU_CREDIT_FACTOR * creditKw);
-                corr_K_FSC.put(w, Math.max(0, rawKw - scaledCreditKw));
+                final double ouCreditFactor = 0.95;
+                int scaledCreditKw = (int) Math.floor(ouCreditFactor * creditKw);
+                correctedFscTrucks.put(w, Math.max(0, rawKw - scaledCreditKw));
             }
 
             // 2) Compute MSC->FSC from corrected FSC outbound needs (pooled)
-            int raw_M_MSCtoFSC_fromCorrectedFsc = sumMapValues(corr_K_FSC);
+            int rawMscToFscTrucks = sumMapValues(correctedFscTrucks);
 
             // 3) Apply FSC initial stock credit to MSC->FSC
-            int corr_M_MSCtoFSC = Math.max(0, raw_M_MSCtoFSC_fromCorrectedFsc - credits.fscStockCreditPerDay);
+            int correctedMscToFscTrucks = Math.max(0, rawMscToFscTrucks - credits.fscStockCreditPerDay);
 
             // 4) Apply VUST credit
-            int corr_M_VUST = Math.max(0, raw_M_VUST - credits.vustCreditPerDay);
+            int correctedMscVustTrucks = Math.max(0, rawMscVustTrucks - credits.vustCreditPerDay);
 
             // Total objective = (MSC->VUST) + (MSC->FSC pooled) + sum_w (FSC fleets)
-            int total = corr_M_VUST + corr_M_MSCtoFSC + sumMapValues(corr_K_FSC);
+            int total = correctedMscVustTrucks + correctedMscToFscTrucks + sumMapValues(correctedFscTrucks);
 
             return new FleetSizingResult(
                     total,
-                    corr_M_VUST,
-                    corr_M_MSCtoFSC,
-                    corr_K_FSC
+                    correctedMscVustTrucks,
+                    correctedMscToFscTrucks,
+                    correctedFscTrucks
             );
         }
     }
@@ -189,7 +188,7 @@ public final class StochasticFleetSizerCorrected {
      */
     private static InventoryCredits computeInventoryCredits(Instance instance,
                                                             PerOuDayCclIlpSolver ilp) throws GRBException {
-        final int T = instance.timeHorizon;
+        final int timeHorizon = instance.timeHorizon;
 
         // Convert OU full-inventory in kg to CCLs
         int vustFullCcls = 0;
@@ -206,11 +205,11 @@ public final class StochasticFleetSizerCorrected {
             }
         }
 
-        int vustCreditPerDay = roundDivNonNegative(vustFullCcls, T);
+        int vustCreditPerDay = roundDivNonNegative(vustFullCcls, timeHorizon);
 
         Map<String, Integer> ouCreditPerDayByFsc = new HashMap<>();
         for (Map.Entry<String, Integer> e : fullCclsByFsc.entrySet()) {
-            ouCreditPerDayByFsc.put(e.getKey(), roundDivNonNegative(e.getValue(), T));
+            ouCreditPerDayByFsc.put(e.getKey(), roundDivNonNegative(e.getValue(), timeHorizon));
         }
 
         // FSC initial storage is already in CCL units
@@ -225,15 +224,15 @@ public final class StochasticFleetSizerCorrected {
             }
         }
 
-        int fscStockCreditPerDay = roundDivNonNegative(totalInitialFscCcls, T);
+        int fscStockCreditPerDay = roundDivNonNegative(totalInitialFscCcls, timeHorizon);
 
         return new InventoryCredits(vustCreditPerDay, ouCreditPerDayByFsc, fscStockCreditPerDay);
     }
 
-    /** Round(total/T) as integer, clipping total at >= 0. */
-    private static int roundDivNonNegative(int total, int T) {
+    /** Round(total/horizon) as integer, clipping total at >= 0. */
+    private static int roundDivNonNegative(int total, int horizon) {
         if (total <= 0) return 0;
-        return (int) Math.floor(total * 1.0 / T);
+        return (int) Math.floor(total * 1.0 / horizon);
     }
 
     /** Returns max element in array (used for peak day). */
@@ -318,7 +317,7 @@ public final class StochasticFleetSizerCorrected {
         private final GRBConstr fuelConstr;
         private final GRBConstr ammoConstr;
 
-        public PerOuDayCclIlpSolver(List<CCLpackage> ccls, boolean verbose) throws GRBException {
+        public PerOuDayCclIlpSolver(List<CCLPackage> ccls, boolean verbose) throws GRBException {
             this.env = new GRBEnv(true);
             env.set(GRB.IntParam.OutputFlag, verbose ? 1 : 0);
             env.set(GRB.IntParam.LogToConsole, verbose ? 1 : 0);
@@ -326,10 +325,10 @@ public final class StochasticFleetSizerCorrected {
 
             this.model = new GRBModel(env);
 
-            int C = ccls.size();
-            this.x = new GRBVar[C];
+            int numCclTypes = ccls.size();
+            this.x = new GRBVar[numCclTypes];
 
-            for (int i = 0; i < C; i++) {
+            for (int i = 0; i < numCclTypes; i++) {
                 x[i] = model.addVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER, "x_" + ccls.get(i).type);
             }
 
@@ -341,8 +340,8 @@ public final class StochasticFleetSizerCorrected {
             GRBLinExpr fuelLhs = new GRBLinExpr();
             GRBLinExpr ammoLhs = new GRBLinExpr();
 
-            for (int i = 0; i < C; i++) {
-                CCLpackage c = ccls.get(i);
+            for (int i = 0; i < numCclTypes; i++) {
+                CCLPackage c = ccls.get(i);
                 fwLhs.addTerm(c.foodWaterKg, x[i]);
                 fuelLhs.addTerm(c.fuelKg, x[i]);
                 ammoLhs.addTerm(c.ammoKg, x[i]);

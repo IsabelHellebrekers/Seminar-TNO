@@ -1,6 +1,6 @@
 package Analysis;
 
-import Objects.CCLpackage;
+import Objects.CCLPackage;
 import Objects.Instance;
 import java.util.Map;
 
@@ -10,7 +10,7 @@ import java.util.Map;
  * Use {@link #of} for configs without a fourth CCL type.
  */
 public record InstanceConfig(Instance instance, int mscTrucks, Map<String, Integer> trucksPerFSC, String label,
-        CCLpackage fourthCCL) {
+        CCLPackage fourthCCL) {
 
     /** Convenience factory for configs without a fourth CCL type. */
     public static InstanceConfig of(Instance instance, int mscTrucks, Map<String, Integer> trucksPerFSC,

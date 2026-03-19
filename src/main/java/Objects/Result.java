@@ -29,13 +29,13 @@ public class Result {
     public record IKey(String ou, String product, int t) {}
     public record SKey(String fsc, int cclType, String ouType, int t) {}
 
-    private final int M_value; // M
-    private final Map<String, Integer> K_value; // K[w]
-    private final Map<XKey, Integer> x_value; // x[w,i,c,t]
-    private final Map<YKey, Integer> y_value; // y[w,c,o,t]
-    private final Map<ZKey, Integer> z_value; // z[c,t]
-    private final Map<IKey, Double> I_value; // I[i,p,t]
-    private final Map<SKey, Integer> S_value; // S[w,c,o,t]
+    private final int mValue; // M
+    private final Map<String, Integer> kValue; // K[w]
+    private final Map<XKey, Integer> xValue; // x[w,i,c,t]
+    private final Map<YKey, Integer> yValue; // y[w,c,o,t]
+    private final Map<ZKey, Integer> zValue; // z[c,t]
+    private final Map<IKey, Double> iValue; // I[i,p,t]
+    private final Map<SKey, Integer> sValue; // S[w,c,o,t]
 
     /**
      * Constructor.
@@ -46,15 +46,15 @@ public class Result {
      * @param trucksAtMsc      #trucks at the MSC
      * @param trucksAtFsc      #trucks at each FSC
      * @param ousSuppliedByFsc for each FSC, a list of OUs it supplies
-     * @param M_value          #trucks at MSC
-     * @param K_value          #trucks at each FSC
-     * @param x_value          #CCLs of type c shipped from FSC w to OU i on day t
-     * @param y_value          #CCLs of type c destined for OU type o shipped from
+     * @param mValue          #trucks at MSC
+     * @param kValue          #trucks at each FSC
+     * @param xValue          #CCLs of type c shipped from FSC w to OU i on day t
+     * @param yValue          #CCLs of type c destined for OU type o shipped from
      *                         MSC to FSC w on day t
-     * @param z_value          #CCLs of type c shipped from MSC to Vust on day t
-     * @param I_value          inventory level of product p at OU i at the start of
+     * @param zValue          #CCLs of type c shipped from MSC to Vust on day t
+     * @param iValue          inventory level of product p at OU i at the start of
      *                         day t (kg)
-     * @param S_value          inventory at FSC w of CCL type c destined for OU type
+     * @param sValue          inventory at FSC w of CCL type c destined for OU type
      *                         o at the start of day t (#CCLs)
      */
     public Result(String instanceName,
@@ -64,13 +64,13 @@ public class Result {
             int trucksAtMsc,
             int[] trucksAtFsc,
             List<List<String>> ousSuppliedByFsc,
-            int M_value,
-            Map<String, Integer> K_value,
-            Map<XKey, Integer> x_value,
-            Map<YKey, Integer> y_value,
-            Map<ZKey, Integer> z_value,
-            Map<IKey, Double> I_value,
-            Map<SKey, Integer> S_value) {
+            int mValue,
+            Map<String, Integer> kValue,
+            Map<XKey, Integer> xValue,
+            Map<YKey, Integer> yValue,
+            Map<ZKey, Integer> zValue,
+            Map<IKey, Double> iValue,
+            Map<SKey, Integer> sValue) {
         this.instanceName = instanceName;
         this.gurobiStatus = gurobiStatus;
         this.optimal = optimal;
@@ -78,13 +78,13 @@ public class Result {
         this.trucksAtFsc = trucksAtFsc.clone();
         this.ousSuppliedByFsc = ousSuppliedByFsc;
 
-        this.M_value = M_value;
-        this.K_value = K_value;
-        this.x_value = x_value;
-        this.y_value = y_value;
-        this.z_value = z_value;
-        this.I_value = I_value;
-        this.S_value = S_value;
+        this.mValue = mValue;
+        this.kValue = kValue;
+        this.xValue = xValue;
+        this.yValue = yValue;
+        this.zValue = zValue;
+        this.iValue = iValue;
+        this.sValue = sValue;
     }
 
     /**
@@ -145,13 +145,13 @@ public class Result {
         List<Integer> instanceResult = new ArrayList<>();
 
         int total = this.trucksAtMsc;
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < this.trucksAtFsc.length; i++) {
             total = total + this.trucksAtFsc[i];
         }
         instanceResult.add(total);
 
         instanceResult.add(this.trucksAtMsc);
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < this.trucksAtFsc.length; i++)
             instanceResult.add(this.trucksAtFsc[i]);
         return instanceResult;
     }
@@ -160,31 +160,31 @@ public class Result {
     // used for the visual representation of a solution. 
 
     public Map<XKey, Integer> getXValue() {
-        return Collections.unmodifiableMap(x_value);
+        return Collections.unmodifiableMap(xValue);
     }
 
     public Map<YKey, Integer> getYValue() {
-        return Collections.unmodifiableMap(y_value);
+        return Collections.unmodifiableMap(yValue);
     }
 
     public Map<ZKey, Integer> getZValue() {
-        return Collections.unmodifiableMap(z_value);
+        return Collections.unmodifiableMap(zValue);
     }
 
     public Map<IKey, Double> getIValue() {
-        return Collections.unmodifiableMap(I_value);
+        return Collections.unmodifiableMap(iValue);
     }
 
     public Map<SKey, Integer> getSValue() {
-        return Collections.unmodifiableMap(S_value);
+        return Collections.unmodifiableMap(sValue);
     }
 
     public Map<String, Integer> getKValue() {
-        return Collections.unmodifiableMap(K_value);
+        return Collections.unmodifiableMap(kValue);
     }
 
     public int getMValue() {
-        return M_value;
+        return mValue;
     }
 
 }

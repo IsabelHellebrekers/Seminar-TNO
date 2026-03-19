@@ -28,9 +28,9 @@ import java.util.*;
  */
 public class PerfectHindsight {
 
-    public static void run(Instance baseInstance, int N, int baseSeed, int M, Map<String, Integer> K) {
-        List<Scenario> scenarios = generateScenarios(baseInstance, N, baseSeed);
-        runPerfectHindsightBenchmarks(scenarios, M, K, baseSeed);
+    public static void run(Instance baseInstance, int numScenarios, int baseSeed, int mscTrucks, Map<String, Integer> fscTrucks) {
+        List<Scenario> scenarios = generateScenarios(baseInstance, numScenarios, baseSeed);
+        runPerfectHindsightBenchmarks(scenarios, mscTrucks, fscTrucks, baseSeed);
     }
 
     /**
@@ -40,18 +40,21 @@ public class PerfectHindsight {
      * (3) Run feasibility benchmarks for unlimited vs fixed fleet size.
      */
     public static void main(String[] args) {
-        int N = 1000;
-        int baseseed = 10042;
-        int M = 79;
-        Map<String, Integer> K = new HashMap<>();
-        K.put("FSC_1", 48);
-        K.put("FSC_2", 35);
+        final int numScenarios = 1000;
+        final int baseSeed = 10042;
+        final int mscTrucks = 79;
+        final int fsc1Trucks = 48;
+        final int fsc2Trucks = 35;
+
+        Map<String, Integer> fscTrucks = new HashMap<>();
+        fscTrucks.put("FSC_1", fsc1Trucks);
+        fscTrucks.put("FSC_2", fsc2Trucks);
 
         Instance fdInstance = InstanceCreator.createFDInstance().get(0);
 
-        List<Scenario> scenarios = generateScenarios(fdInstance, N, baseseed);
+        List<Scenario> scenarios = generateScenarios(fdInstance, numScenarios, baseSeed);
 
-        runPerfectHindsightBenchmarks(scenarios, M, K, baseseed);
+        runPerfectHindsightBenchmarks(scenarios, mscTrucks, fscTrucks, baseSeed);
     }
 
     /**
@@ -67,8 +70,8 @@ public class PerfectHindsight {
      */
     private static void runPerfectHindsightBenchmarks(
             List<Scenario> scenarios,
-            int M,
-            Map<String, Integer> K,
+            int mscTrucks,
+            Map<String, Integer> fscTrucks,
             int baseSeed) {
         GRBEnv env = null;
 
@@ -130,7 +133,7 @@ public class PerfectHindsight {
                 try {
                     milp = new CapacitatedResupplyMILP(sc.instance, env, false);
 
-                    fixFleetSize(milp.getModel(), sc.instance, M, K);
+                    fixFleetSize(milp.getModel(), sc.instance, mscTrucks, fscTrucks);
 
                     GRBModel model = milp.getModel();
 
@@ -168,22 +171,22 @@ public class PerfectHindsight {
             }
         }
 
-        int N = scenarios.size();
+        int numScenarios = scenarios.size();
         System.out.println("====================================");
         System.out.println("Perfect hindsight feasibility check");
-        System.out.println("N scenarios: " + N);
+        System.out.println("N scenarios: " + numScenarios);
         System.out.println("baseSeed: " + baseSeed);
         System.out.println();
 
         System.out.println("(1) Unlimited fleet (MILP minimizes trucks):");
-        System.out.printf("  feasible   = %d (%.2f%%)%n", feasibleUnlimited, 100.0 * feasibleUnlimited / N);
-        System.out.printf("  infeasible = %d (%.2f%%)%n", infeasibleUnlimited, 100.0 * infeasibleUnlimited / N);
+        System.out.printf("  feasible   = %d (%.2f%%)%n", feasibleUnlimited, 100.0 * feasibleUnlimited / numScenarios);
+        System.out.printf("  infeasible = %d (%.2f%%)%n", infeasibleUnlimited, 100.0 * infeasibleUnlimited / numScenarios);
 
         System.out.println();
 
-        System.out.println("(2) Fixed fleet size (given M and K):");
-        System.out.printf("  feasible   = %d (%.2f%%)%n", feasibleFixed, 100.0 * feasibleFixed / N);
-        System.out.printf("  infeasible = %d (%.2f%%)%n", infeasibleFixed, 100.0 * infeasibleFixed / N);
+        System.out.println("(2) Fixed fleet size (given mscTrucks and fscTrucks):");
+        System.out.printf("  feasible   = %d (%.2f%%)%n", feasibleFixed, 100.0 * feasibleFixed / numScenarios);
+        System.out.printf("  infeasible = %d (%.2f%%)%n", infeasibleFixed, 100.0 * infeasibleFixed / numScenarios);
     }
 
     /**
@@ -206,10 +209,10 @@ public class PerfectHindsight {
      * @param baseseed base seed for reproducible scenario generation
      * @return list of Scenario objects containing
      */
-    private static List<Scenario> generateScenarios(Instance base, int N, int baseseed) {
-        List<Scenario> scenarios = new ArrayList<>(N);
-        for (int s = 1; s <= N; s++) {
-            long scenarioSeed = baseseed + s;
+    private static List<Scenario> generateScenarios(Instance base, int numScenarios, int baseSeed) {
+        List<Scenario> scenarios = new ArrayList<>(numScenarios);
+        for (int s = 1; s <= numScenarios; s++) {
+            long scenarioSeed = baseSeed + s;
             Instance inst = buildScenario(base, scenarioSeed);
             scenarios.add(new Scenario(scenarioSeed, inst));
         }
@@ -225,7 +228,7 @@ public class PerfectHindsight {
      * @return scenario instance with stochastic demand arrays
      */
     private static Instance buildScenario(Instance base, long scenarioSeed) {
-        int T = base.timeHorizon;
+        int timeHorizon = base.timeHorizon;
         Sampling sampler = new Sampling(scenarioSeed);
 
         Map<String, double[]> fw = new HashMap<>();
@@ -233,12 +236,12 @@ public class PerfectHindsight {
         Map<String, double[]> ammo = new HashMap<>();
 
         for (OperatingUnit ou : base.operatingUnits) {
-            fw.put(ou.operatingUnitName, new double[T]);
-            fuel.put(ou.operatingUnitName, new double[T]);
-            ammo.put(ou.operatingUnitName, new double[T]);
+            fw.put(ou.operatingUnitName, new double[timeHorizon]);
+            fuel.put(ou.operatingUnitName, new double[timeHorizon]);
+            ammo.put(ou.operatingUnitName, new double[timeHorizon]);
         }
 
-        for (int t = 1; t <= T; t++) {
+        for (int t = 1; t <= timeHorizon; t++) {
             int idx = t - 1;
             for (OperatingUnit ou : base.operatingUnits) {
                 double dFW = sampler.uniform() * ou.dailyFoodWaterKg;
@@ -287,16 +290,16 @@ public class PerfectHindsight {
      * @param K     fixed FSC fleet size keyed by FSC name
      * @throws GRBException if variable lookup of attribute updates fail
      */
-    private static void fixFleetSize(GRBModel model, Instance inst, int M, Map<String, Integer> K) throws GRBException {
+    private static void fixFleetSize(GRBModel model, Instance inst, int mscTrucks, Map<String, Integer> fscTrucks) throws GRBException {
         GRBVar mVar = model.getVarByName("M");
-        mVar.set(GRB.DoubleAttr.LB, M);
-        mVar.set(GRB.DoubleAttr.UB, M);
+        mVar.set(GRB.DoubleAttr.LB, mscTrucks);
+        mVar.set(GRB.DoubleAttr.UB, mscTrucks);
 
         for (FSC f : inst.FSCs) {
             String varName = "K_" + f.FSCname;
             GRBVar kVar = model.getVarByName(varName);
 
-            int val = (K != null && K.containsKey(f.FSCname)) ? K.get(f.FSCname) : 0;
+            int val = (fscTrucks != null && fscTrucks.containsKey(f.FSCname)) ? fscTrucks.get(f.FSCname) : 0;
             kVar.set(GRB.DoubleAttr.LB, val);
             kVar.set(GRB.DoubleAttr.UB, val);
         }

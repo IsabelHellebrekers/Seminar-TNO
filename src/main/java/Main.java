@@ -12,50 +12,48 @@ import com.gurobi.gurobi.GRBException;
 
 public class Main {
 
+    private static final int OOS_SEED = 10042;
+    private static final int N_OOS = 10000;
+    private static final int DISPERSED_INSTANCE_INDEX = 41;
+
     public static void main(String[] args) throws IOException {
         Instance fdInstance = InstanceCreator.createFDInstance(10).get(0);
-        Instance dispersedInstance = InstanceCreator.contiguousPartitions().get(41);
+        Instance dispersedInstance = InstanceCreator.contiguousPartitions().get(DISPERSED_INSTANCE_INDEX);
+        List<Instance> allInstances = List.of(fdInstance, dispersedInstance);
 
         // MILP (uncomment to run)
-        // List<Result> result = CapacitatedResupplyMILP.solveInstances(allInstances);
-        // System.out.println();
-
-        // for (Result res : result) {
-        // System.out.println(res.getTruckVector());
-        // }
+        List<Result> result = CapacitatedResupplyMILP.solveInstances(allInstances);
+        for (Result res : result) {
+            System.out.println(res.getTruckVector());
+        }
 
         // DISPERSED EXPERIMENTS (uncomment to run)
-        // runDispersedExperiments();
+        runDispersedExperiments();
 
         // STOCHASTIC EXPERIMENTS (uncomment to run)
-        // runStochasticExperiments(fdInstance);
+        runStochasticExperiments(fdInstance);
 
         // PERFECT HINDSIGHT EXPERIMENTS (uncomment to run)
-        // runPerfectHindsightExperiments();
+        runPerfectHindsightExperiments();
 
         // SENSITIVITY ANALYSIS (uncomment to run)
-        // List<InstanceConfig> sensitivityConfigs = buildExtendedHorizonConfigs();
-        // runCorrelationAnalysis(sensitivityConfigs);
-        // runDemandDistributionAnalysis(sensitivityConfigs);
+        List<InstanceConfig> sensitivityConfigs = buildExtendedHorizonConfigs();
+        runCorrelationAnalysis(sensitivityConfigs);
+        runDemandDistributionAnalysis(sensitivityConfigs);
 
-        // List<InstanceConfig> timeHorizonConfigs = buildExtendedHorizonConfigs();
-        // runExtendedTimeHorizon(timeHorizonConfigs);
+        List<InstanceConfig> timeHorizonConfigs = buildExtendedHorizonConfigs();
+        runExtendedTimeHorizon(timeHorizonConfigs);
 
-        // List<InstanceConfig> vehicleBreakdownConfigs = buildExtendedHorizonConfigs();
-        // runVehicleBreakdownAnalysis(vehicleBreakdownConfigs);
+        List<InstanceConfig> vehicleBreakdownConfigs = buildExtendedHorizonConfigs();
+        runVehicleBreakdownAnalysis(vehicleBreakdownConfigs);
 
         // Extended time horizon fleet size heuristic
-        // runFleetSizing(fdInstance);
+        runFleetSizing(fdInstance);
 
         Instance dispInstance = InstanceCreator.createDispersedInstanceExtraType(2000, 7000, 1000, 10).get(0);
         runStochasticDispersed(dispInstance);
     }
 
-    /**
-     * Solves the deterministic MILP for all 512 contiguous partitons (Dispersed
-     * instances).
-     * Writes the output to a CSV file named DispersedConceptSolutions.csv.
-     */
     private static void runDispersedExperiments() {
         long t0 = System.currentTimeMillis();
         List<Result> results = CapacitatedResupplyMILP.solveInstances(InstanceCreator.contiguousPartitions());
@@ -72,19 +70,19 @@ public class Main {
 
         System.out.println();
         System.out.println("STOCHASTIC FLEET SIZING, time horizon = " + base.timeHorizon);
-        StochasticFleetSizerCorrected.FleetSizingResult fleet;
+        StochasticFleetSizerCorrected.FleetSizingResult fleetResult;
         try {
             long t0 = System.currentTimeMillis();
-            fleet = StochasticFleetSizerCorrected.estimateFleetSizes(base, nScenarios, serviceLevel, seedSizingTrain);
+            fleetResult = StochasticFleetSizerCorrected.estimateFleetSizes(base, nScenarios, serviceLevel, seedSizingTrain);
             long t1 = System.currentTimeMillis();
             long timeSeconds = (t1 - t0) / 1000;
 
             System.out.println("Runtime (s) : " + timeSeconds);
-            System.out.println("Total trucks = " + fleet.totalTrucks);
-            int mscTrucks = fleet.trucksMSCtoFSC + fleet.trucksMSCtoVUST;
+            System.out.println("Total trucks = " + fleetResult.totalTrucks);
+            int mscTrucks = fleetResult.trucksMSCtoFSC + fleetResult.trucksMSCtoVUST;
             System.out.println("MSC =" + mscTrucks);
-            for (String w : new TreeSet<>(fleet.trucksAtFSC.keySet())) {
-                System.out.println("  " + w + " = " + fleet.trucksAtFSC.get(w));
+            for (String w : new TreeSet<>(fleetResult.trucksAtFSC.keySet())) {
+                System.out.println("  " + w + " = " + fleetResult.trucksAtFSC.get(w));
             }
         } catch (GRBException e) {
             throw new RuntimeException();
@@ -93,12 +91,10 @@ public class Main {
 
     private static void runStochasticExperiments(Instance base) {
         final int nScenarios = 1000;
-        final int nOOS = 10000;
         final double serviceLevel = 0.95;
 
         final long seedSizingTrain = 42000;
         final long seedTuningTrain = 43000;
-        final int seedOOS = 10042;
 
         final String outputFile = "stochastic_experiments_log.txt";
 
@@ -118,8 +114,8 @@ public class Main {
                 log(writer, "Runtime (s) : " + timeSeconds);
                 log(writer, "Total trucks = " + fleet.totalTrucks);
 
-                int mscTrucks = fleet.trucksMSCtoFSC + fleet.trucksMSCtoVUST;
-                log(writer, "MSC = " + mscTrucks);
+                int totalMscTrucks = fleet.trucksMSCtoFSC + fleet.trucksMSCtoVUST;
+                log(writer, "MSC = " + totalMscTrucks);
 
                 for (String w : new TreeSet<>(fleet.trucksAtFSC.keySet())) {
                     log(writer, "  " + w + " = " + fleet.trucksAtFSC.get(w));
@@ -129,8 +125,8 @@ public class Main {
                 throw new RuntimeException(e);
             }
 
-            final int M = fleet.trucksMSCtoFSC + fleet.trucksMSCtoVUST;
-            final Map<String, Integer> K = new HashMap<>(fleet.trucksAtFSC);
+            final int mscTrucks = fleet.trucksMSCtoFSC + fleet.trucksMSCtoVUST;
+            final Map<String, Integer> trucksPerFsc = new HashMap<>(fleet.trucksAtFSC);
 
             log(writer, "");
             log(writer, "STEP 2 : WEIGHT TUNING (train)");
@@ -139,7 +135,7 @@ public class Main {
             EvaluationHeuristic.TargetWeights defaultVust = new EvaluationHeuristic.TargetWeights(1.0, 1.0, 1.0);
 
             var tuning = EvaluationHeuristic.tuneWeights(
-                    base, M, K, nScenarios, (int) seedTuningTrain,
+                    base, mscTrucks, trucksPerFsc, nScenarios, (int) seedTuningTrain,
                     lb, ub, step, defaultVust);
 
             log(writer, "BEST CONFIG : OU = " + tuning.bestCfg.ou() +
@@ -151,7 +147,7 @@ public class Main {
             log(writer, "STEP 3 : OOS EVALUATION 3 CCLs (test)");
 
             EvaluationSummary oosSummary = EvaluationHeuristic.evaluate(
-                    base, M, K, nOOS, seedOOS, bestCfg,
+                    base, mscTrucks, trucksPerFsc, N_OOS, OOS_SEED, bestCfg,
                     List.of(0.0, 0.0, 0.0, 0.0));
 
             log(writer, oosSummary.toString());
@@ -187,7 +183,7 @@ public class Main {
 
                 // Same seeds for every instance, exactly as requested
                 var tuning4 = EvaluationHeuristic.tuneWeights(
-                        inst, M, K, nScenarios, (int) seedTuningTrain,
+                        inst, mscTrucks, trucksPerFsc, nScenarios, (int) seedTuningTrain,
                         lb, ub, step, defaultVust);
 
                 log(writer, "BEST CONFIG : OU = " + tuning4.bestCfg.ou() +
@@ -196,7 +192,7 @@ public class Main {
                 EvaluationHeuristic.WeightConfig bestCfg4 = tuning4.bestCfg;
 
                 EvaluationSummary oos4 = EvaluationHeuristic.evaluate(
-                        inst, M, K, nOOS, seedOOS, bestCfg4,
+                        inst, mscTrucks, trucksPerFsc, N_OOS, OOS_SEED, bestCfg4,
                         List.of(0.0, 0.0, 0.0, 0.0));
 
                 log(writer, "OOS RESULT INSTANCE " + (i + 1) + ":");
@@ -229,26 +225,27 @@ public class Main {
     }
 
     private static void runStochasticDispersed(Instance instance) {
-        int seedOOS = 10042;
-        int nOOS = 10000;
+        final int dispersedMscTrucks = 88;
+        final int dispersedFsc1Trucks = 33;
+        final int dispersedFsc2Trucks = 18;
+        final int dispersedFsc3Trucks = 24;
+        final int dispersedFsc4Trucks = 17;
 
-        int M = 88;
-        Map<String, Integer> K = new HashMap<>();
-        K.put("FSC_1", 33);
-        K.put("FSC_2", 18);
-        K.put("FSC_3", 24);
-        K.put("FSC_4", 17);
-        // K.put("FSC_5", 17);
+        final Map<String, Integer> trucksPerFsc = new HashMap<>();
+        trucksPerFsc.put("FSC_1", dispersedFsc1Trucks);
+        trucksPerFsc.put("FSC_2", dispersedFsc2Trucks);
+        trucksPerFsc.put("FSC_3", dispersedFsc3Trucks);
+        trucksPerFsc.put("FSC_4", dispersedFsc4Trucks);
 
         EvaluationHeuristic.WeightConfig config = new WeightConfig(
             new TargetWeights(1.2, 0.6, 0.9),
             new TargetWeights(1.0, 1.0, 1.0)
         );
 
-        EvaluationSummary OOS = EvaluationHeuristic.evaluate(
-            instance, M, K, nOOS, seedOOS, config, List.of(0.0, 0.0, 0.0, 0.0));
+        EvaluationSummary oos = EvaluationHeuristic.evaluate(
+            instance, dispersedMscTrucks, trucksPerFsc, N_OOS, OOS_SEED, config, List.of(0.0, 0.0, 0.0, 0.0));
 
-        System.out.println(OOS);
+        System.out.println(oos);
     }
 
     private static void log(PrintWriter writer, String message) {
@@ -264,105 +261,45 @@ public class Main {
             EvaluationSummary oosSummary) {
     }
 
-    /**
-     * Performs perfect hindsight experiments.
-     */
     private static void runPerfectHindsightExperiments() {
-        final int N = 10000;
-        final int oosSeed = 10042;
+        final int fdMscTrucks = 79;
+        final int fdFsc1Trucks = 48;
+        final int fdFsc2Trucks = 35;
 
-        final int M = 79;
-        final Map<String, Integer> K = new HashMap<>();
-        K.put("FSC_1", 48);
-        K.put("FSC_2", 35);
+        final Map<String, Integer> trucksPerFsc = new HashMap<>();
+        trucksPerFsc.put("FSC_1", fdFsc1Trucks);
+        trucksPerFsc.put("FSC_2", fdFsc2Trucks);
 
         Instance base3 = InstanceCreator.createFDInstance().get(0);
 
         System.out.println();
         System.out.println("--- Perfect hindsight: 3 CCL types ---");
-        System.out.println("N=" + N + " | seed=" + oosSeed + " | fixed fleet: M=" + M + " K=" + K);
+        System.out.println("N=" + N_OOS + " | seed=" + OOS_SEED + " | fixed fleet: M=" + fdMscTrucks + " K=" + trucksPerFsc);
 
-        PerfectHindsight.run(base3, N, oosSeed, M, K);
+        PerfectHindsight.run(base3, N_OOS, OOS_SEED, fdMscTrucks, trucksPerFsc);
 
         Instance base4 = InstanceCreator.createFDInstanceExtraType(2000, 7000, 1000).get(0);
 
         System.out.println();
         System.out.println("--- Perfect hindsight: 4 CCL types (CCL4=2000/7000/1000) ---");
-        System.out.println("N=" + N + " | seed=" + oosSeed + " | fixed fleet: M=" + M + " K=" + K);
+        System.out.println("N=" + N_OOS + " | seed=" + OOS_SEED + " | fixed fleet: M=" + fdMscTrucks + " K=" + trucksPerFsc);
 
-        PerfectHindsight.run(base4, N, oosSeed, M, K);
+        PerfectHindsight.run(base4, N_OOS, OOS_SEED, fdMscTrucks, trucksPerFsc);
     }
 
-    /**
-     * Builds the list of InstanceConfigs used for sensitivity analyses.
-     * The FD instance uses the fleet sizes from the stochastic fleet sizing step.
-     * The dispersed instance distributes the same total FSC truck budget
-     * proportionally across its FSCs based on their storage capacity.
-     */
-    private static List<InstanceConfig> buildSensitivityConfigs(Instance fdInstance, Instance dispersedInstance) {
-        Map<String, Integer> fdK = new HashMap<>();
-        fdK.put("FSC_1", 48);
-        fdK.put("FSC_2", 35);
-
-        // Map<String, Integer> dispersedK = buildProportionalK(dispersedInstance, 83);
-
-        return List.of(
-                InstanceConfig.of(fdInstance, 79, fdK, "FD"));
-                // InstanceConfig.of(dispersedInstance, 79, dispersedK, "Dispersed"));
-    }
-
-    /**
-     * Builds InstanceConfigs for the vehicle breakdown analysis.
-     * Returns one config for the 3-CCL baseline and one for the 4-CCL variant.
-     */
-    private static List<InstanceConfig> buildVehicleBreakdownConfigs(Instance fdInstance) {
-        Map<String, Integer> fdK = new HashMap<>();
-        fdK.put("FSC_1", 48);
-        fdK.put("FSC_2", 35);
-
-        CCLpackage ccl4 = new CCLpackage(4, 2000, 7000, 1000);
-
-        Instance fdInstance4ccl = InstanceCreator.createFDInstance().get(0);
-        fdInstance4ccl.addCCLType(ccl4);
-
-        return List.of(
-                InstanceConfig.of(fdInstance, 79, fdK, "FD (3 CCL)"),
-                new InstanceConfig(fdInstance4ccl, 79, fdK, "FD (4 CCL)", ccl4));
-    }
-
-    /**
-     * Builds InstanceConfigs for the extended time horizon analysis.
-     * The fourth CCL is stored in the config so the analysis can add it to
-     * each internally-created instance at the right horizon.
-     */
     private static List<InstanceConfig> buildExtendedHorizonConfigs() {
-        Map<String, Integer> fdK = new HashMap<>();
-        fdK.put("FSC_1", 48);
-        fdK.put("FSC_2", 35);
+        final int fdMscTrucks = 79;
+        final int fdFsc1Trucks = 48;
+        final int fdFsc2Trucks = 35;
 
-        CCLpackage ccl4 = new CCLpackage(4, 2000, 7000, 1000);
+        Map<String, Integer> fdTrucksPerFsc = new HashMap<>();
+        fdTrucksPerFsc.put("FSC_1", fdFsc1Trucks);
+        fdTrucksPerFsc.put("FSC_2", fdFsc2Trucks);
+
+        CCLPackage ccl4 = new CCLPackage(4, 2000, 7000, 1000);
         Instance fdInstance4 = InstanceCreator.createFDInstanceExtraType(2000, 7000, 1000, 10).get(0);
 
-        return List.of(new InstanceConfig(fdInstance4, 79, fdK, "FD (4 CCL)", ccl4));
-    }
-
-    /**
-     * Distributes totalFscTrucks among the FSCs of the given instance proportional
-     * to each FSC's maximum storage capacity.
-     */
-    private static Map<String, Integer> buildProportionalK(Instance instance, int totalFscTrucks) {
-        int totalCap = instance.FSCs.stream().mapToInt(fsc -> fsc.maxStorageCapCcls).sum();
-        Map<String, Integer> K = new HashMap<>();
-        int assigned = 0;
-        for (int i = 0; i < instance.FSCs.size() - 1; i++) {
-            FSC fsc = instance.FSCs.get(i);
-            int trucks = (int) Math.round((double) fsc.maxStorageCapCcls / totalCap * totalFscTrucks);
-            K.put(fsc.FSCname, trucks);
-            assigned += trucks;
-        }
-        FSC last = instance.FSCs.get(instance.FSCs.size() - 1);
-        K.put(last.FSCname, totalFscTrucks - assigned);
-        return K;
+        return List.of(new InstanceConfig(fdInstance4, fdMscTrucks, fdTrucksPerFsc, "FD (4 CCL)", ccl4));
     }
 
     private static void runCorrelationAnalysis(List<InstanceConfig> configs) {

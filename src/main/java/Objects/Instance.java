@@ -11,7 +11,7 @@ public class Instance {
     public final List<OperatingUnit> operatingUnits;
     public final List<FSC> FSCs;
     public final List<String> products;
-    public final List<CCLpackage> cclTypes;
+    public final List<CCLPackage> cclTypes;
     public final List<String> ouTypes;
     public final int timeHorizon;
 
@@ -35,9 +35,9 @@ public class Instance {
         this.FSCs = fscs;
         this.products = List.of("FW", "FUEL", "AMMO");
         this.cclTypes = new ArrayList<>(List.of(
-                new CCLpackage(1, 3000, 3000, 4000),
-                new CCLpackage(2, 1000, 4000, 5000),
-                new CCLpackage(3, 0, 2000, 8000)));
+                new CCLPackage(1, 3000, 3000, 4000),
+                new CCLPackage(2, 1000, 4000, 5000),
+                new CCLPackage(3, 0, 2000, 8000)));
         this.ouTypes = List.of("VUST", "GN_CIE", "PAINF_CIE", "AT_CIE");
         this.timeHorizon = timeHorizon;
     }
@@ -48,7 +48,7 @@ public class Instance {
      * @param fscs              the forward supply centres (FSCs)
      * @param cclTypes          the CCL types (differ in amount (kg) of each product)
      */
-    public Instance(List<OperatingUnit> operatingUnits, List<FSC> fscs, List<CCLpackage> cclTypes) {
+    public Instance(List<OperatingUnit> operatingUnits, List<FSC> fscs, List<CCLPackage> cclTypes) {
         this(operatingUnits, fscs, cclTypes, 10);
     }
 
@@ -59,7 +59,7 @@ public class Instance {
      * @param cclTypes          the CCL types (differ in amount (kg) of each product)
      * @param timeHorizon       planning horizon in days
      */
-    public Instance(List<OperatingUnit> operatingUnits, List<FSC> fscs, List<CCLpackage> cclTypes, int timeHorizon) {
+    public Instance(List<OperatingUnit> operatingUnits, List<FSC> fscs, List<CCLPackage> cclTypes, int timeHorizon) {
         this.operatingUnits = operatingUnits;
         this.FSCs = fscs;
         this.products = List.of("FW", "FUEL", "AMMO");
@@ -102,8 +102,8 @@ public class Instance {
      * number already exists it is not added again.
      * @param cclPackage the CCL package type to add
      */
-    public void addCCLType(CCLpackage cclPackage) {
-        for (CCLpackage existing : this.cclTypes) {
+    public void addCCLType(CCLPackage cclPackage) {
+        for (CCLPackage existing : this.cclTypes) {
             if (existing.type == cclPackage.type) return;
         }
         this.cclTypes.add(cclPackage);
