@@ -16,7 +16,7 @@ public class Main {
     private static final int N_OOS = 10000;
     private static final int DISPERSED_INSTANCE_INDEX = 41;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, GRBException {
         Instance fdInstance = InstanceCreator.createFDInstance(10).get(0);
         Instance dispersedInstance = InstanceCreator.contiguousPartitions().get(DISPERSED_INSTANCE_INDEX);
         List<Instance> allInstances = List.of(fdInstance, dispersedInstance);
@@ -69,7 +69,7 @@ public class Main {
         final long seedSizingTrain = 42000;
 
         System.out.println();
-        System.out.println("STOCHASTIC FLEET SIZING, time horizon = " + base.timeHorizon);
+        System.out.println("STOCHASTIC FLEET SIZING, time horizon = " + base.getTimeHorizon());
         StochasticFleetSizerCorrected.FleetSizingResult fleetResult;
         try {
             long t0 = System.currentTimeMillis();
@@ -261,7 +261,7 @@ public class Main {
             EvaluationSummary oosSummary) {
     }
 
-    private static void runPerfectHindsightExperiments() {
+    private static void runPerfectHindsightExperiments() throws GRBException {
         final int fdMscTrucks = 79;
         final int fdFsc1Trucks = 48;
         final int fdFsc2Trucks = 35;

@@ -48,9 +48,9 @@ public class FSCDeliveryEvent implements Event {
         // Highlight FSC->OU arcs
         for (var e : this.arcTrucks.entrySet()) {
             int trucks = e.getValue();
-            if (trucks <= 0) continue;
+            if (trucks <= 0) { continue; }
             String[] parts = e.getKey().split("->");
-            if (parts.length != 2) continue;
+            if (parts.length != 2) { continue; }
             state.highlightArc(parts[0], parts[1], trucks);
         }
 
@@ -58,25 +58,25 @@ public class FSCDeliveryEvent implements Event {
         var I = this.result.getIValue();
         int tNext = this.time + 1;
         for (String ou : this.ouNames) {
-            if (ou.equals("VUST")) continue;
+            if (ou.equals("VUST")) { continue; }
             Double fw   = I.get(new Result.IKey(ou, "FW",   tNext));
             Double fuel = I.get(new Result.IKey(ou, "FUEL", tNext));
             Double ammo = I.get(new Result.IKey(ou, "AMMO", tNext));
-            if (fw   != null) state.setInventoryOU(ou, "FW",   fw);
-            if (fuel != null) state.setInventoryOU(ou, "FUEL", fuel);
-            if (ammo != null) state.setInventoryOU(ou, "AMMO", ammo);
+            if (fw   != null) { state.setInventoryOU(ou, "FW",   fw); }
+            if (fuel != null) { state.setInventoryOU(ou, "FUEL", fuel); }
+            if (ammo != null) { state.setInventoryOU(ou, "AMMO", ammo); }
         }
 
         // Decrease FSC inventories by CCLs dispatched to OUs: sum over c of x[w,i,c,t]
         Map<String, Integer> fscDecrease = new HashMap<>();
         for (var e : this.result.getXValue().entrySet()) {
             Result.XKey key = e.getKey();
-            if (key.t() != this.time) continue;
+            if (key.t() != this.time) { continue; }
             fscDecrease.merge(key.fsc(), e.getValue(), Integer::sum);
         }
         for (String fsc : this.fscNames) {
             int decrease = fscDecrease.getOrDefault(fsc, 0);
-            if (decrease > 0) state.addInventoryFSC(fsc, -decrease);
+            if (decrease > 0) { state.addInventoryFSC(fsc, -decrease); }
         }
     }
 }

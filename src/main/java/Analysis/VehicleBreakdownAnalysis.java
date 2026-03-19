@@ -94,9 +94,9 @@ public final class VehicleBreakdownAnalysis {
             }
             rowFmt.append(" %-18.2f %-22d %-22.2f%n");
             rowArgs.addAll(List.of(
-                    summary.noStockoutPercentage,
-                    summary.scenariosWithoutStockout,
-                    summary.avgTotalStockoutKg));
+                    summary.getNoStockoutPercentage(),
+                    summary.getScenariosWithoutStockout(),
+                    summary.getAvgTotalStockoutKg()));
             System.out.printf(rowFmt.toString(), rowArgs.toArray());
         }
     }

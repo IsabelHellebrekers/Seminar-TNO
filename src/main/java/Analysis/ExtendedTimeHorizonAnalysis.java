@@ -97,9 +97,9 @@ public final class ExtendedTimeHorizonAnalysis {
                 Instance evalInst;
                 if (ccl4 != null) {
                     evalInst = InstanceCreator.createFDInstanceExtraType(
-                            (int) ccl4.foodWaterKg,
-                            (int) ccl4.fuelKg,
-                            (int) ccl4.ammoKg,
+                            (int) ccl4.getFoodWaterKg(),
+                            (int) ccl4.getFuelKg(),
+                            (int) ccl4.getAmmoKg(),
                             horizon).get(0);
                 } else {
                     evalInst = InstanceCreator.createFDInstance(horizon).get(0);
@@ -130,28 +130,28 @@ public final class ExtendedTimeHorizonAnalysis {
                                 weightCfg,
                                 List.of(0.0, 0.0, 0.0, 0.0));
 
-                        if (result.hasStockout) {
+                        if (result.isHasStockout()) {
 
                             scenariosWithStockout++;
 
                             writer.printf(Locale.US,
                                     "%s,%.6f,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f%n",
-                                    result.hasStockout,
-                                    result.totalStockoutKg,
-                                    result.firstStockoutDay,
-                                    result.numberOfStockoutDays,
-                                    result.fwStockoutDays,
-                                    result.fuelStockoutDays,
-                                    result.ammoStockoutDays,
-                                    result.totalFwStockoutKg,
-                                    result.totalFuelStockoutKg,
-                                    result.totalAmmoStockoutKg);
+                                    result.isHasStockout(),
+                                    result.getTotalStockoutKg(),
+                                    result.getFirstStockoutDay(),
+                                    result.getNumberOfStockoutDays(),
+                                    result.getFwStockoutDays(),
+                                    result.getFuelStockoutDays(),
+                                    result.getAmmoStockoutDays(),
+                                    result.getTotalFwStockoutKg(),
+                                    result.getTotalFuelStockoutKg(),
+                                    result.getTotalAmmoStockoutKg());
 
                         } else {
                             scenariosWithoutStockout++;
                         }
 
-                        sumTotalStockoutKg += result.totalStockoutKg;
+                        sumTotalStockoutKg += result.getTotalStockoutKg();
                     }
 
                     double avgTotalStockoutKg = sumTotalStockoutKg / N_SCENARIOS;
@@ -211,7 +211,7 @@ public final class ExtendedTimeHorizonAnalysis {
             }
 
             return new DeterministicRunSummary(
-                    inst.timeHorizon,
+                    inst.getTimeHorizon(),
                     status,
                     statusName,
                     runtime,
@@ -221,19 +221,17 @@ public final class ExtendedTimeHorizonAnalysis {
                     gap);
 
         } catch (GRBException e) {
-            throw new RuntimeException("Deterministic solve failed for H=" + inst.timeHorizon + ": " + e.getMessage(),
+            throw new RuntimeException("Deterministic solve failed for H=" + inst.getTimeHorizon() + ": " + e.getMessage(),
                     e);
         } finally {
             if (milp != null) {
-                try {
-                    milp.dispose();
-                } catch (Exception ignored) {
-                }
+                milp.dispose();
             }
             if (env != null) {
                 try {
                     env.dispose();
-                } catch (Exception ignored) {
+                } catch (GRBException e) {
+                    e.printStackTrace();
                 }
             }
         }
@@ -252,14 +250,16 @@ public final class ExtendedTimeHorizonAnalysis {
     }
 
     private static String formatDouble(Double x) {
-        if (x == null)
+        if (x == null) {
             return "-";
+        }
         return String.format("%.2f", x);
     }
 
     private static String formatGapPercent(Double gap) {
-        if (gap == null)
+        if (gap == null) {
             return "-";
+        }
         return String.format("%.2f", 100.0 * gap);
     }
 

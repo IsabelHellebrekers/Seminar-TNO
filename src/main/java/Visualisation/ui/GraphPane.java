@@ -51,18 +51,24 @@ public class GraphPane extends Pane {
 
     public GraphPane(Instance inst, SimState state) {
         this(inst);
-        if (state != null) refresh(state);
+        if (state != null) {
+            refresh(state);
+        }
     }
 
     /** Toggle debug overlays on arcs and inventory nodes. */
     public void setDebugMode(boolean debug) {
         this.debugMode = debug;
-        for (FscPane p           : fscNodes.values()) p.setDebugMode(debug);
-        for (OperatingUnitPane p : ouNodes.values())  p.setDebugMode(debug);
+        for (FscPane p : fscNodes.values()) {
+            p.setDebugMode(debug);
+        }
+        for (OperatingUnitPane p : ouNodes.values()) {
+            p.setDebugMode(debug);
+        }
     }
 
     public void rebuild(double width, double height) {
-        if (width <= 0 || height <= 0) return;
+        if (width <= 0 || height <= 0) { return; }
         setPrefSize(width, height);
         getChildren().clear();
         edges.clear();
@@ -74,12 +80,12 @@ public class GraphPane extends Pane {
         List<String> ouNames   = new ArrayList<>();
         List<String> vustNames = new ArrayList<>();
 
-        inst.FSCs.forEach(fsc -> fscNames.add(fsc.FSCname));
-        inst.operatingUnits.forEach(ou -> {
-            if ("VUST".equals(ou.ouType) || "VUST".equals(ou.operatingUnitName)) {
-                vustNames.add(ou.operatingUnitName);
+        inst.getFSCs().forEach(fsc -> fscNames.add(fsc.getName()));
+        inst.getOperatingUnits().forEach(ou -> {
+            if ("VUST".equals(ou.getOuType()) || "VUST".equals(ou.getName())) {
+                vustNames.add(ou.getName());
             } else {
-                ouNames.add(ou.operatingUnitName);
+                ouNames.add(ou.getName());
             }
         });
 
@@ -90,18 +96,22 @@ public class GraphPane extends Pane {
             drawFscNode(fscName);
             drawEdge("MSC", fscName);
         }
-        for (OperatingUnit ou : inst.operatingUnits) {
-            String ouName = ou.operatingUnitName;
+        for (OperatingUnit ou : inst.getOperatingUnits()) {
+            String ouName = ou.getName();
             drawOuNode(ouName);
-            if (ou.source != null && !ou.source.isBlank()) {
-                drawEdge(ou.source, ouName);
+            if (ou.getSource() != null && !ou.getSource().isBlank()) {
+                drawEdge(ou.getSource(), ouName);
             }
         }
 
         // Re-apply debug mode to freshly created node panes after rebuild
         if (this.debugMode) {
-            for (FscPane p           : fscNodes.values()) p.setDebugMode(true);
-            for (OperatingUnitPane p : ouNodes.values())  p.setDebugMode(true);
+            for (FscPane p : fscNodes.values()) {
+                p.setDebugMode(true);
+            }
+            for (OperatingUnitPane p : ouNodes.values()) {
+                p.setDebugMode(true);
+            }
         }
     }
 
@@ -114,7 +124,7 @@ public class GraphPane extends Pane {
 
     private void drawFscNode(String name) {
         Point2D p = this.pos.get(name);
-        if (p == null) return;
+        if (p == null) { return; }
         FscPane node = new FscPane(name);
         placeNode(node, p);
         getChildren().add(node);
@@ -123,7 +133,7 @@ public class GraphPane extends Pane {
 
     private void drawOuNode(String name) {
         Point2D p = this.pos.get(name);
-        if (p == null) return;
+        if (p == null) { return; }
         OperatingUnitPane node = new OperatingUnitPane(name);
         placeNode(node, p);
         getChildren().add(node);
@@ -139,7 +149,7 @@ public class GraphPane extends Pane {
     private void drawEdge(String from, String to) {
         Point2D a = this.pos.get(from);
         Point2D b = this.pos.get(to);
-        if (a == null || b == null) return;
+        if (a == null || b == null) { return; }
 
         Point2D start = rightMiddle(a);
         Point2D end   = leftMiddle(b);
@@ -180,7 +190,9 @@ public class GraphPane extends Pane {
         for (var e : this.edges.entrySet()) {
             String[] parts = e.getKey().split("->");
             int t = state.getArcTrucks(parts[0], parts[1]);
-            if (t > maxTrucks) maxTrucks = t;
+            if (t > maxTrucks) {
+                maxTrucks = t;
+            }
         }
 
         for (var e : this.edges.entrySet()) {
@@ -229,8 +241,12 @@ public class GraphPane extends Pane {
             }
         }
 
-        for (OperatingUnitPane node : this.ouNodes.values())  node.refresh(state);
-        for (FscPane node           : this.fscNodes.values()) node.refresh(state);
+        for (OperatingUnitPane node : this.ouNodes.values()) {
+            node.refresh(state);
+        }
+        for (FscPane node : this.fscNodes.values()) {
+            node.refresh(state);
+        }
     }
 
     private Point2D rightMiddle(Point2D center) {

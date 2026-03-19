@@ -151,8 +151,9 @@ public class Result {
         instanceResult.add(total);
 
         instanceResult.add(this.trucksAtMsc);
-        for (int i = 0; i < this.trucksAtFsc.length; i++)
+        for (int i = 0; i < this.trucksAtFsc.length; i++) {
             instanceResult.add(this.trucksAtFsc[i]);
+        }
         return instanceResult;
     }
 

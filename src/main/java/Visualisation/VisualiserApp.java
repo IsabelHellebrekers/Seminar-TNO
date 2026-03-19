@@ -22,6 +22,7 @@ import javafx.geometry.Pos;
 import javafx.stage.Stage;
 import javafx.application.Platform;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,7 +53,7 @@ public class VisualiserApp extends Application {
             SimExporter.export(fdInst, fdResult, "docs/sim_fd.json", "FD Concept");
             SimExporter.export(dispersedInst, dispersedResult, "docs/sim_dispersed.json", "Dispersed Concept");
             SimExporter.writeManifest("docs/scenarios.json");
-        } catch (Exception e) {
+        } catch (IOException e) {
             System.err.println("[SimExporter] Export failed: " + e.getMessage());
         }
 
@@ -159,7 +160,9 @@ public class VisualiserApp extends Application {
             if (index[0] > 0) {
                 index[0]--;
                 state.resetFrom(fdInst, fdResult);
-                for (int i = 0; i < index[0]; i++) schedule.get(i).event.apply(state);
+                for (int i = 0; i < index[0]; i++) {
+                    schedule.get(i).event.apply(state);
+                }
                 graph.refresh(state);
                 totalMinutes[0] = index[0] > 0 ? schedule.get(index[0] - 1).totalMinutes : 9 * 60.0;
                 updateClock(controls, totalMinutes[0]);
@@ -210,22 +213,22 @@ public class VisualiserApp extends Application {
         nodes.add("MSC");
         List<String> fscNames = new ArrayList<>();
         List<String> ouNames = new ArrayList<>();
-        inst.FSCs.forEach(fsc -> {
-            nodes.add(fsc.FSCname);
-            fscNames.add(fsc.FSCname);
+        inst.getFSCs().forEach(fsc -> {
+            nodes.add(fsc.getName());
+            fscNames.add(fsc.getName());
         });
-        inst.operatingUnits.forEach(ou -> {
-            nodes.add(ou.operatingUnitName);
-            ouNames.add(ou.operatingUnitName);
+        inst.getOperatingUnits().forEach(ou -> {
+            nodes.add(ou.getName());
+            ouNames.add(ou.getName());
         });
 
-        for (int t = 1; t <= inst.timeHorizon; t++) {
+        for (int t = 1; t <= inst.getTimeHorizon(); t++) {
             Map<String, DemandEvent.Demand> demands = new HashMap<>();
-            for (OperatingUnit ou : inst.operatingUnits) {
-                long dFW = Math.round(ou.dailyFoodWaterKg);
-                long dFuel = Math.round(ou.dailyFuelKg);
-                long dAmmo = Math.round(ou.dailyAmmoKg);
-                demands.put(ou.operatingUnitName, new DemandEvent.Demand(dFW, dFuel, dAmmo));
+            for (OperatingUnit ou : inst.getOperatingUnits()) {
+                long dFW = Math.round(ou.getDailyFoodWaterKg());
+                long dFuel = Math.round(ou.getDailyFuelKg());
+                long dAmmo = Math.round(ou.getDailyAmmoKg());
+                demands.put(ou.getName(), new DemandEvent.Demand(dFW, dFuel, dAmmo));
             }
             events.add(new ScheduledEvent(t, 10 * 60, new DemandEvent(t, demands)));
 
@@ -233,12 +236,14 @@ public class VisualiserApp extends Application {
                 continue;
             }
 
+
             // Phase 1 (14:00): FSC -> OU supply
             Map<String, Integer> fscArcTrucks = new HashMap<>();
             for (Map.Entry<Result.XKey, Integer> e : result.getXValue().entrySet()) {
                 Result.XKey key = e.getKey();
-                if (key.t() != t)
+                if (key.t() != t) {
                     continue;
+                }
                 String arc = key.fsc() + "->" + key.ou();
                 if (nodes.contains(key.fsc()) && nodes.contains(key.ou())) {
                     fscArcTrucks.merge(arc, e.getValue(), Integer::sum);
@@ -251,18 +256,21 @@ public class VisualiserApp extends Application {
             Map<String, Integer> mscArcTrucks = new HashMap<>();
             for (Map.Entry<Result.YKey, Integer> e : result.getYValue().entrySet()) {
                 Result.YKey key = e.getKey();
-                if (key.t() != t)
+                if (key.t() != t) {
                     continue;
-                if (!nodes.contains(key.fsc()))
+                }
+                if (!nodes.contains(key.fsc())) {
                     continue;
+                }
                 mscArcTrucks.merge("MSC->" + key.fsc(), e.getValue(), Integer::sum);
             }
 
             int mscToVust = 0;
             for (Map.Entry<Result.ZKey, Integer> e : result.getZValue().entrySet()) {
                 Result.ZKey key = e.getKey();
-                if (key.t() != t)
+                if (key.t() != t) {
                     continue;
+                }
                 mscToVust += e.getValue();
             }
             if (mscToVust > 0 && nodes.contains("VUST")) {

@@ -62,10 +62,10 @@ public class FscPane extends VBox {
     }
 
     private static double ratio(double value, double max) {
-        if (max <= 0) return 0.0;
+        if (max <= 0) { return 0.0; }
         double r = value / max;
-        if (r < 0) return 0.0;
-        if (r > 1) return 1.0;
+        if (r < 0) { return 0.0; }
+        if (r > 1) { return 1.0; }
         return r;
     }
 }

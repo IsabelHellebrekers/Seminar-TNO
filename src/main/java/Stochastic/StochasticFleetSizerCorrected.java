@@ -49,21 +49,24 @@ public final class StochasticFleetSizerCorrected {
                                                        double serviceLevel,
                                                        long baseSeed) throws GRBException {
 
-        if (numScenarios <= 0) throw new IllegalArgumentException("numScenarios must be > 0");
-        if (serviceLevel <= 0.0 || serviceLevel > 1.0)
+        if (numScenarios <= 0) {
+            throw new IllegalArgumentException("numScenarios must be > 0");
+        }
+        if (serviceLevel <= 0.0 || serviceLevel > 1.0) {
             throw new IllegalArgumentException("serviceLevel must be in (0,1]");
+        }
 
-        final int timeHorizon = instance.timeHorizon;
-        final List<CCLPackage> ccls = instance.cclTypes;
+        final int timeHorizon = instance.getTimeHorizon();
+        final List<CCLPackage> ccls = instance.getCclTypes();
 
         // FSC names (for consistent indexing)
         List<String> fscNames = new ArrayList<>();
-        for (FSC f : instance.FSCs) fscNames.add(f.FSCname);
+        for (FSC f : instance.getFSCs()) { fscNames.add(f.getName()); }
 
         // Store scenario peak samples:
         // - per FSC: peak daily outbound workload FSC->OUs
         Map<String, List<Integer>> peakSamplesPerFsc = new HashMap<>();
-        for (String w : fscNames) peakSamplesPerFsc.put(w, new ArrayList<>(numScenarios));
+        for (String w : fscNames) { peakSamplesPerFsc.put(w, new ArrayList<>(numScenarios)); }
 
         // - MSC->VUST: peak daily workload
         List<Integer> peakSamplesMSCtoVUST = new ArrayList<>(numScenarios);
@@ -76,23 +79,23 @@ public final class StochasticFleetSizerCorrected {
 
             // Scenario loop
             for (int s = 0; s < numScenarios; s++) {
-                Sampling sampler = new Sampling(baseSeed + s); // TODO: base seed
+                Sampling sampler = new Sampling(baseSeed + s);
 
                 // Daily FSC workloads (FSC->OU)
                 Map<String, int[]> dailyWorkloadFsc = new HashMap<>();
-                for (String w : fscNames) dailyWorkloadFsc.put(w, new int[timeHorizon]);
+                for (String w : fscNames) { dailyWorkloadFsc.put(w, new int[timeHorizon]); }
 
                 // Daily MSC->VUST workload
                 int[] dailyWorkloadVust = new int[timeHorizon];
 
                 // Loop OUs
-                for (OperatingUnit ou : instance.operatingUnits) {
-                    String ouName = ou.operatingUnitName;
+                for (OperatingUnit ou : instance.getOperatingUnits()) {
+                    String ouName = ou.getName();
 
                     // Sample realized daily demand arrays (length T)
-                    double[] dFW = sampler.stochasticFW((int) Math.round(ou.dailyFoodWaterKg), instance.timeHorizon);
-                    double[] dFUEL = sampler.stochasticFUEL((int) Math.round(ou.dailyFuelKg), instance.timeHorizon);
-                    double[] dAMMO = sampler.stochasticAMMO((int) Math.round(ou.dailyAmmoKg), instance.timeHorizon);
+                    double[] dFW = sampler.stochasticFW((int) Math.round(ou.getDailyFoodWaterKg()), instance.getTimeHorizon());
+                    double[] dFUEL = sampler.stochasticFUEL((int) Math.round(ou.getDailyFuelKg()), instance.getTimeHorizon());
+                    double[] dAMMO = sampler.stochasticAMMO((int) Math.round(ou.getDailyAmmoKg()), instance.getTimeHorizon());
 
                     for (int t = 0; t < timeHorizon; t++) {
                         // Convert demand to minimum #CCLs (min trucks)
@@ -101,7 +104,7 @@ public final class StochasticFleetSizerCorrected {
                         if ("VUST".equals(ouName)) {
                             dailyWorkloadVust[t] += shipments;
                         } else {
-                            String w = ou.source;
+                            String w = ou.getSource();
                             int[] arr = dailyWorkloadFsc.computeIfAbsent(w, __ -> new int[timeHorizon]);
                             arr[t] += shipments;
                         }
@@ -188,19 +191,19 @@ public final class StochasticFleetSizerCorrected {
      */
     private static InventoryCredits computeInventoryCredits(Instance instance,
                                                             PerOuDayCclIlpSolver ilp) throws GRBException {
-        final int timeHorizon = instance.timeHorizon;
+        final int timeHorizon = instance.getTimeHorizon();
 
         // Convert OU full-inventory in kg to CCLs
         int vustFullCcls = 0;
         Map<String, Integer> fullCclsByFsc = new HashMap<>();
 
-        for (OperatingUnit ou : instance.operatingUnits) {
-            int fullCcls = ilp.minCclsToCover(ou.maxFoodWaterKg, ou.maxFuelKg, ou.maxAmmoKg);
+        for (OperatingUnit ou : instance.getOperatingUnits()) {
+            int fullCcls = ilp.minCclsToCover(ou.getMaxFoodWaterKg(), ou.getMaxFuelKg(), ou.getMaxAmmoKg());
 
-            if ("VUST".equals(ou.operatingUnitName)) {
+            if ("VUST".equals(ou.getName())) {
                 vustFullCcls += fullCcls;
             } else {
-                String w = ou.source;
+                String w = ou.getSource();
                 fullCclsByFsc.put(w, fullCclsByFsc.getOrDefault(w, 0) + fullCcls);
             }
         }
@@ -215,12 +218,12 @@ public final class StochasticFleetSizerCorrected {
         // FSC initial storage is already in CCL units
         // initialStorageLevels: Map<ouType, int[3]> where int[3] = (#type1, #type2, #type3)
         int totalInitialFscCcls = 0;
-        for (FSC f : instance.FSCs) {
-            for (Map.Entry<String, int[]> e : f.initialStorageLevels.entrySet()) {
+        for (FSC f : instance.getFSCs()) {
+            for (Map.Entry<String, int[]> e : f.getInitialStorageLevels().entrySet()) {
                 String ouType = e.getKey();
-                if ("VUST".equals(ouType)) continue;
+                if ("VUST".equals(ouType)) { continue; }
                 int[] vec = e.getValue();
-                for (int k : vec) totalInitialFscCcls += k;
+                for (int k : vec) { totalInitialFscCcls += k; }
             }
         }
 
@@ -231,14 +234,16 @@ public final class StochasticFleetSizerCorrected {
 
     /** Round(total/horizon) as integer, clipping total at >= 0. */
     private static int roundDivNonNegative(int total, int horizon) {
-        if (total <= 0) return 0;
+        if (total <= 0) {
+            return 0;
+        }
         return (int) Math.floor(total * 1.0 / horizon);
     }
 
     /** Returns max element in array (used for peak day). */
     private static int maxOverDays(int[] arr) {
         int m = 0;
-        for (int x : arr) m = Math.max(m, x);
+        for (int x : arr) { m = Math.max(m, x); }
         return m;
     }
 
@@ -250,20 +255,26 @@ public final class StochasticFleetSizerCorrected {
      * @return empirical quantile value
      */
     private static int empiricalQuantile(List<Integer> samples, double q) {
-        if (samples.isEmpty()) return 0;
+        if (samples.isEmpty()) {
+            return 0;
+        }
         List<Integer> copy = new ArrayList<>(samples);
         Collections.sort(copy);
         int n = copy.size();
         int idx = (int) Math.ceil(q * n) - 1;
-        if (idx < 0) idx = 0;
-        if (idx >= n) idx = n - 1;
+        if (idx < 0) {
+            idx = 0;
+        }
+        if (idx >= n) {
+            idx = n - 1;
+        }
         return copy.get(idx);
     }
 
     /** Sum map values. */
     private static int sumMapValues(Map<String, Integer> map) {
         int s = 0;
-        for (int v : map.values()) s += v;
+        for (int v : map.values()) { s += v; }
         return s;
     }
 
@@ -329,11 +340,11 @@ public final class StochasticFleetSizerCorrected {
             this.x = new GRBVar[numCclTypes];
 
             for (int i = 0; i < numCclTypes; i++) {
-                x[i] = model.addVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER, "x_" + ccls.get(i).type);
+                x[i] = model.addVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER, "x_" + ccls.get(i).getType());
             }
 
             GRBLinExpr obj = new GRBLinExpr();
-            for (GRBVar v : x) obj.addTerm(1.0, v);
+            for (GRBVar v : x) { obj.addTerm(1.0, v); }
             model.setObjective(obj, GRB.MINIMIZE);
 
             GRBLinExpr fwLhs = new GRBLinExpr();
@@ -342,9 +353,9 @@ public final class StochasticFleetSizerCorrected {
 
             for (int i = 0; i < numCclTypes; i++) {
                 CCLPackage c = ccls.get(i);
-                fwLhs.addTerm(c.foodWaterKg, x[i]);
-                fuelLhs.addTerm(c.fuelKg, x[i]);
-                ammoLhs.addTerm(c.ammoKg, x[i]);
+                fwLhs.addTerm(c.getFoodWaterKg(), x[i]);
+                fuelLhs.addTerm(c.getFuelKg(), x[i]);
+                ammoLhs.addTerm(c.getAmmoKg(), x[i]);
             }
 
             fwConstr   = model.addConstr(fwLhs,   GRB.GREATER_EQUAL, 0.0, "cover_fw");
@@ -373,9 +384,9 @@ public final class StochasticFleetSizerCorrected {
         }
 
         @Override
-        public void close() {
-            try { model.dispose(); } catch (Exception ignored) {}
-            try { env.dispose(); } catch (Exception ignored) {}
+        public void close() throws GRBException{
+            model.dispose();
+            env.dispose();
         }
     }
 

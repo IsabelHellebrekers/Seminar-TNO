@@ -215,8 +215,8 @@ public class InstanceCreator {
         // Make list of OUs based on base
         List<OperatingUnit> remainingOUs = new ArrayList<>();
 
-        for (OperatingUnit ou : base.operatingUnits) {
-            if (ou.operatingUnitName.equals("VUST")) {
+        for (OperatingUnit ou : base.getOperatingUnits()) {
+            if (ou.getName().equals("VUST")) {
                 vust = ou;
             } else {
                 remainingOUs.add(ou);
@@ -230,14 +230,14 @@ public class InstanceCreator {
         if (vust != null) {
             for (Instance inst : partitions) {
                 inst.addOperatingUnit(
-                        vust.operatingUnitName,
-                        vust.ouType,
-                        vust.dailyFoodWaterKg,
-                        vust.dailyFuelKg,
-                        vust.dailyAmmoKg,
-                        vust.maxFoodWaterKg,
-                        vust.maxFuelKg,
-                        vust.maxAmmoKg,
+                        vust.getName(),
+                        vust.getOuType(),
+                        vust.getDailyFoodWaterKg(),
+                        vust.getDailyFuelKg(),
+                        vust.getDailyAmmoKg(),
+                        vust.getMaxFoodWaterKg(),
+                        vust.getMaxFuelKg(),
+                        vust.getMaxAmmoKg(),
                         "MSC");
             }
         }
@@ -294,8 +294,8 @@ public class InstanceCreator {
      */
     public static void addOperatingUnitsToNode(Instance inst, List<OperatingUnit> subList, String sourceName) {
         for (OperatingUnit ou : subList) {
-            inst.addOperatingUnit(ou.operatingUnitName, ou.ouType, ou.dailyFoodWaterKg, ou.dailyFuelKg, ou.dailyAmmoKg,
-                    ou.maxFoodWaterKg, ou.maxFuelKg, ou.maxAmmoKg, sourceName);
+            inst.addOperatingUnit(ou.getName(), ou.getOuType(), ou.getDailyFoodWaterKg(), ou.getDailyFuelKg(), ou.getDailyAmmoKg(),
+                    ou.getMaxFoodWaterKg(), ou.getMaxFuelKg(), ou.getMaxAmmoKg(), sourceName);
         }
     }
 
@@ -321,12 +321,15 @@ public class InstanceCreator {
         int amountAT = 0;
 
         for (OperatingUnit ou : subList) {
-            if (ou.ouType.equals("GN_CIE"))
+            if (ou.getOuType().equals("GN_CIE")) {
                 amountGN++;
-            if (ou.ouType.equals("PAINF_CIE"))
+            }
+            if (ou.getOuType().equals("PAINF_CIE")) {
                 amountPAINF++;
-            if (ou.ouType.equals("AT_CIE"))
+            }
+            if (ou.getOuType().equals("AT_CIE")) {
                 amountAT++;
+            }
         }
 
         int totalGN = amountGN * 7;

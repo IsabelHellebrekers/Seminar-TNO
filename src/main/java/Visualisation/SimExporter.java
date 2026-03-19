@@ -41,8 +41,8 @@ public class SimExporter {
         List<String> fscNames = new ArrayList<>();
         Set<String>  nodes    = new HashSet<>();
         nodes.add("MSC");
-        for (var fsc : inst.FSCs)            { nodes.add(fsc.FSCname);             fscNames.add(fsc.FSCname); }
-        for (var ou  : inst.operatingUnits)  { nodes.add(ou.operatingUnitName);    ouNames.add(ou.operatingUnitName); }
+        for (var fsc : inst.getFSCs())            { nodes.add(fsc.getName());             fscNames.add(fsc.getName()); }
+        for (var ou  : inst.getOperatingUnits())  { nodes.add(ou.getName());    ouNames.add(ou.getName()); }
 
         SimState state = SimState.from(inst, res);
 
@@ -53,22 +53,26 @@ public class SimExporter {
         json.append("  \"nodes\": [\n");
         List<String> nodeParts = new ArrayList<>();
         nodeParts.add("    {\"name\": \"MSC\", \"type\": \"MSC\"}");
-        for (var fsc : inst.FSCs)
-            nodeParts.add("    {\"name\": " + q(fsc.FSCname) + ", \"type\": \"FSC\"}");
-        for (var ou : inst.operatingUnits) {
-            String type = ("VUST".equals(ou.ouType) || "VUST".equals(ou.operatingUnitName)) ? "VUST" : "OU";
-            nodeParts.add("    {\"name\": " + q(ou.operatingUnitName) + ", \"type\": " + q(type) + "}");
+        for (var fsc : inst.getFSCs()) {
+            nodeParts.add("    {\"name\": " + q(fsc.getName()) + ", \"type\": \"FSC\"}");
+        }
+        for (var ou : inst.getOperatingUnits()) {
+            String type = ("VUST".equals(ou.getOuType()) || "VUST".equals(ou.getName())) ? "VUST" : "OU";
+            nodeParts.add("    {\"name\": " + q(ou.getName()) + ", \"type\": " + q(type) + "}");
         }
         json.append(String.join(",\n", nodeParts)).append("\n  ],\n");
 
         // ── edges ──────────────────────────────────────────────────────────────
         json.append("  \"edges\": [\n");
         List<String> edgeParts = new ArrayList<>();
-        for (var fsc : inst.FSCs)
-            edgeParts.add("    {\"from\": \"MSC\", \"to\": " + q(fsc.FSCname) + "}");
-        for (var ou : inst.operatingUnits)
-            if (ou.source != null && !ou.source.isBlank())
-                edgeParts.add("    {\"from\": " + q(ou.source) + ", \"to\": " + q(ou.operatingUnitName) + "}");
+        for (var fsc : inst.getFSCs()) {
+            edgeParts.add("    {\"from\": \"MSC\", \"to\": " + q(fsc.getName()) + "}");
+        }
+        for (var ou : inst.getOperatingUnits()) {
+            if (ou.getSource() != null && !ou.getSource().isBlank()) {
+                edgeParts.add("    {\"from\": " + q(ou.getSource()) + ", \"to\": " + q(ou.getName()) + "}");
+            }
+        }
         json.append(String.join(",\n", edgeParts)).append("\n  ],\n");
 
         // ── frames ─────────────────────────────────────────────────────────────
@@ -78,24 +82,26 @@ public class SimExporter {
         // Frame 0: initial state before any demand
         frames.add(snapshot(state, inst, "Initial state (full inventories)", "Day 1 09:00"));
 
-        for (int t = 1; t <= inst.timeHorizon; t++) {
+        for (int t = 1; t <= inst.getTimeHorizon(); t++) {
             // 10:00 — demand
             Map<String, DemandEvent.Demand> demands = new HashMap<>();
-            for (OperatingUnit ou : inst.operatingUnits)
-                demands.put(ou.operatingUnitName, new DemandEvent.Demand(
-                        ou.dailyFoodWaterKg, ou.dailyFuelKg, ou.dailyAmmoKg));
+            for (OperatingUnit ou : inst.getOperatingUnits()) {
+                demands.put(ou.getName(), new DemandEvent.Demand(
+                        ou.getDailyFoodWaterKg(), ou.getDailyFuelKg(), ou.getDailyAmmoKg()));
+            }
             new DemandEvent(t, demands).apply(state);
             frames.add(snapshot(state, inst, "t=" + t + " Demand (all OUs)", "Day " + t + " 10:00"));
 
-            if (res == null) continue;
+            if (res == null) { continue; }
 
             // 14:00 — FSC → OU delivery
             Map<String, Integer> fscArcs = new HashMap<>();
             for (var e : res.getXValue().entrySet()) {
                 var key = e.getKey();
-                if (key.t() != t) continue;
-                if (nodes.contains(key.fsc()) && nodes.contains(key.ou()))
+                if (key.t() != t) { continue; }
+                if (nodes.contains(key.fsc()) && nodes.contains(key.ou())) {
                     fscArcs.merge(key.fsc() + "->" + key.ou(), e.getValue(), Integer::sum);
+                }
             }
             new FSCDeliveryEvent(t, fscArcs, ouNames, fscNames, res).apply(state);
             frames.add(snapshot(state, inst, "t=" + t + " FSC \u2192 OU supply", "Day " + t + " 14:00"));
@@ -104,14 +110,16 @@ public class SimExporter {
             Map<String, Integer> mscArcs = new HashMap<>();
             for (var e : res.getYValue().entrySet()) {
                 var key = e.getKey();
-                if (key.t() != t || !nodes.contains(key.fsc())) continue;
+                if (key.t() != t || !nodes.contains(key.fsc())) { continue; }
                 mscArcs.merge("MSC->" + key.fsc(), e.getValue(), Integer::sum);
             }
             int mscToVust = 0;
-            for (var e : res.getZValue().entrySet())
-                if (e.getKey().t() == t) mscToVust += e.getValue();
-            if (mscToVust > 0 && nodes.contains("VUST"))
+            for (var e : res.getZValue().entrySet()) {
+                if (e.getKey().t() == t) { mscToVust += e.getValue(); }
+            }
+            if (mscToVust > 0 && nodes.contains("VUST")) {
                 mscArcs.merge("MSC->VUST", mscToVust, Integer::sum);
+            }
             new DeliveryEvent(t, mscArcs, ouNames, fscNames, res).apply(state);
             frames.add(snapshot(state, inst, "t=" + t + " MSC \u2192 FSC/VUST supply", "Day " + t + " 20:00"));
         }
@@ -151,33 +159,38 @@ public class SimExporter {
         // arc trucks
         sb.append("      \"arcTrucks\": {");
         List<String> arcs = new ArrayList<>();
-        for (var fsc : inst.FSCs) {
-            arcs.add(q("MSC->" + fsc.FSCname) + ": " + state.getArcTrucks("MSC", fsc.FSCname));
-            for (var ou : inst.operatingUnits)
-                if (fsc.FSCname.equals(ou.source))
-                    arcs.add(q(fsc.FSCname + "->" + ou.operatingUnitName) + ": "
-                            + state.getArcTrucks(fsc.FSCname, ou.operatingUnitName));
+        for (var fsc : inst.getFSCs()) {
+            arcs.add(q("MSC->" + fsc.getName()) + ": " + state.getArcTrucks("MSC", fsc.getName()));
+            for (var ou : inst.getOperatingUnits()) {
+                if (fsc.getName().equals(ou.getSource())) {
+                    arcs.add(q(fsc.getName() + "->" + ou.getName()) + ": "
+                            + state.getArcTrucks(fsc.getName(), ou.getName()));
+                }
+            }
         }
-        for (var ou : inst.operatingUnits)
-            if ("MSC".equals(ou.source))
-                arcs.add(q("MSC->" + ou.operatingUnitName) + ": "
-                        + state.getArcTrucks("MSC", ou.operatingUnitName));
+        for (var ou : inst.getOperatingUnits()) {
+            if ("MSC".equals(ou.getSource())) {
+                arcs.add(q("MSC->" + ou.getName()) + ": "
+                        + state.getArcTrucks("MSC", ou.getName()));
+            }
+        }
         sb.append(String.join(", ", arcs)).append("},\n");
 
         // node states
         sb.append("      \"nodes\": {\n");
         List<String> ns = new ArrayList<>();
-        for (var fsc : inst.FSCs)
-            ns.add("        " + q(fsc.FSCname) + ": {\"ccl\": " + state.getInventoryFSC(fsc.FSCname)
-                    + ", \"cclMax\": " + state.getInventoryFSCMax(fsc.FSCname) + "}");
-        for (var ou : inst.operatingUnits) {
-            long fw     = Math.round(state.getInventoryOU(ou.operatingUnitName, "FW"));
-            long fwMax  = Math.round(state.getInventoryOUMax(ou.operatingUnitName, "FW"));
-            long fuel   = Math.round(state.getInventoryOU(ou.operatingUnitName, "FUEL"));
-            long fuelMax= Math.round(state.getInventoryOUMax(ou.operatingUnitName, "FUEL"));
-            long ammo   = Math.round(state.getInventoryOU(ou.operatingUnitName, "AMMO"));
-            long ammoMax= Math.round(state.getInventoryOUMax(ou.operatingUnitName, "AMMO"));
-            ns.add("        " + q(ou.operatingUnitName) + ": {\"fw\": " + fw + ", \"fwMax\": " + fwMax
+        for (var fsc : inst.getFSCs()) {
+            ns.add("        " + q(fsc.getName()) + ": {\"ccl\": " + state.getInventoryFSC(fsc.getName())
+                    + ", \"cclMax\": " + state.getInventoryFSCMax(fsc.getName()) + "}");
+        }
+        for (var ou : inst.getOperatingUnits()) {
+            long fw     = Math.round(state.getInventoryOU(ou.getName(), "FW"));
+            long fwMax  = Math.round(state.getInventoryOUMax(ou.getName(), "FW"));
+            long fuel   = Math.round(state.getInventoryOU(ou.getName(), "FUEL"));
+            long fuelMax= Math.round(state.getInventoryOUMax(ou.getName(), "FUEL"));
+            long ammo   = Math.round(state.getInventoryOU(ou.getName(), "AMMO"));
+            long ammoMax= Math.round(state.getInventoryOUMax(ou.getName(), "AMMO"));
+            ns.add("        " + q(ou.getName()) + ": {\"fw\": " + fw + ", \"fwMax\": " + fwMax
                     + ", \"fuel\": " + fuel + ", \"fuelMax\": " + fuelMax
                     + ", \"ammo\": " + ammo + ", \"ammoMax\": " + ammoMax + "}");
         }

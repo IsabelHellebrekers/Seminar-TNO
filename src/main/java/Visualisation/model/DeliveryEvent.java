@@ -49,9 +49,9 @@ public class DeliveryEvent implements Event {
         // Highlight MSC->FSC and MSC->VUST arcs only
         for (var e : this.arcTrucks.entrySet()) {
             int trucks = e.getValue();
-            if (trucks <= 0) continue;
+            if (trucks <= 0) { continue; }
             String[] parts = e.getKey().split("->");
-            if (parts.length != 2) continue;
+            if (parts.length != 2) { continue; }
             state.highlightArc(parts[0], parts[1], trucks);
         }
 
@@ -61,15 +61,15 @@ public class DeliveryEvent implements Event {
         Double fw   = I.get(new Result.IKey("VUST", "FW",   tNext));
         Double fuel = I.get(new Result.IKey("VUST", "FUEL", tNext));
         Double ammo = I.get(new Result.IKey("VUST", "AMMO", tNext));
-        if (fw   != null) state.setInventoryOU("VUST", "FW",   fw);
-        if (fuel != null) state.setInventoryOU("VUST", "FUEL", fuel);
-        if (ammo != null) state.setInventoryOU("VUST", "AMMO", ammo);
+        if (fw   != null) { state.setInventoryOU("VUST", "FW",   fw); }
+        if (fuel != null) { state.setInventoryOU("VUST", "FUEL", fuel); }
+        if (ammo != null) { state.setInventoryOU("VUST", "AMMO", ammo); }
 
         // Bring FSC inventories up to S[w, t+1] totals after MSC replenishment
         Map<String, Integer> totals = new HashMap<>();
         for (var e : this.result.getSValue().entrySet()) {
             var key = e.getKey();
-            if (key.t() != tNext) continue;
+            if (key.t() != tNext) { continue; }
             totals.merge(key.fsc(), e.getValue(), Integer::sum);
         }
         for (String fsc : this.fscNames) {

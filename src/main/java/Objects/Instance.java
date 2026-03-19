@@ -8,12 +8,12 @@ import java.util.Map;
  * Presents an Instance for the Capacitated Resupply Problem (CRP).
  */
 public class Instance {
-    public final List<OperatingUnit> operatingUnits;
-    public final List<FSC> FSCs;
-    public final List<String> products;
-    public final List<CCLPackage> cclTypes;
-    public final List<String> ouTypes;
-    public final int timeHorizon;
+    private final List<OperatingUnit> operatingUnits;
+    private final List<FSC> FSCs;
+    private final List<String> products;
+    private final List<CCLPackage> cclTypes;
+    private final List<String> ouTypes;
+    private final int timeHorizon;
 
     /**
      * Baseline constructor with default 10-day horizon.
@@ -68,6 +68,24 @@ public class Instance {
         this.timeHorizon = timeHorizon;
     }
 
+    /** @return the operating units (OUs) */
+    public List<OperatingUnit> getOperatingUnits() { return operatingUnits; }
+
+    /** @return the forward supply centres (FSCs) */
+    public List<FSC> getFSCs() { return FSCs; }
+
+    /** @return the product types */
+    public List<String> getProducts() { return products; }
+
+    /** @return the CCL package types */
+    public List<CCLPackage> getCclTypes() { return cclTypes; }
+
+    /** @return the OU types */
+    public List<String> getOuTypes() { return ouTypes; }
+
+    /** @return the planning horizon in days */
+    public int getTimeHorizon() { return timeHorizon; }
+
     /**
      * Method that adds an operating unit (OU) to the instance
      * @param operatingUnitName     name of the operating unit
@@ -104,7 +122,9 @@ public class Instance {
      */
     public void addCCLType(CCLPackage cclPackage) {
         for (CCLPackage existing : this.cclTypes) {
-            if (existing.type == cclPackage.type) return;
+            if (existing.getType() == cclPackage.getType()) {
+                return;
+            }
         }
         this.cclTypes.add(cclPackage);
     }

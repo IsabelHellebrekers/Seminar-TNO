@@ -5,26 +5,26 @@ package Objects;
  * Quantities (except for time values) are expressed in kg.
  */
 public class OperatingUnit {
-    public final String operatingUnitName;
-    public final String ouType;
+    private final String operatingUnitName;
+    private final String ouType;
 
     // Daily demand (kg)
-    public final double dailyFoodWaterKg;
-    public final double dailyFuelKg;
-    public final double dailyAmmoKg;
+    private final double dailyFoodWaterKg;
+    private final double dailyFuelKg;
+    private final double dailyAmmoKg;
 
     // Stochastic demand (kg)
-    public final double[] stochasticFoodWaterKg;
-    public final double[] stochasticFuelKg;
-    public final double[] stochasticAmmoKg;
+    private final double[] stochasticFoodWaterKg;
+    private final double[] stochasticFuelKg;
+    private final double[] stochasticAmmoKg;
 
     // Maximum storage capacities at the OU (kg)
-    public final double maxFoodWaterKg;
-    public final double maxFuelKg;
-    public final double maxAmmoKg;
+    private final double maxFoodWaterKg;
+    private final double maxFuelKg;
+    private final double maxAmmoKg;
 
     // Assigned resupply source (MSC or one of the FSCs)
-    public String source;
+    private String source;
 
     /**
      * Deterministic constructor.
@@ -92,6 +92,42 @@ public class OperatingUnit {
         this.source = source;
     }
 
+    /** @return the name of this operating unit */
+    public String getName() { return operatingUnitName; }
+
+    /** @return the type of this operating unit */
+    public String getOuType() { return ouType; }
+
+    /** @return the daily food/water demand (kg) */
+    public double getDailyFoodWaterKg() { return dailyFoodWaterKg; }
+
+    /** @return the daily fuel demand (kg) */
+    public double getDailyFuelKg() { return dailyFuelKg; }
+
+    /** @return the daily ammunition demand (kg) */
+    public double getDailyAmmoKg() { return dailyAmmoKg; }
+
+    /** @return the stochastic food/water demand array (kg) */
+    public double[] getStochasticFoodWaterKg() { return stochasticFoodWaterKg; }
+
+    /** @return the stochastic fuel demand array (kg) */
+    public double[] getStochasticFuelKg() { return stochasticFuelKg; }
+
+    /** @return the stochastic ammunition demand array (kg) */
+    public double[] getStochasticAmmoKg() { return stochasticAmmoKg; }
+
+    /** @return the maximum food/water storage capacity (kg) */
+    public double getMaxFoodWaterKg() { return maxFoodWaterKg; }
+
+    /** @return the maximum fuel storage capacity (kg) */
+    public double getMaxFuelKg() { return maxFuelKg; }
+
+    /** @return the maximum ammunition storage capacity (kg) */
+    public double getMaxAmmoKg() { return maxAmmoKg; }
+
+    /** @return the assigned resupply source */
+    public String getSource() { return source; }
+
     /**
      * Method that changes the source of the operating unit.
      * @param newSourceName the new source of the OU
@@ -103,7 +139,7 @@ public class OperatingUnit {
     /**
      * String representation of an operating unit.
      */
-    @Override 
+    @Override
     public String toString() {
         return "operatingUnit='" + operatingUnitName + '\'' +
                 ", ouType=" + ouType +

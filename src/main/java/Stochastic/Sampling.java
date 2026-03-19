@@ -117,8 +117,9 @@ public final class Sampling {
     public double binomial() {
         int successes = 0;
         for (int i = 0; i < n; i++) {
-            if (rng.nextDouble() < p)
+            if (rng.nextDouble() < p) {
                 successes++;
+            }
         }
         return applyMultipliers(successes * 1.0 / 10);
         // return successes * 1.0 / 10;

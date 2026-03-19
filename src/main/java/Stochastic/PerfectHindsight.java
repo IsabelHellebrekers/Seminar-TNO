@@ -28,7 +28,7 @@ import java.util.*;
  */
 public class PerfectHindsight {
 
-    public static void run(Instance baseInstance, int numScenarios, int baseSeed, int mscTrucks, Map<String, Integer> fscTrucks) {
+    public static void run(Instance baseInstance, int numScenarios, int baseSeed, int mscTrucks, Map<String, Integer> fscTrucks) throws GRBException {
         List<Scenario> scenarios = generateScenarios(baseInstance, numScenarios, baseSeed);
         runPerfectHindsightBenchmarks(scenarios, mscTrucks, fscTrucks, baseSeed);
     }
@@ -38,8 +38,9 @@ public class PerfectHindsight {
      * (1) Build the base deterministic instance
      * (2) Generate N stochastic demand scenarios using (baseseed + s)
      * (3) Run feasibility benchmarks for unlimited vs fixed fleet size.
+     * @throws GRBException 
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws GRBException {
         final int numScenarios = 1000;
         final int baseSeed = 10042;
         final int mscTrucks = 79;
@@ -67,6 +68,7 @@ public class PerfectHindsight {
      * @param M         fixed MSC fleet size
      * @param K         fixed FSC fleet size, keyed by FSC name
      * @param baseSeed  base seed used for scenario generation
+     * @throws GRBException 
      */
     private static void runPerfectHindsightBenchmarks(
             List<Scenario> scenarios,
@@ -115,8 +117,9 @@ public class PerfectHindsight {
                         }
                     }
                 } finally {
-                    if (milp != null)
+                    if (milp != null) {
                         milp.dispose();
+                    }
                 }
 
                 if ((idx + 1) % 10 == 0) {
@@ -145,14 +148,15 @@ public class PerfectHindsight {
 
                     boolean ok = model.get(GRB.IntAttr.SolCount) > 0;
 
-                    if (ok)
+                    if (ok) {
                         feasibleFixed++;
-                    else {
+                    } else {
                         infeasibleFixed++;
                     }
                 } finally {
-                    if (milp != null)
+                    if (milp != null) {
                         milp.dispose();
+                    }
                 }
 
                 if ((idx + 1) % 10 == 0) {
@@ -166,7 +170,8 @@ public class PerfectHindsight {
             if (env != null) {
                 try {
                     env.dispose();
-                } catch (Exception ignored) {
+                } catch (GRBException e) {
+                    e.printStackTrace();
                 }
             }
         }
@@ -228,56 +233,56 @@ public class PerfectHindsight {
      * @return scenario instance with stochastic demand arrays
      */
     private static Instance buildScenario(Instance base, long scenarioSeed) {
-        int timeHorizon = base.timeHorizon;
+        int timeHorizon = base.getTimeHorizon();
         Sampling sampler = new Sampling(scenarioSeed);
 
         Map<String, double[]> fw = new HashMap<>();
         Map<String, double[]> fuel = new HashMap<>();
         Map<String, double[]> ammo = new HashMap<>();
 
-        for (OperatingUnit ou : base.operatingUnits) {
-            fw.put(ou.operatingUnitName, new double[timeHorizon]);
-            fuel.put(ou.operatingUnitName, new double[timeHorizon]);
-            ammo.put(ou.operatingUnitName, new double[timeHorizon]);
+        for (OperatingUnit ou : base.getOperatingUnits()) {
+            fw.put(ou.getName(), new double[timeHorizon]);
+            fuel.put(ou.getName(), new double[timeHorizon]);
+            ammo.put(ou.getName(), new double[timeHorizon]);
         }
 
         for (int t = 1; t <= timeHorizon; t++) {
             int idx = t - 1;
-            for (OperatingUnit ou : base.operatingUnits) {
-                double dFW = sampler.uniform() * ou.dailyFoodWaterKg;
-                double dFUEL = sampler.binomial() * ou.dailyFuelKg;
-                double dAMMO = sampler.triangular() * ou.dailyAmmoKg;
+            for (OperatingUnit ou : base.getOperatingUnits()) {
+                double dFW = sampler.uniform() * ou.getDailyFoodWaterKg();
+                double dFUEL = sampler.binomial() * ou.getDailyFuelKg();
+                double dAMMO = sampler.triangular() * ou.getDailyAmmoKg();
 
-                fw.get(ou.operatingUnitName)[idx] = dFW;
-                fuel.get(ou.operatingUnitName)[idx] = dFUEL;
-                ammo.get(ou.operatingUnitName)[idx] = dAMMO;
+                fw.get(ou.getName())[idx] = dFW;
+                fuel.get(ou.getName())[idx] = dFUEL;
+                ammo.get(ou.getName())[idx] = dAMMO;
             }
         }
 
-        List<OperatingUnit> scenarioOus = new ArrayList<>(base.operatingUnits.size());
-        for (OperatingUnit ou : base.operatingUnits) {
+        List<OperatingUnit> scenarioOus = new ArrayList<>(base.getOperatingUnits().size());
+        for (OperatingUnit ou : base.getOperatingUnits()) {
             scenarioOus.add(new OperatingUnit(
-                    ou.operatingUnitName,
-                    ou.ouType,
-                    fw.get(ou.operatingUnitName),
-                    fuel.get(ou.operatingUnitName),
-                    ammo.get(ou.operatingUnitName),
-                    ou.maxFoodWaterKg,
-                    ou.maxFuelKg,
-                    ou.maxAmmoKg,
-                    ou.source));
+                    ou.getName(),
+                    ou.getOuType(),
+                    fw.get(ou.getName()),
+                    fuel.get(ou.getName()),
+                    ammo.get(ou.getName()),
+                    ou.getMaxFoodWaterKg(),
+                    ou.getMaxFuelKg(),
+                    ou.getMaxAmmoKg(),
+                    ou.getSource()));
         }
 
-        List<FSC> scenarioFscs = new ArrayList<>(base.FSCs.size());
-        for (FSC f : base.FSCs) {
+        List<FSC> scenarioFscs = new ArrayList<>(base.getFSCs().size());
+        for (FSC f : base.getFSCs()) {
             Map<String, int[]> copy = new HashMap<>();
-            for (Map.Entry<String, int[]> e : f.initialStorageLevels.entrySet()) {
+            for (Map.Entry<String, int[]> e : f.getInitialStorageLevels().entrySet()) {
                 copy.put(e.getKey(), e.getValue().clone());
             }
-            scenarioFscs.add(new FSC(f.FSCname, f.maxStorageCapCcls, copy));
+            scenarioFscs.add(new FSC(f.getName(), f.getMaxStorageCapCcls(), copy));
         }
 
-        return new Instance(scenarioOus, scenarioFscs, base.timeHorizon);
+        return new Instance(scenarioOus, scenarioFscs, base.getTimeHorizon());
     }
 
     /**
@@ -295,11 +300,11 @@ public class PerfectHindsight {
         mVar.set(GRB.DoubleAttr.LB, mscTrucks);
         mVar.set(GRB.DoubleAttr.UB, mscTrucks);
 
-        for (FSC f : inst.FSCs) {
-            String varName = "K_" + f.FSCname;
+        for (FSC f : inst.getFSCs()) {
+            String varName = "K_" + f.getName();
             GRBVar kVar = model.getVarByName(varName);
 
-            int val = (fscTrucks != null && fscTrucks.containsKey(f.FSCname)) ? fscTrucks.get(f.FSCname) : 0;
+            int val = (fscTrucks != null && fscTrucks.containsKey(f.getName())) ? fscTrucks.get(f.getName()) : 0;
             kVar.set(GRB.DoubleAttr.LB, val);
             kVar.set(GRB.DoubleAttr.UB, val);
         }

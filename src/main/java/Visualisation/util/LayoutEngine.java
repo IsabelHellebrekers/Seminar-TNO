@@ -42,7 +42,7 @@ public class LayoutEngine {
     /** Places {@code nodes} evenly within the vertical range [startY, startY+rangeH]. */
     private static void placeNodes(Map<String, Point2D> pos, List<String> nodes,
                                    double x, double startY, double rangeH) {
-        if (nodes.isEmpty()) return;
+        if (nodes.isEmpty()) { return; }
         if (nodes.size() == 1) {
             pos.put(nodes.get(0), new Point2D(x, startY + rangeH / 2.0));
             return;

@@ -84,7 +84,9 @@ public class OperatingUnitPane extends VBox {
     /** Format kg value: exact if < 100 000, otherwise round to nearest k. */
     private static String fmt(double v) {
         long r = Math.round(v);
-        if (r >= 100_000) return (r / 1000) + "k";
+        if (r >= 100_000) {
+            return (r / 1000) + "k";
+        }
         return Long.toString(r);
     }
 
@@ -97,10 +99,10 @@ public class OperatingUnitPane extends VBox {
     }
 
     private static double ratio(double value, double max) {
-        if (max <= 0) return 0.0;
+        if (max <= 0) { return 0.0; }
         double r = value / max;
-        if (r < 0) return 0.0;
-        if (r > 1) return 1.0;
+        if (r < 0) { return 0.0; }
+        if (r > 1) { return 1.0; }
         return r;
     }
 }

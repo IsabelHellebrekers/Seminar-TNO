@@ -34,45 +34,51 @@ public class SimState {
         if (sValues != null) {
             for (Map.Entry<Result.SKey, Integer> e : sValues.entrySet()) {
                 Result.SKey key = e.getKey();
-                if (key.t() != 1) continue;
+                if (key.t() != 1) { continue; }
                 fscTotals.merge(key.fsc(), e.getValue(), Integer::sum);
             }
         }
 
         // Inventories for OUs
-        for (OperatingUnit ou : inst.operatingUnits) {
-            double fw = ou.maxFoodWaterKg;
-            double fuel = ou.maxFuelKg;
-            double ammo = ou.maxAmmoKg;
+        for (OperatingUnit ou : inst.getOperatingUnits()) {
+            double fw = ou.getMaxFoodWaterKg();
+            double fuel = ou.getMaxFuelKg();
+            double ammo = ou.getMaxAmmoKg();
 
             if (res != null) {
                 Map<Result.IKey, Double> iValues = res.getIValue();
-                Double fwVal = iValues.get(new Result.IKey(ou.operatingUnitName, "FW", 1));
-                Double fuelVal = iValues.get(new Result.IKey(ou.operatingUnitName, "FUEL", 1));
-                Double ammoVal = iValues.get(new Result.IKey(ou.operatingUnitName, "AMMO", 1));
-                if (fwVal != null) fw = fwVal;
-                if (fuelVal != null) fuel = fuelVal;
-                if (ammoVal != null) ammo = ammoVal;
+                Double fwVal = iValues.get(new Result.IKey(ou.getName(), "FW", 1));
+                Double fuelVal = iValues.get(new Result.IKey(ou.getName(), "FUEL", 1));
+                Double ammoVal = iValues.get(new Result.IKey(ou.getName(), "AMMO", 1));
+                if (fwVal != null) {
+                    fw = fwVal;
+                }
+                if (fuelVal != null) {
+                    fuel = fuelVal;
+                }
+                if (ammoVal != null) {
+                    ammo = ammoVal;
+                }
             }
 
             Map<String, Double> invMap = new HashMap<>();
             invMap.put("FW", fw);
             invMap.put("FUEL", fuel);
             invMap.put("AMMO", ammo);
-            this.inventoryOU.put(ou.operatingUnitName, invMap);
+            this.inventoryOU.put(ou.getName(), invMap);
 
             Map<String, Double> maxMap = new HashMap<>();
-            maxMap.put("FW", ou.maxFoodWaterKg);
-            maxMap.put("FUEL", ou.maxFuelKg);
-            maxMap.put("AMMO", ou.maxAmmoKg);
-            this.inventoryOUMax.put(ou.operatingUnitName, maxMap);
+            maxMap.put("FW", ou.getMaxFoodWaterKg());
+            maxMap.put("FUEL", ou.getMaxFuelKg());
+            maxMap.put("AMMO", ou.getMaxAmmoKg());
+            this.inventoryOUMax.put(ou.getName(), maxMap);
         }
 
         // Inventories for FSCs
-        for (FSC fsc : inst.FSCs) {
-            this.inventoryFSCMax.put(fsc.FSCname, fsc.maxStorageCapCcls);
-            int start = fscTotals.isEmpty() ? fsc.maxStorageCapCcls : fscTotals.getOrDefault(fsc.FSCname, 0);
-            this.inventoryFSC.put(fsc.FSCname, start);
+        for (FSC fsc : inst.getFSCs()) {
+            this.inventoryFSCMax.put(fsc.getName(), fsc.getMaxStorageCapCcls());
+            int start = fscTotals.isEmpty() ? fsc.getMaxStorageCapCcls() : fscTotals.getOrDefault(fsc.getName(), 0);
+            this.inventoryFSC.put(fsc.getName(), start);
         }
     }
 

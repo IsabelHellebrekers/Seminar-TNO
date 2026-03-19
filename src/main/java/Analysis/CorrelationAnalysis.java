@@ -81,7 +81,7 @@ public final class CorrelationAnalysis {
                     N_SCENARIOS, OOS_SEED, BEST_CFG, correlations);
             System.out.printf("%-18.2f %-20s %-10d %-18.2f %-22.2f%n",
                     rhoValue, cfg.label(), cfg.mscTrucks(),
-                    summary.noStockoutPercentage, summary.avgTotalStockoutKg);
+                    summary.getNoStockoutPercentage(), summary.getAvgTotalStockoutKg());
         }
     }
 }

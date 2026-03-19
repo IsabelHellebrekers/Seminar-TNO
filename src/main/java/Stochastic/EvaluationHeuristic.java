@@ -65,20 +65,20 @@ public class EvaluationHeuristic {
     }
 
     public static final class ScenarioResult {
-        public final boolean hasStockout;
-        public final double totalStockoutKg;
-        public final List<Stockout> stockouts;
+        private final boolean hasStockout;
+        private final double totalStockoutKg;
+        private final List<Stockout> stockouts;
 
-        public final int firstStockoutDay;
-        public final int numberOfStockoutDays;
+        private final int firstStockoutDay;
+        private final int numberOfStockoutDays;
 
-        public final int fwStockoutDays;
-        public final int fuelStockoutDays;
-        public final int ammoStockoutDays;
+        private final int fwStockoutDays;
+        private final int fuelStockoutDays;
+        private final int ammoStockoutDays;
 
-        public final double totalFwStockoutKg;
-        public final double totalFuelStockoutKg;
-        public final double totalAmmoStockoutKg;
+        private final double totalFwStockoutKg;
+        private final double totalFuelStockoutKg;
+        private final double totalAmmoStockoutKg;
 
         public ScenarioResult(
                 boolean hasStockout,
@@ -108,15 +108,48 @@ public class EvaluationHeuristic {
             this.totalFuelStockoutKg = totalFuelStockoutKg;
             this.totalAmmoStockoutKg = totalAmmoStockoutKg;
         }
+
+        /** @return true if any stockout occurred in this scenario */
+        public boolean isHasStockout() { return hasStockout; }
+
+        /** @return total stockout quantity across all products and OUs (kg) */
+        public double getTotalStockoutKg() { return totalStockoutKg; }
+
+        /** @return list of individual stockout events */
+        public List<Stockout> getStockouts() { return stockouts; }
+
+        /** @return the first day on which a stockout occurred (0 if none) */
+        public int getFirstStockoutDay() { return firstStockoutDay; }
+
+        /** @return number of days on which at least one stockout occurred */
+        public int getNumberOfStockoutDays() { return numberOfStockoutDays; }
+
+        /** @return number of days with a food/water stockout */
+        public int getFwStockoutDays() { return fwStockoutDays; }
+
+        /** @return number of days with a fuel stockout */
+        public int getFuelStockoutDays() { return fuelStockoutDays; }
+
+        /** @return number of days with an ammunition stockout */
+        public int getAmmoStockoutDays() { return ammoStockoutDays; }
+
+        /** @return total food/water stockout quantity (kg) */
+        public double getTotalFwStockoutKg() { return totalFwStockoutKg; }
+
+        /** @return total fuel stockout quantity (kg) */
+        public double getTotalFuelStockoutKg() { return totalFuelStockoutKg; }
+
+        /** @return total ammunition stockout quantity (kg) */
+        public double getTotalAmmoStockoutKg() { return totalAmmoStockoutKg; }
     }
 
     public static final class DemandMultiplierConfig {
-        public final double meanFw;
-        public final double meanFuel;
-        public final double meanAmmo;
-        public final double stdFw;
-        public final double stdFuel;
-        public final double stdAmmo;
+        private final double meanFw;
+        private final double meanFuel;
+        private final double meanAmmo;
+        private final double stdFw;
+        private final double stdFuel;
+        private final double stdAmmo;
 
         public DemandMultiplierConfig(
                 double meanFw, double meanFuel, double meanAmmo,
@@ -132,20 +165,38 @@ public class EvaluationHeuristic {
         public static DemandMultiplierConfig baseline() {
             return new DemandMultiplierConfig(1.0, 1.0, 1.0, 1.0, 1.0, 1.0);
         }
+
+        /** @return the mean multiplier for food/water demand */
+        public double getMeanFw() { return meanFw; }
+
+        /** @return the mean multiplier for fuel demand */
+        public double getMeanFuel() { return meanFuel; }
+
+        /** @return the mean multiplier for ammunition demand */
+        public double getMeanAmmo() { return meanAmmo; }
+
+        /** @return the standard deviation multiplier for food/water demand */
+        public double getStdFw() { return stdFw; }
+
+        /** @return the standard deviation multiplier for fuel demand */
+        public double getStdFuel() { return stdFuel; }
+
+        /** @return the standard deviation multiplier for ammunition demand */
+        public double getStdAmmo() { return stdAmmo; }
     }
 
     /**
      * Aggregate metrics over many scenarios.
      */
     public static final class EvaluationSummary {
-        public final int totalScenarios;
-        public final int scenariosWithoutStockout;
-        public final double noStockoutPercentage;
-        public final double avgTotalStockoutKg;
+        private final int totalScenarios;
+        private final int scenariosWithoutStockout;
+        private final double noStockoutPercentage;
+        private final double avgTotalStockoutKg;
 
         /**
          * Aggregate metrics over many scenarios.
-         * 
+         *
          * @param totalScenarios           number of simulated scenarios
          * @param scenariosWithoutStockout count of scenarios with zero stockouts
          * @param noStockoutPercentage     scenariosWithoutStockout / totalScenarios *
@@ -159,6 +210,18 @@ public class EvaluationHeuristic {
             this.noStockoutPercentage = noStockoutPercentage;
             this.avgTotalStockoutKg = avgTotalStockoutKg;
         }
+
+        /** @return the total number of simulated scenarios */
+        public int getTotalScenarios() { return totalScenarios; }
+
+        /** @return the number of scenarios with no stockout */
+        public int getScenariosWithoutStockout() { return scenariosWithoutStockout; }
+
+        /** @return the percentage of scenarios without stockout */
+        public double getNoStockoutPercentage() { return noStockoutPercentage; }
+
+        /** @return the average total stockout quantity across scenarios (kg) */
+        public double getAvgTotalStockoutKg() { return avgTotalStockoutKg; }
 
         /**
          * String representation of an EvaluationSummary
@@ -206,10 +269,10 @@ public class EvaluationHeuristic {
         for (int s = 1; s <= nScenarios; s++) {
             ScenarioResult result = evaluateSingleScenario(data, M, K, baseSeed + s, cfg, correlations, meanMult,
                     stdMult);
-            if (!result.hasStockout) {
+            if (!result.isHasStockout()) {
                 noStockoutCount++;
             }
-            sumStockoutKg += result.totalStockoutKg;
+            sumStockoutKg += result.getTotalStockoutKg();
         }
 
         double noStockoutPercentage = (double) noStockoutCount / nScenarios * 100.0;
@@ -241,13 +304,13 @@ public class EvaluationHeuristic {
         Random rng = new Random(scenarioSeed);
 
         Map<String, OperatingUnit> ouByName = new HashMap<>();
-        for (OperatingUnit ou : data.operatingUnits) {
-            ouByName.put(ou.operatingUnitName, ou);
+        for (OperatingUnit ou : data.getOperatingUnits()) {
+            ouByName.put(ou.getName(), ou);
         }
 
         Map<String, double[]> ouMaxDemand = new HashMap<>();
-        for (OperatingUnit ou : data.operatingUnits) {
-            ouMaxDemand.put(ou.operatingUnitName, computeOuNextDayMaxDemand(ou));
+        for (OperatingUnit ou : data.getOperatingUnits()) {
+            ouMaxDemand.put(ou.getName(), computeOuNextDayMaxDemand(ou));
         }
 
         OperatingUnit vust = ouByName.get("VUST");
@@ -255,15 +318,15 @@ public class EvaluationHeuristic {
         double[] vustTarget = computeVustNextDayMaxDemandTarget(vust, cfg.vust());
 
         Map<String, List<OperatingUnit>> ousByFsc = new HashMap<>();
-        for (FSC f : data.FSCs) {
-            ousByFsc.put(f.FSCname, new ArrayList<>());
+        for (FSC f : data.getFSCs()) {
+            ousByFsc.put(f.getName(), new ArrayList<>());
         }
 
-        for (OperatingUnit ou : data.operatingUnits) {
-            if (ou.operatingUnitName.equals("VUST")) {
+        for (OperatingUnit ou : data.getOperatingUnits()) {
+            if (ou.getName().equals("VUST")) {
                 continue;
             }
-            ousByFsc.get(ou.source).add(ou);
+            ousByFsc.get(ou.getSource()).add(ou);
         }
 
         Map<String, double[]> ouInv = initOuInventory(data);
@@ -277,43 +340,43 @@ public class EvaluationHeuristic {
         sampler.setStdMultiplier(stdMult);
 
         Map<String, double[][]> ouMultipliers = new HashMap<>();
-        for (OperatingUnit ou : data.operatingUnits) {
-            ouMultipliers.put(ou.operatingUnitName, sampler.correlatedSamples(
+        for (OperatingUnit ou : data.getOperatingUnits()) {
+            ouMultipliers.put(ou.getName(), sampler.correlatedSamples(
                     correlations.get(0), correlations.get(1), correlations.get(2), correlations.get(3),
-                    data.timeHorizon));
+                    data.getTimeHorizon()));
         }
 
-        double[] fwStockoutByDay = new double[data.timeHorizon + 1];
-        double[] fuelStockoutByDay = new double[data.timeHorizon + 1];
-        double[] ammoStockoutByDay = new double[data.timeHorizon + 1];
-        boolean[] anyStockoutDay = new boolean[data.timeHorizon + 1];
+        double[] fwStockoutByDay = new double[data.getTimeHorizon() + 1];
+        double[] fuelStockoutByDay = new double[data.getTimeHorizon() + 1];
+        double[] ammoStockoutByDay = new double[data.getTimeHorizon() + 1];
+        boolean[] anyStockoutDay = new boolean[data.getTimeHorizon() + 1];
 
         // Simulate days t = 1,...,T
-        for (int t = 1; t <= data.timeHorizon; t++) {
+        for (int t = 1; t <= data.getTimeHorizon(); t++) {
 
             // 1) Realize and consume demand on day t
-            for (OperatingUnit ou : data.operatingUnits) {
-                double[] inv = ouInv.get(ou.operatingUnitName);
-                double[][] correlatedMultipliers = ouMultipliers.get(ou.operatingUnitName);
+            for (OperatingUnit ou : data.getOperatingUnits()) {
+                double[] inv = ouInv.get(ou.getName());
+                double[][] correlatedMultipliers = ouMultipliers.get(ou.getName());
 
                 int dayIndex = t - 1;
                 double dFW, dFUEL, dAMMO;
 
                 if (correlations.equals(List.of(0.0, 0.0, 0.0, 0.0))) {
-                    dFW = sampler.uniform() * ou.dailyFoodWaterKg;
-                    dFUEL = sampler.binomial() * ou.dailyFuelKg;
-                    dAMMO = sampler.triangular() * ou.dailyAmmoKg;
+                    dFW = sampler.uniform() * ou.getDailyFoodWaterKg();
+                    dFUEL = sampler.binomial() * ou.getDailyFuelKg();
+                    dAMMO = sampler.triangular() * ou.getDailyAmmoKg();
                 } else {
-                    dFW = correlatedMultipliers[IDX_FW][dayIndex] * ou.dailyFoodWaterKg;
-                    dFUEL = correlatedMultipliers[IDX_FUEL][dayIndex] * ou.dailyFuelKg;
-                    dAMMO = correlatedMultipliers[IDX_AMMO][dayIndex] * ou.dailyAmmoKg;
+                    dFW = correlatedMultipliers[IDX_FW][dayIndex] * ou.getDailyFoodWaterKg();
+                    dFUEL = correlatedMultipliers[IDX_FUEL][dayIndex] * ou.getDailyFuelKg();
+                    dAMMO = correlatedMultipliers[IDX_AMMO][dayIndex] * ou.getDailyAmmoKg();
 
                 }
 
-                double fwSo = consumeAndRecordStockout(stockouts, ou.operatingUnitName, "FW", dFW, t, inv, IDX_FW);
-                double fuelSo = consumeAndRecordStockout(stockouts, ou.operatingUnitName, "FUEL", dFUEL, t, inv,
+                double fwSo = consumeAndRecordStockout(stockouts, ou.getName(), "FW", dFW, t, inv, IDX_FW);
+                double fuelSo = consumeAndRecordStockout(stockouts, ou.getName(), "FUEL", dFUEL, t, inv,
                         IDX_FUEL);
-                double ammoSo = consumeAndRecordStockout(stockouts, ou.operatingUnitName, "AMMO", dAMMO, t, inv,
+                double ammoSo = consumeAndRecordStockout(stockouts, ou.getName(), "AMMO", dAMMO, t, inv,
                         IDX_AMMO);
 
                 totalStockoutKg += fwSo + fuelSo + ammoSo;
@@ -335,21 +398,21 @@ public class EvaluationHeuristic {
             }
 
             // No dispatch on the final day
-            if (t == data.timeHorizon) {
+            if (t == data.getTimeHorizon()) {
                 break;
             }
 
             // 2) Scheduled arrivals decided today
             Map<String, double[]> scheduledDeliveries = new HashMap<>();
-            for (OperatingUnit ou : data.operatingUnits) {
-                scheduledDeliveries.put(ou.operatingUnitName, new double[] { 0.0, 0.0, 0.0 });
+            for (OperatingUnit ou : data.getOperatingUnits()) {
+                scheduledDeliveries.put(ou.getName(), new double[] { 0.0, 0.0, 0.0 });
             }
 
             Map<UsedKey, Integer> usedToday = new HashMap<>();
 
             // 3) Downstream : FSC -> OU
-            for (FSC fsc : data.FSCs) {
-                String w = fsc.FSCname;
+            for (FSC fsc : data.getFSCs()) {
+                String w = fsc.getName();
                 int trucks = K.getOrDefault(w, 0);
                 if (trucks <= 0) {
                     continue;
@@ -372,15 +435,15 @@ public class EvaluationHeuristic {
                     int chosenC = selectBestFeasibleCCLTypeAllProducts(
                             chosenOu,
                             fscInv.get(w),
-                            ouInv.get(chosenOu.operatingUnitName),
-                            scheduledDeliveries.get(chosenOu.operatingUnitName),
-                            data.cclTypes,
-                            ouMaxDemand.get(chosenOu.operatingUnitName),
+                            ouInv.get(chosenOu.getName()),
+                            scheduledDeliveries.get(chosenOu.getName()),
+                            data.getCclTypes(),
+                            ouMaxDemand.get(chosenOu.getName()),
                             rng,
                             cfg);
 
                     if (chosenC == -1) {
-                        blocked.add(chosenOu.operatingUnitName);
+                        blocked.add(chosenOu.getName());
                         kTruck--;
                         if (blocked.size() >= candidates.size()) {
                             break;
@@ -388,10 +451,10 @@ public class EvaluationHeuristic {
                         continue;
                     }
 
-                    String ouType = chosenOu.ouType;
+                    String ouType = chosenOu.getOuType();
                     fscInv.get(w).get(ouType)[chosenC - 1]--;
 
-                    addCclToScheduledDeliveries(scheduledDeliveries.get(chosenOu.operatingUnitName), data.cclTypes,
+                    addCclToScheduledDeliveries(scheduledDeliveries.get(chosenOu.getName()), data.getCclTypes(),
                             chosenC);
 
                     usedToday.merge(new UsedKey(w, ouType, chosenC), 1, Integer::sum);
@@ -407,38 +470,40 @@ public class EvaluationHeuristic {
                 double[] add = scheduledDeliveries.get("VUST");
 
                 while (mRemaining > 0 && !meetsTarget(inv, add, vustTarget)) {
-                    int bestC = selectBestFeasibleCCLTypeForVustTarget(vust, inv, add, data.cclTypes, vustTarget);
+                    int bestC = selectBestFeasibleCCLTypeForVustTarget(vust, inv, add, data.getCclTypes(), vustTarget);
                     if (bestC == -1) {
                         break;
                     }
 
-                    addCclToScheduledDeliveries(add, data.cclTypes, bestC);
+                    addCclToScheduledDeliveries(add, data.getCclTypes(), bestC);
                     mRemaining--;
                 }
             }
 
             // 4b) MSC -> FSC
             while (mRemaining > 0) {
-                RefillChoice choice = selectLowestRatioRefill(data.FSCs, fscInv);
-                if (choice == null)
+                RefillChoice choice = selectLowestRatioRefill(data.getFSCs(), fscInv);
+                if (choice == null) {
                     break;
+                }
 
                 FSC f = choice.fsc;
-                if (totalCclsAtFsc(f, fscInv) >= f.maxStorageCapCcls)
+                if (totalCclsAtFsc(f, fscInv) >= f.getMaxStorageCapCcls()) {
                     break;
+                }
 
-                fscInv.get(f.FSCname).get(choice.ouType)[choice.cclType - 1]++;
+                fscInv.get(f.getName()).get(choice.ouType)[choice.cclType - 1]++;
                 mRemaining--;
             }
 
             // 5) Apply arrivals to obtain start-of-day inventories for day t+1
-            for (OperatingUnit ou : data.operatingUnits) {
-                double[] inv = ouInv.get(ou.operatingUnitName);
-                double[] add = scheduledDeliveries.get(ou.operatingUnitName);
+            for (OperatingUnit ou : data.getOperatingUnits()) {
+                double[] inv = ouInv.get(ou.getName());
+                double[] add = scheduledDeliveries.get(ou.getName());
 
-                inv[IDX_FW] = Math.min(inv[IDX_FW] + add[IDX_FW], ou.maxFoodWaterKg);
-                inv[IDX_FUEL] = Math.min(inv[IDX_FUEL] + add[IDX_FUEL], ou.maxFuelKg);
-                inv[IDX_AMMO] = Math.min(inv[IDX_AMMO] + add[IDX_AMMO], ou.maxAmmoKg);
+                inv[IDX_FW] = Math.min(inv[IDX_FW] + add[IDX_FW], ou.getMaxFoodWaterKg());
+                inv[IDX_FUEL] = Math.min(inv[IDX_FUEL] + add[IDX_FUEL], ou.getMaxFuelKg());
+                inv[IDX_AMMO] = Math.min(inv[IDX_AMMO] + add[IDX_AMMO], ou.getMaxAmmoKg());
             }
         }
 
@@ -455,7 +520,7 @@ public class EvaluationHeuristic {
         double totalFuelStockoutKg = 0;
         double totalAmmoStockoutKg = 0;
 
-        for (int t = 1; t <= data.timeHorizon; t++) {
+        for (int t = 1; t <= data.getTimeHorizon(); t++) {
 
             if (anyStockoutDay[t]) {
                 numberOfStockoutDays++;
@@ -505,9 +570,9 @@ public class EvaluationHeuristic {
      * @return target vector [FW, FUEL, AMMO] in kg
      */
     private static double[] computeVustNextDayMaxDemandTarget(OperatingUnit vust, TargetWeights w) {
-        double targetFW = Math.min(vust.maxFoodWaterKg, vust.dailyFoodWaterKg * MAX_MULT_FW * w.fw());
-        double targetFUEL = Math.min(vust.maxFuelKg, vust.dailyFuelKg * MAX_MULT_FUEL * w.fuel());
-        double targetAMMO = Math.min(vust.maxAmmoKg, vust.dailyAmmoKg * MAX_MULT_AMMO * w.ammo());
+        double targetFW = Math.min(vust.getMaxFoodWaterKg(), vust.getDailyFoodWaterKg() * MAX_MULT_FW * w.fw());
+        double targetFUEL = Math.min(vust.getMaxFuelKg(), vust.getDailyFuelKg() * MAX_MULT_FUEL * w.fuel());
+        double targetAMMO = Math.min(vust.getMaxAmmoKg(), vust.getDailyAmmoKg() * MAX_MULT_AMMO * w.ammo());
 
         return new double[] { targetFW, targetFUEL, targetAMMO };
     }
@@ -553,13 +618,14 @@ public class EvaluationHeuristic {
         double bestAfter = Double.POSITIVE_INFINITY;
 
         for (CCLPackage ccl : cclTypes) {
-            int c = ccl.type;
+            int c = ccl.getType();
 
             if (!fitsCapacity(vust, inv, add, ccl)) {
                 continue;
             }
 
             double after = relativeDeficitSumAfter(inv, add, target, ccl);
+
             if (after + EPS < bestAfter) {
                 bestAfter = after;
                 bestC = c;
@@ -605,9 +671,9 @@ public class EvaluationHeuristic {
      * @return scalar deficit score after hypothetical delivery
      */
     private static double relativeDeficitSumAfter(double[] inv, double[] add, double[] target, CCLPackage ccl) {
-        double fwLvl = inv[IDX_FW] + add[IDX_FW] + ccl.foodWaterKg;
-        double fuelLvl = inv[IDX_FUEL] + add[IDX_FUEL] + ccl.fuelKg;
-        double ammoLvl = inv[IDX_AMMO] + add[IDX_AMMO] + ccl.ammoKg;
+        double fwLvl = inv[IDX_FW] + add[IDX_FW] + ccl.getFoodWaterKg();
+        double fuelLvl = inv[IDX_FUEL] + add[IDX_FUEL] + ccl.getFuelKg();
+        double ammoLvl = inv[IDX_AMMO] + add[IDX_AMMO] + ccl.getAmmoKg();
 
         double dfw = Math.max(0.0, target[IDX_FW] - fwLvl) / Math.max(1.0, target[IDX_FW]);
         double dfuel = Math.max(0.0, target[IDX_FUEL] - fuelLvl) / Math.max(1.0, target[IDX_FUEL]);
@@ -661,8 +727,8 @@ public class EvaluationHeuristic {
      */
     private static Map<String, double[]> initOuInventory(Instance data) {
         Map<String, double[]> ouInv = new HashMap<>();
-        for (OperatingUnit ou : data.operatingUnits) {
-            ouInv.put(ou.operatingUnitName, new double[] { ou.maxFoodWaterKg, ou.maxFuelKg, ou.maxAmmoKg });
+        for (OperatingUnit ou : data.getOperatingUnits()) {
+            ouInv.put(ou.getName(), new double[] { ou.getMaxFoodWaterKg(), ou.getMaxFuelKg(), ou.getMaxAmmoKg() });
         }
         return ouInv;
     }
@@ -676,18 +742,19 @@ public class EvaluationHeuristic {
      */
     private static Map<String, Map<String, int[]>> initFscInventory(Instance data) {
         Map<String, Map<String, int[]>> inv = new HashMap<>();
-        for (FSC fsc : data.FSCs) {
+        for (FSC fsc : data.getFSCs()) {
             Map<String, int[]> byType = new HashMap<>();
-            for (Map.Entry<String, int[]> e : fsc.initialStorageLevels.entrySet()) {
+            for (Map.Entry<String, int[]> e : fsc.getInitialStorageLevels().entrySet()) {
                 byType.put(e.getKey(), e.getValue().clone());
             }
-            for (String o : data.ouTypes) {
+            for (String o : data.getOuTypes()) {
                 if (o.equals("VUST")) {
                     continue;
                 }
+
                 byType.computeIfAbsent(o, k -> new int[] { 0, 0, 0 });
             }
-            inv.put(fsc.FSCname, byType);
+            inv.put(fsc.getName(), byType);
         }
 
         return inv;
@@ -723,13 +790,14 @@ public class EvaluationHeuristic {
         int ties = 0;
 
         for (OperatingUnit ou : candidates) {
-            if (blocked.contains(ou.operatingUnitName)) {
+            if (blocked.contains(ou.getName())) {
                 continue;
             }
 
-            double[] inv = ouInv.get(ou.operatingUnitName);
-            double[] add = scheduledDeliveries.get(ou.operatingUnitName);
-            double[] dmax = ouMaxDemand.get(ou.operatingUnitName);
+
+            double[] inv = ouInv.get(ou.getName());
+            double[] add = scheduledDeliveries.get(ou.getName());
+            double[] dmax = ouMaxDemand.get(ou.getName());
 
             double ratio = minDemandCoverRatio(inv, add, dmax, w);
 
@@ -772,9 +840,9 @@ public class EvaluationHeuristic {
      * @return dmax vector [FW, FUEL, AMMO] in kg
      */
     private static double[] computeOuNextDayMaxDemand(OperatingUnit ou) {
-        double dFW = ou.dailyFoodWaterKg * MAX_MULT_FW;
-        double dFUEL = ou.dailyFuelKg * MAX_MULT_FUEL;
-        double dAMMO = ou.dailyAmmoKg * MAX_MULT_AMMO;
+        double dFW = ou.getDailyFoodWaterKg() * MAX_MULT_FW;
+        double dFUEL = ou.getDailyFuelKg() * MAX_MULT_FUEL;
+        double dAMMO = ou.getDailyAmmoKg() * MAX_MULT_AMMO;
 
         return new double[] { dFW, dFUEL, dAMMO };
     }
@@ -804,9 +872,10 @@ public class EvaluationHeuristic {
             double[] dmax,
             Random rng,
             WeightConfig cfg) {
-        int[] stock = fscInvByOuType.get(ou.ouType);
-        if (stock == null)
+        int[] stock = fscInvByOuType.get(ou.getOuType());
+        if (stock == null) {
             return -1;
+        }
 
         int bestC = -1;
         double bestScore = -1.0;
@@ -814,12 +883,14 @@ public class EvaluationHeuristic {
         int ties = 0;
 
         for (CCLPackage ccl : cclTypes) {
-            int c = ccl.type;
-            if (stock[c - 1] <= 0)
+            int c = ccl.getType();
+            if (stock[c - 1] <= 0) {
                 continue;
+            }
 
-            if (!fitsCapacity(ou, inv, add, ccl))
+            if (!fitsCapacity(ou, inv, add, ccl)) {
                 continue;
+            }
 
             double score = postDeliveryDeficitReductionScore(ou, inv, add, ccl, dmax, cfg.ou());
 
@@ -858,25 +929,25 @@ public class EvaluationHeuristic {
             CCLPackage ccl,
             double[] dmax,
             TargetWeights w) {
-        double targetFW = Math.min(ou.maxFoodWaterKg, Math.max(0.0, w.fw() * dmax[IDX_FW]));
-        double targetFUEL = Math.min(ou.maxFuelKg, Math.max(0.0, w.fuel() * dmax[IDX_FUEL]));
-        double targetAMMO = Math.min(ou.maxAmmoKg, Math.max(0.0, w.ammo() * dmax[IDX_AMMO]));
+        double targetFW = Math.min(ou.getMaxFoodWaterKg(), Math.max(0.0, w.fw() * dmax[IDX_FW]));
+        double targetFUEL = Math.min(ou.getMaxFuelKg(), Math.max(0.0, w.fuel() * dmax[IDX_FUEL]));
+        double targetAMMO = Math.min(ou.getMaxAmmoKg(), Math.max(0.0, w.ammo() * dmax[IDX_AMMO]));
 
         double before = normalizedDeficit(inv[IDX_FW] + add[IDX_FW], targetFW)
                 + normalizedDeficit(inv[IDX_FUEL] + add[IDX_FUEL], targetFUEL)
                 + normalizedDeficit(inv[IDX_AMMO] + add[IDX_AMMO], targetAMMO);
 
-        double after = normalizedDeficit(inv[IDX_FW] + add[IDX_FW] + ccl.foodWaterKg, targetFW)
-                + normalizedDeficit(inv[IDX_FUEL] + add[IDX_FUEL] + ccl.fuelKg, targetFUEL)
-                + normalizedDeficit(inv[IDX_AMMO] + add[IDX_AMMO] + ccl.ammoKg, targetAMMO);
+        double after = normalizedDeficit(inv[IDX_FW] + add[IDX_FW] + ccl.getFoodWaterKg(), targetFW)
+                + normalizedDeficit(inv[IDX_FUEL] + add[IDX_FUEL] + ccl.getFuelKg(), targetFUEL)
+                + normalizedDeficit(inv[IDX_AMMO] + add[IDX_AMMO] + ccl.getAmmoKg(), targetAMMO);
 
         double baseScore = before - after;
 
-        double fuelAfter = inv[IDX_FUEL] + add[IDX_FUEL] + ccl.fuelKg;
-        double ammoAfter = inv[IDX_AMMO] + add[IDX_AMMO] + ccl.ammoKg;
+        double fuelAfter = inv[IDX_FUEL] + add[IDX_FUEL] + ccl.getFuelKg();
+        double ammoAfter = inv[IDX_AMMO] + add[IDX_AMMO] + ccl.getAmmoKg();
 
-        double fuelRatio = fuelAfter / Math.max(1.0, ou.maxFuelKg);
-        double ammoRatio = ammoAfter / Math.max(1.0, ou.maxAmmoKg);
+        double fuelRatio = fuelAfter / Math.max(1.0, ou.getMaxFuelKg());
+        double ammoRatio = ammoAfter / Math.max(1.0, ou.getMaxAmmoKg());
 
         double balancePenalty = Math.abs(fuelRatio - ammoRatio);
 
@@ -907,13 +978,13 @@ public class EvaluationHeuristic {
      * @return true if all products remain <= max capacity
      */
     private static boolean fitsCapacity(OperatingUnit ou, double[] inv, double[] add, CCLPackage ccl) {
-        double fw = inv[IDX_FW] + add[IDX_FW] + ccl.foodWaterKg;
-        double fuel = inv[IDX_FUEL] + add[IDX_FUEL] + ccl.fuelKg;
-        double ammo = inv[IDX_AMMO] + add[IDX_AMMO] + ccl.ammoKg;
+        double fw = inv[IDX_FW] + add[IDX_FW] + ccl.getFoodWaterKg();
+        double fuel = inv[IDX_FUEL] + add[IDX_FUEL] + ccl.getFuelKg();
+        double ammo = inv[IDX_AMMO] + add[IDX_AMMO] + ccl.getAmmoKg();
 
-        return fw <= ou.maxFoodWaterKg + EPS
-                && fuel <= ou.maxFuelKg + EPS
-                && ammo <= ou.maxAmmoKg + EPS;
+        return fw <= ou.getMaxFoodWaterKg() + EPS
+                && fuel <= ou.getMaxFuelKg() + EPS
+                && ammo <= ou.getMaxAmmoKg() + EPS;
     }
 
     /**
@@ -927,15 +998,15 @@ public class EvaluationHeuristic {
     private static void addCclToScheduledDeliveries(double[] add, List<CCLPackage> cclTypes, int cclType) {
         CCLPackage chosen = null;
         for (CCLPackage c : cclTypes) {
-            if (c.type == cclType) {
+            if (c.getType() == cclType) {
                 chosen = c;
                 break;
             }
         }
         if (chosen != null) {
-            add[IDX_FW] += chosen.foodWaterKg;
-            add[IDX_FUEL] += chosen.fuelKg;
-            add[IDX_AMMO] += chosen.ammoKg;
+            add[IDX_FW] += chosen.getFoodWaterKg();
+            add[IDX_FUEL] += chosen.getFuelKg();
+            add[IDX_AMMO] += chosen.getAmmoKg();
         }
     }
 
@@ -948,15 +1019,16 @@ public class EvaluationHeuristic {
      * @return total number of CCLs at this FSC
      */
     private static int totalCclsAtFsc(FSC fsc, Map<String, Map<String, int[]>> fscInv) {
-        Map<String, int[]> byType = fscInv.get(fsc.FSCname);
+        Map<String, int[]> byType = fscInv.get(fsc.getName());
         if (byType == null) {
             return 0;
         }
 
         int total = 0;
         for (int[] arr : byType.values()) {
-            for (int x : arr)
+            for (int x : arr) {
                 total += x;
+            }
         }
         return total;
     }
@@ -999,29 +1071,34 @@ public class EvaluationHeuristic {
         double bestRatio = Double.POSITIVE_INFINITY;
 
         for (FSC fsc : fscs) {
-            if (totalCclsAtFsc(fsc, fscInv) >= fsc.maxStorageCapCcls)
+            if (totalCclsAtFsc(fsc, fscInv) >= fsc.getMaxStorageCapCcls()) {
                 continue;
+            }
 
-            Map<String, int[]> curByType = fscInv.get(fsc.FSCname);
-            if (curByType == null)
+            Map<String, int[]> curByType = fscInv.get(fsc.getName());
+            if (curByType == null) {
                 continue;
+            }
 
-            for (Map.Entry<String, int[]> initEntry : fsc.initialStorageLevels.entrySet()) {
+            for (Map.Entry<String, int[]> initEntry : fsc.getInitialStorageLevels().entrySet()) {
                 String ouType = initEntry.getKey();
-                if (ouType.equals("VUST"))
+                if (ouType.equals("VUST")) {
                     continue;
+                }
 
                 int[] initArr = initEntry.getValue();
                 int[] curArr = curByType.get(ouType);
-                if (curArr == null)
+                if (curArr == null) {
                     continue;
+                }
 
                 int L = Math.min(initArr.length, curArr.length);
 
                 for (int idx = 0; idx < L; idx++) {
                     int init = initArr[idx];
-                    if (init <= 0)
+                    if (init <= 0) {
                         continue;
+                    }
 
                     int cur = curArr[idx];
                     double ratio = (double) cur / init;
@@ -1078,8 +1155,8 @@ public class EvaluationHeuristic {
         WeightConfig bestCfg = null;
         EvaluationSummary best = null;
 
-        for (double aFW : ouFW)
-            for (double aFU : ouFUEL)
+        for (double aFW : ouFW) {
+            for (double aFU : ouFUEL) {
                 for (double aAM : ouAMMO) {
                     WeightConfig cfg = new WeightConfig(
                             new TargetWeights(aFW, aFU, aAM),
@@ -1089,13 +1166,15 @@ public class EvaluationHeuristic {
                             List.of(0.0, 0.0, 0.0, 0.0)); // no correlation
 
                     if (best == null
-                            || s.scenariosWithoutStockout > best.scenariosWithoutStockout
-                            || (s.scenariosWithoutStockout == best.scenariosWithoutStockout
-                                    && s.avgTotalStockoutKg + EPS < best.avgTotalStockoutKg)) {
+                            || s.getScenariosWithoutStockout() > best.getScenariosWithoutStockout()
+                            || (s.getScenariosWithoutStockout() == best.getScenariosWithoutStockout()
+                                    && s.getAvgTotalStockoutKg() + EPS < best.getAvgTotalStockoutKg())) {
                         best = s;
                         bestCfg = cfg;
                     }
                 }
+            }
+        }
 
         return new GridSearchResult(bestCfg, best);
     }
@@ -1127,8 +1206,8 @@ public class EvaluationHeuristic {
         WeightConfig bestCfg = null;
         EvaluationSummary best = null;
 
-        for (double v1 : vFW)
-            for (double v2 : vFUEL)
+        for (double v1 : vFW) {
+            for (double v2 : vFUEL) {
                 for (double v3 : vAMMO) {
                     WeightConfig cfg = new WeightConfig(
                             fixedOu,
@@ -1138,13 +1217,15 @@ public class EvaluationHeuristic {
                             List.of(0.0, 0.0, 0.0, 0.0)); // no correlation
 
                     if (best == null
-                            || s.scenariosWithoutStockout > best.scenariosWithoutStockout
-                            || (s.scenariosWithoutStockout == best.scenariosWithoutStockout
-                                    && s.avgTotalStockoutKg + EPS < best.avgTotalStockoutKg)) {
+                            || s.getScenariosWithoutStockout() > best.getScenariosWithoutStockout()
+                            || (s.getScenariosWithoutStockout() == best.getScenariosWithoutStockout()
+                                    && s.getAvgTotalStockoutKg() + EPS < best.getAvgTotalStockoutKg())) {
                         best = s;
                         bestCfg = cfg;
                     }
                 }
+            }
+        }
 
         return new GridSearchResult(bestCfg, best);
     }
@@ -1277,15 +1358,18 @@ public class EvaluationHeuristic {
      * @return true if candidate is strictly better under the objective
      */
     private static boolean isBetter(EvaluationSummary cand, EvaluationSummary best) {
-        if (best == null)
+        if (best == null) {
             return true;
+        }
 
-        if (cand.scenariosWithoutStockout > best.scenariosWithoutStockout)
+        if (cand.getScenariosWithoutStockout() > best.getScenariosWithoutStockout()) {
             return true;
-        if (cand.scenariosWithoutStockout < best.scenariosWithoutStockout)
+        }
+        if (cand.getScenariosWithoutStockout() < best.getScenariosWithoutStockout()) {
             return false;
+        }
 
-        return cand.avgTotalStockoutKg + EPS < best.avgTotalStockoutKg;
+        return cand.getAvgTotalStockoutKg() + EPS < best.getAvgTotalStockoutKg();
     }
 
     /**
@@ -1336,8 +1420,9 @@ public class EvaluationHeuristic {
                 elapsed / 1000.0,
                 eta / 1000.0);
 
-        if (current == total)
+        if (current == total) {
             System.out.println();
+        }
     }
 
     /**
@@ -1397,9 +1482,9 @@ public class EvaluationHeuristic {
                                                                                                                        // correlation
 
                 if (best == null
-                        || s.scenariosWithoutStockout > best.scenariosWithoutStockout
-                        || (s.scenariosWithoutStockout == best.scenariosWithoutStockout
-                                && s.avgTotalStockoutKg + EPS < best.avgTotalStockoutKg)) {
+                        || s.getScenariosWithoutStockout() > best.getScenariosWithoutStockout()
+                        || (s.getScenariosWithoutStockout() == best.getScenariosWithoutStockout()
+                                && s.getAvgTotalStockoutKg() + EPS < best.getAvgTotalStockoutKg())) {
                     best = s;
                     bestComp = new NewCclComposition(fw, fuel, ammo);
                 }

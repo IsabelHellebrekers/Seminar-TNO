@@ -44,11 +44,11 @@ public class CapacitatedResupplyMILP {
      */
     public CapacitatedResupplyMILP(Instance data, GRBEnv env, boolean verbose) throws GRBException {
         this.data = data;
-        this.fscs = this.data.FSCs;
-        this.ous = this.data.operatingUnits;
-        this.products = this.data.products;
-        this.cclTypes = this.data.cclTypes;
-        this.ouTypes = this.data.ouTypes;
+        this.fscs = this.data.getFSCs();
+        this.ous = this.data.getOperatingUnits();
+        this.products = this.data.getProducts();
+        this.cclTypes = this.data.getCclTypes();
+        this.ouTypes = this.data.getOuTypes();
 
         buildArcs();
 
@@ -67,10 +67,10 @@ public class CapacitatedResupplyMILP {
      */
     private void buildArcs() {
         for (OperatingUnit ou : ous) {
-            if (ou.operatingUnitName.equals("VUST")) {
+            if (ou.getName().equals("VUST")) {
                 continue;
             }
-            this.arcs.add(new Arc(ou.source, ou.operatingUnitName));
+            this.arcs.add(new Arc(ou.getSource(), ou.getName()));
         }
     }
 
@@ -84,8 +84,8 @@ public class CapacitatedResupplyMILP {
         mscTruckVar = this.model.addVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER, "M");
 
         // Build fscTruckVars for all FSCs
-        for (FSC fsc : this.data.FSCs) {
-            fscTruckVars.put(fsc.FSCname, this.model.addVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER, "K_" + fsc.FSCname));
+        for (FSC fsc : this.data.getFSCs()) {
+            fscTruckVars.put(fsc.getName(), this.model.addVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER, "K_" + fsc.getName()));
         }
 
         // x[w, i, c, t] : FSC -> OU deliveries
@@ -93,8 +93,8 @@ public class CapacitatedResupplyMILP {
             String w = a.w();
             String i = a.i();
             for (CCLPackage c : this.cclTypes) {
-                for (int t = 1; t <= this.data.timeHorizon; t++) {
-                    Result.XKey key = new Result.XKey(w, i, c.type, t);
+                for (int t = 1; t <= this.data.getTimeHorizon(); t++) {
+                    Result.XKey key = new Result.XKey(w, i, c.getType(), t);
                     x.put(key, model.addVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER,
                             "x_{" + "w" + w + "_i" + i + "_c" + c + "_t" + t + "}"));
                 }
@@ -105,10 +105,10 @@ public class CapacitatedResupplyMILP {
         for (FSC fsc : fscs) {
             for (CCLPackage c : this.cclTypes) {
                 for (String o : this.ouTypes) {
-                    for (int t = 1; t <= this.data.timeHorizon; t++) {
-                        Result.YKey key = new Result.YKey(fsc.FSCname, c.type, o, t);
+                    for (int t = 1; t <= this.data.getTimeHorizon(); t++) {
+                        Result.YKey key = new Result.YKey(fsc.getName(), c.getType(), o, t);
                         y.put(key, model.addVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER,
-                                "y_{" + "w" + fsc.FSCname + "_c" + c + "_o" + o + "_t" + t + "}"));
+                                "y_{" + "w" + fsc.getName() + "_c" + c + "_o" + o + "_t" + t + "}"));
                     }
                 }
             }
@@ -116,8 +116,8 @@ public class CapacitatedResupplyMILP {
 
         // z[c, t] : MSC -> Vust deliveries
         for (CCLPackage c : this.cclTypes) {
-            for (int t = 1; t <= this.data.timeHorizon; t++) {
-                Result.ZKey key = new Result.ZKey(c.type, t);
+            for (int t = 1; t <= this.data.getTimeHorizon(); t++) {
+                Result.ZKey key = new Result.ZKey(c.getType(), t);
                 z.put(key, model.addVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER,
                         "z_{" + "c" + c + "_t" + t + "}"));
             }
@@ -125,9 +125,9 @@ public class CapacitatedResupplyMILP {
 
         // I[i, p, t]: OU inventory (kg)
         for (OperatingUnit ou : ous) {
-            String i = ou.operatingUnitName;
+            String i = ou.getName();
             for (String p : this.products) {
-                for (int t = 1; t <= this.data.timeHorizon; t++) {
+                for (int t = 1; t <= this.data.getTimeHorizon(); t++) {
                     Result.IKey key = new Result.IKey(i, p, t);
                     I.put(key, model.addVar(0.0, GRB.INFINITY, 0.0, GRB.CONTINUOUS,
                             "I_{" + "i" + i + "_p" + p + "_t" + t + "}"));
@@ -139,10 +139,10 @@ public class CapacitatedResupplyMILP {
         for (FSC fsc : fscs) {
             for (CCLPackage c : this.cclTypes) {
                 for (String o : this.ouTypes) {
-                    for (int t = 1; t <= this.data.timeHorizon; t++) {
-                        Result.SKey key = new Result.SKey(fsc.FSCname, c.type, o, t);
+                    for (int t = 1; t <= this.data.getTimeHorizon(); t++) {
+                        Result.SKey key = new Result.SKey(fsc.getName(), c.getType(), o, t);
                         S.put(key, this.model.addVar(0.0, GRB.INFINITY, 0.0, GRB.INTEGER,
-                                "S_{" + "w" + fsc.FSCname + "_c" + c + "_o" + o + "_t" + t + "}"));
+                                "S_{" + "w" + fsc.getName() + "_c" + c + "_o" + o + "_t" + t + "}"));
                     }
                 }
             }
@@ -160,7 +160,7 @@ public class CapacitatedResupplyMILP {
         obj.addTerm(1.0, this.mscTruckVar);
 
         for (FSC fsc : this.fscs) {
-            obj.addTerm(1.0, fscTruckVars.get(fsc.FSCname));
+            obj.addTerm(1.0, fscTruckVars.get(fsc.getName()));
         }
 
         model.setObjective(obj, GRB.MINIMIZE);
@@ -198,26 +198,26 @@ public class CapacitatedResupplyMILP {
      */
     private void addOuInitialInventoryConstraints() throws GRBException {
         for (OperatingUnit ou : ous) {
-            String i = ou.operatingUnitName;
+            String i = ou.getName();
             // Food & Water initial inventory
             model.addConstr(
                     I.get(new Result.IKey(i, "FW", 1)),
                     GRB.EQUAL,
-                    ou.maxFoodWaterKg,
+                    ou.getMaxFoodWaterKg(),
                     "OU_INIT_FW_" + i);
 
             // Fuel initial inventory
             model.addConstr(
                     I.get(new Result.IKey(i, "FUEL", 1)),
                     GRB.EQUAL,
-                    ou.maxFuelKg,
+                    ou.getMaxFuelKg(),
                     "OU_INIT_FUEL_" + i);
 
             // Ammunition initial inventory
             model.addConstr(
                     I.get(new Result.IKey(i, "AMMO", 1)),
                     GRB.EQUAL,
-                    ou.maxAmmoKg,
+                    ou.getMaxAmmoKg(),
                     "OU_INIT_AMMO_" + i);
         }
     }
@@ -235,10 +235,10 @@ public class CapacitatedResupplyMILP {
                         continue;
                     }
                     this.model.addConstr(
-                            S.get(new Result.SKey(w.FSCname, c.type, o, 1)),
+                            S.get(new Result.SKey(w.getName(), c.getType(), o, 1)),
                             GRB.EQUAL,
-                            w.initialStorageLevels.get(o)[c.type - 1],
-                            "FSC_INIT_{w" + w.FSCname + "_c" + c + "_o" + o + "}");
+                            w.getInitialStorageLevels().get(o)[c.getType() - 1],
+                            "FSC_INIT_{w" + w.getName() + "_c" + c + "_o" + o + "}");
 
                 }
             }
@@ -252,16 +252,17 @@ public class CapacitatedResupplyMILP {
      */
     private void addTruckConstraintsFsc() throws GRBException {
         for (FSC w : fscs) {
-            for (int t = 1; t <= this.data.timeHorizon; t++) {
+            for (int t = 1; t <= this.data.getTimeHorizon(); t++) {
                 GRBLinExpr lhs = new GRBLinExpr();
 
                 // Sum LHS
                 for (Arc a : arcs) {
-                    if (!a.w().equals(w.FSCname)) {
+                    if (!a.w().equals(w.getName())) {
                         continue;
                     }
+
                     for (CCLPackage c : cclTypes) {
-                        GRBVar var = x.get(new Result.XKey(w.FSCname, a.i(), c.type, t));
+                        GRBVar var = x.get(new Result.XKey(w.getName(), a.i(), c.getType(), t));
                         lhs.addTerm(1.0, var);
                     }
                 }
@@ -269,8 +270,8 @@ public class CapacitatedResupplyMILP {
                 model.addConstr(
                         lhs,
                         GRB.LESS_EQUAL,
-                        fscTruckVars.get(w.FSCname),
-                        "TRUCK_FSC_{w" + w.FSCname + "_t" + t + "}");
+                        fscTruckVars.get(w.getName()),
+                        "TRUCK_FSC_{w" + w.getName() + "_t" + t + "}");
             }
         }
     }
@@ -281,20 +282,20 @@ public class CapacitatedResupplyMILP {
      * @throws GRBException if an error occurs
      */
     private void addTruckConstraintsMsc() throws GRBException {
-        for (int t = 1; t <= this.data.timeHorizon; t++) {
+        for (int t = 1; t <= this.data.getTimeHorizon(); t++) {
             GRBLinExpr lhs = new GRBLinExpr();
 
             for (FSC w : fscs) {
                 for (CCLPackage c : cclTypes) {
                     for (String o : this.ouTypes) {
-                        GRBVar var = y.get(new Result.YKey(w.FSCname, c.type, o, t));
+                        GRBVar var = y.get(new Result.YKey(w.getName(), c.getType(), o, t));
                         lhs.addTerm(1.0, var);
                     }
                 }
             }
 
             for (CCLPackage c : this.cclTypes) {
-                lhs.addTerm(1.0, z.get(new Result.ZKey(c.type, t)));
+                lhs.addTerm(1.0, z.get(new Result.ZKey(c.getType(), t)));
             }
 
             model.addConstr(lhs, GRB.LESS_EQUAL, mscTruckVar, "TRUCK_MSC_t" + t);
@@ -307,7 +308,7 @@ public class CapacitatedResupplyMILP {
      * @throws GRBException if an error occurs
      */
     private void addFscInventoryBalanceConstraints() throws GRBException {
-        for (int t = 1; t <= this.data.timeHorizon - 1; t++) {
+        for (int t = 1; t <= this.data.getTimeHorizon() - 1; t++) {
             for (FSC w : this.fscs) {
                 for (CCLPackage c : this.cclTypes) {
                     for (String o : this.ouTypes) {
@@ -316,30 +317,30 @@ public class CapacitatedResupplyMILP {
                         }
                         GRBLinExpr rhs = new GRBLinExpr();
 
-                        rhs.addTerm(1.0, S.get(new Result.SKey(w.FSCname, c.type, o, t)));
+                        rhs.addTerm(1.0, S.get(new Result.SKey(w.getName(), c.getType(), o, t)));
 
                         List<OperatingUnit> ousOfType = new ArrayList<>();
                         for (OperatingUnit ou : this.ous) {
-                            if (ou.ouType.equals(o)) {
+                            if (ou.getOuType().equals(o)) {
                                 ousOfType.add(ou);
                             }
                         }
 
                         for (OperatingUnit i : ousOfType) {
-                            if (i.source.equals(w.FSCname)) {
-                                Result.XKey xk = new Result.XKey(w.FSCname, i.operatingUnitName, c.type, t);
+                            if (i.getSource().equals(w.getName())) {
+                                Result.XKey xk = new Result.XKey(w.getName(), i.getName(), c.getType(), t);
                                 GRBVar xv = x.get(xk);
                                 rhs.addTerm(-1.0, xv);
                             }
                         }
 
-                        rhs.addTerm(1.0, y.get(new Result.YKey(w.FSCname, c.type, o, t)));
+                        rhs.addTerm(1.0, y.get(new Result.YKey(w.getName(), c.getType(), o, t)));
 
                         model.addConstr(
-                                S.get(new Result.SKey(w.FSCname, c.type, o, t + 1)),
+                                S.get(new Result.SKey(w.getName(), c.getType(), o, t + 1)),
                                 GRB.EQUAL,
                                 rhs,
-                                "FSC_BAL_{w" + w.FSCname + "_c" + c + "_o" + o + "_t" + t + "}");
+                                "FSC_BAL_{w" + w.getName() + "_c" + c + "_o" + o + "_t" + t + "}");
                     }
                 }
             }
@@ -353,9 +354,9 @@ public class CapacitatedResupplyMILP {
      * @throws GRBException if an error occurs
      */
     private void addOuInventoryBalanceConstraints() throws GRBException {
-        for (int t = 1; t <= this.data.timeHorizon - 1; t++) {
+        for (int t = 1; t <= this.data.getTimeHorizon() - 1; t++) {
             for (OperatingUnit ou : this.ous) {
-                String i = ou.operatingUnitName;
+                String i = ou.getName();
 
                 for (String p : this.products) {
                     GRBLinExpr rhs = new GRBLinExpr();
@@ -369,18 +370,18 @@ public class CapacitatedResupplyMILP {
                     // Add deliveries shipped on day t (available at t+1)
                     for (CCLPackage c : this.cclTypes) {
                         double content = switch (p) {
-                            case "FW" -> c.foodWaterKg;
-                            case "FUEL" -> c.fuelKg;
-                            case "AMMO" -> c.ammoKg;
+                            case "FW" -> c.getFoodWaterKg();
+                            case "FUEL" -> c.getFuelKg();
+                            case "AMMO" -> c.getAmmoKg();
                             default -> throw new IllegalArgumentException("Unknown product: " + p);
                         };
 
                         if (!i.equals("VUST")) {
-                            String w = ou.source; // FSC supplying this OU
-                            rhs.addTerm(content, x.get(new Result.XKey(w, i, c.type, t)));
+                            String w = ou.getSource(); // FSC supplying this OU
+                            rhs.addTerm(content, x.get(new Result.XKey(w, i, c.getType(), t)));
                         } else {
                             // VUST gets deliveries from MSC via z
-                            rhs.addTerm(content, z.get(new Result.ZKey(c.type, t)));
+                            rhs.addTerm(content, z.get(new Result.ZKey(c.getType(), t)));
                         }
                     }
 
@@ -401,9 +402,9 @@ public class CapacitatedResupplyMILP {
      */
     private void addNoStockOutConstraints() throws GRBException {
         for (OperatingUnit ou : ous) {
-            String i = ou.operatingUnitName;
+            String i = ou.getName();
 
-            for (int t = 1; t <= this.data.timeHorizon; t++) {
+            for (int t = 1; t <= this.data.getTimeHorizon(); t++) {
                 model.addConstr(
                         I.get(new Result.IKey(i, "FW", t)),
                         GRB.GREATER_EQUAL,
@@ -430,26 +431,26 @@ public class CapacitatedResupplyMILP {
      */
     private void addOuCapacityConstraints() throws GRBException {
         for (OperatingUnit ou : ous) {
-            String i = ou.operatingUnitName;
+            String i = ou.getName();
 
-            for (int t = 1; t <= this.data.timeHorizon; t++) {
+            for (int t = 1; t <= this.data.getTimeHorizon(); t++) {
 
                 model.addConstr(
                         I.get(new Result.IKey(i, "FW", t)),
                         GRB.LESS_EQUAL,
-                        ou.maxFoodWaterKg,
+                        ou.getMaxFoodWaterKg(),
                         "CAP_FW_{i" + i + "_t" + t + "}");
 
                 model.addConstr(
                         I.get(new Result.IKey(i, "FUEL", t)),
                         GRB.LESS_EQUAL,
-                        ou.maxFuelKg,
+                        ou.getMaxFuelKg(),
                         "CAP_FUEL_{i" + i + "_t" + t + "}");
 
                 model.addConstr(
                         I.get(new Result.IKey(i, "AMMO", t)),
                         GRB.LESS_EQUAL,
-                        ou.maxAmmoKg,
+                        ou.getMaxAmmoKg(),
                         "CAP_AMMO_{i" + i + "_t" + t + "}");
             }
         }
@@ -462,20 +463,20 @@ public class CapacitatedResupplyMILP {
      */
     private void addFscCapacityConstraints() throws GRBException {
         for (FSC w : fscs) {
-            for (int t = 1; t <= this.data.timeHorizon; t++) {
+            for (int t = 1; t <= this.data.getTimeHorizon(); t++) {
                 GRBLinExpr lhs = new GRBLinExpr();
 
                 for (CCLPackage c : this.cclTypes) {
                     for (String o : this.ouTypes) {
-                        lhs.addTerm(1.0, S.get(new Result.SKey(w.FSCname, c.type, o, t)));
+                        lhs.addTerm(1.0, S.get(new Result.SKey(w.getName(), c.getType(), o, t)));
                     }
                 }
 
                 model.addConstr(
                         lhs,
                         GRB.LESS_EQUAL,
-                        w.maxStorageCapCcls,
-                        "FSC_CAP_{w" + w.FSCname + "_t" + t + "}");
+                        w.getMaxStorageCapCcls(),
+                        "FSC_CAP_{w" + w.getName() + "_t" + t + "}");
             }
         }
     }
@@ -508,6 +509,7 @@ public class CapacitatedResupplyMILP {
     /**
      * Solves 1 or more instances and returns a Result per instance.
      * One shared GRBEnv is used for efficiency.
+     * @throws GRBException 
      */
     public static List<Result> solveInstances(List<Instance> instances) {
         if (instances == null || instances.isEmpty()) {
@@ -555,13 +557,15 @@ public class CapacitatedResupplyMILP {
 
                     // For each FSC_1..FSC_10, list OUs actually supplied (x>0 anywhere)
                     List<Set<String>> suppliedSets = new ArrayList<>();
-                    for (int i = 0; i < 10; i++)
+                    for (int i = 0; i < 10; i++) {
                         suppliedSets.add(new HashSet<>());
+                    }
 
                     for (Map.Entry<Result.XKey, GRBVar> e : milp.x.entrySet()) {
                         double val = e.getValue().get(GRB.DoubleAttr.X);
-                        if (val <= EPS)
+                        if (val <= EPS) {
                             continue;
+                        }
 
                         Result.XKey key = e.getKey();
                         String w = key.fsc(); // FSC name
@@ -592,38 +596,37 @@ public class CapacitatedResupplyMILP {
                                 ouLists, milp));
                     }
 
-                } catch (Exception e) {
+                } catch (GRBException e) {
                     throw new RuntimeException("Failed solving " + instanceName + ": " + e.getMessage(), e);
                 } finally {
                     if (milp != null) {
-                        try {
-                            milp.dispose();
-                        } catch (Exception ignored) {
-                        }
+                        milp.dispose();
                     }
                 }
             }
 
             return results;
 
-        } catch (Exception e) {
+        } catch (GRBException e) {
             throw new RuntimeException("Failed in solveInstances(): " + e.getMessage(), e);
         } finally {
             if (env != null) {
                 try {
                     env.dispose();
-                } catch (Exception ignored) {
+                } catch (GRBException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
                 }
             }
         }
     }
 
     /**
-     * Extracts variable values from the solved MILP and creates a Result object. 
+     * Extracts variable values from the solved MILP and creates a Result object.
      * Collects the optimal truck allocation and decision variable values from the Gurobi model.
      * @param instanceName  name of the instance
      * @param status        the Gurobi optimization status
-     * @param optimal       true if the solution is optimal, false otherwise    
+     * @param optimal       true if the solution is optimal, false otherwise
      * @param objVal        the objective function value (total trucks)
      * @param trucksAtMsc   the number of trucks stationed at the MSC
      * @param trucksAtFsc   array of trucks stationed at each FSC
@@ -644,37 +647,42 @@ public class CapacitatedResupplyMILP {
         Map<Result.XKey, Integer> xValue = new HashMap<>();
         for (Map.Entry<Result.XKey, GRBVar> e : milp.x.entrySet()) {
             int v = (int) Math.round(e.getValue().get(GRB.DoubleAttr.X));
-            if (v != 0)
+            if (v != 0) {
                 xValue.put(e.getKey(), v);
+            }
         }
 
         Map<Result.YKey, Integer> yValue = new HashMap<>();
         for (Map.Entry<Result.YKey, GRBVar> e : milp.y.entrySet()) {
             int v = (int) Math.round(e.getValue().get(GRB.DoubleAttr.X));
-            if (v != 0)
+            if (v != 0) {
                 yValue.put(e.getKey(), v);
+            }
         }
 
         Map<Result.ZKey, Integer> zValue = new HashMap<>();
         for (Map.Entry<Result.ZKey, GRBVar> e : milp.z.entrySet()) {
             int v = (int) Math.round(e.getValue().get(GRB.DoubleAttr.X));
-            if (v != 0)
+            if (v != 0) {
                 zValue.put(e.getKey(), v);
+            }
         }
 
         Map<Result.IKey, Double> iValue = new HashMap<>();
         for (Map.Entry<Result.IKey, GRBVar> e : milp.I.entrySet()) {
             double v = e.getValue().get(GRB.DoubleAttr.X);
             // keep all or filter tiny:
-            if (Math.abs(v) > EPS)
+            if (Math.abs(v) > EPS) {
                 iValue.put(e.getKey(), v);
+            }
         }
 
         Map<Result.SKey, Integer> sValue = new HashMap<>();
         for (Map.Entry<Result.SKey, GRBVar> e : milp.S.entrySet()) {
             int v = (int) Math.round(e.getValue().get(GRB.DoubleAttr.X));
-            if (v != 0)
+            if (v != 0) {
                 sValue.put(e.getKey(), v);
+            }
         }
 
         return new Result(instanceName, status, optimal, objVal, trucksAtMsc, trucksAtFsc, ouLists, mValue, kValue,
@@ -697,25 +705,25 @@ public class CapacitatedResupplyMILP {
      * @throws GRBException if an error occurs
      */
     private void addFscDispatchFeasibilityConstraints() throws GRBException {
-        for (int t = 1; t <= this.data.timeHorizon; t++) {
+        for (int t = 1; t <= this.data.getTimeHorizon(); t++) {
             for (FSC w : this.fscs) {
                 for (CCLPackage c : this.cclTypes) {
                     for (String o : this.ouTypes) {
-                        if (o.equals("VUST")) continue;
+                        if (o.equals("VUST")) { continue; }
 
                         GRBLinExpr dispatchSum = new GRBLinExpr();
                         for (OperatingUnit i : this.ous) {
-                            if (!i.source.equals(w.FSCname)) continue;
-                            if (!i.ouType.equals(o)) continue;
-                            GRBVar xv = x.get(new Result.XKey(w.FSCname, i.operatingUnitName, c.type, t));
-                            if (xv != null) dispatchSum.addTerm(1.0, xv);
+                            if (!i.getSource().equals(w.getName())) { continue; }
+                            if (!i.getOuType().equals(o)) { continue; }
+                            GRBVar xv = x.get(new Result.XKey(w.getName(), i.getName(), c.getType(), t));
+                            if (xv != null) { dispatchSum.addTerm(1.0, xv); }
                         }
 
                         model.addConstr(
-                                S.get(new Result.SKey(w.FSCname, c.type, o, t)),
+                                S.get(new Result.SKey(w.getName(), c.getType(), o, t)),
                                 GRB.GREATER_EQUAL,
                                 dispatchSum,
-                                "FSC_DISP_{w" + w.FSCname + "_c" + c.type + "_o" + o + "_t" + t + "}");
+                                "FSC_DISP_{w" + w.getName() + "_c" + c.getType() + "_o" + o + "_t" + t + "}");
                     }
                 }
             }
@@ -730,23 +738,26 @@ public class CapacitatedResupplyMILP {
      * @return demand of product p (kg), at day t, at operating unit ou
      */
     private double demandAt(OperatingUnit ou, String p, int t) {
-        int idx = t - 1; 
+        int idx = t - 1;
 
         switch (p) {
             case "FW" -> {
-                if (ou.stochasticFoodWaterKg != null)
-                    return ou.stochasticFoodWaterKg[idx];
-                return ou.dailyFoodWaterKg;
+                if (ou.getStochasticFoodWaterKg() != null) {
+                    return ou.getStochasticFoodWaterKg()[idx];
+                }
+                return ou.getDailyFoodWaterKg();
             }
             case "FUEL" -> {
-                if (ou.stochasticFuelKg != null)
-                    return ou.stochasticFuelKg[idx];
-                return ou.dailyFuelKg;
+                if (ou.getStochasticFuelKg() != null) {
+                    return ou.getStochasticFuelKg()[idx];
+                }
+                return ou.getDailyFuelKg();
             }
             case "AMMO" -> {
-                if (ou.stochasticAmmoKg != null)
-                    return ou.stochasticAmmoKg[idx];
-                return ou.dailyAmmoKg;
+                if (ou.getStochasticAmmoKg() != null) {
+                    return ou.getStochasticAmmoKg()[idx];
+                }
+                return ou.getDailyAmmoKg();
             }
             default -> throw new IllegalArgumentException("Unknown product: " + p);
         }

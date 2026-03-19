@@ -43,7 +43,7 @@ public final class DemandDistributionAnalysis {
                         cfg.instance(), cfg.mscTrucks(), cfg.trucksPerFSC(), N_SCENARIOS, OOS_SEED,
                         BEST_CFG, NO_CORRELATION, mult, 1.0);
                 System.out.printf("%-12.2f %-20s %-10d %-18.2f %-22.2f%n",
-                        mult, cfg.label(), cfg.mscTrucks(), summary.noStockoutPercentage, summary.avgTotalStockoutKg);
+                        mult, cfg.label(), cfg.mscTrucks(), summary.getNoStockoutPercentage(), summary.getAvgTotalStockoutKg());
             }
         }
     }
@@ -60,7 +60,7 @@ public final class DemandDistributionAnalysis {
                         cfg.instance(), cfg.mscTrucks(), cfg.trucksPerFSC(), N_SCENARIOS, OOS_SEED,
                         BEST_CFG, NO_CORRELATION, 1.0, mult);
                 System.out.printf("%-12.2f %-20s %-10d %-18.2f %-22.2f%n",
-                        mult, cfg.label(), cfg.mscTrucks(), summary.noStockoutPercentage, summary.avgTotalStockoutKg);
+                        mult, cfg.label(), cfg.mscTrucks(), summary.getNoStockoutPercentage(), summary.getAvgTotalStockoutKg());
             }
         }
     }
