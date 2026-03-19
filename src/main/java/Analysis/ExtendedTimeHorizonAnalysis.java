@@ -1,4 +1,4 @@
-package Analysis;
+﻿package Analysis;
 
 import DataUtils.InstanceCreator;
 import Deterministic.CapacitatedResupplyMILP;
@@ -14,6 +14,16 @@ import com.gurobi.gurobi.GRBModel;
 import java.util.*;
 import java.io.*;
 
+/**
+ * Analysis of performance over extended planning time horizons.
+ * Solves both deterministic and stochastic variants of the resupply problem
+ * for increasing horizon lengths and reports solution quality metrics.
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
+ */
 public final class ExtendedTimeHorizonAnalysis {
 
     private ExtendedTimeHorizonAnalysis() {
@@ -33,6 +43,11 @@ public final class ExtendedTimeHorizonAnalysis {
     private static final EvaluationHeuristic.TargetWeights VUST_WEIGHTS = new EvaluationHeuristic.TargetWeights(1.0,
             1.0, 1.0);
 
+    /**
+     * Run the extended time horizon analysis for all provided instance configurations.
+     *
+     * @param configs list of instance configurations to evaluate
+     */
     public static void run(List<InstanceConfig> configs) {
         System.out.println();
         System.out.println("============================================================");

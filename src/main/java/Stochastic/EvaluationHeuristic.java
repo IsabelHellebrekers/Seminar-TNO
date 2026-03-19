@@ -1,4 +1,4 @@
-package Stochastic;
+﻿package Stochastic;
 
 import Objects.*;
 
@@ -22,6 +22,11 @@ import DataUtils.InstanceCreator;
  * 
  * The main output is an EvaluationSummary over many scenarios, and a
  * ScenarioResult for a single run.
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
  */
 public class EvaluationHeuristic {
     // Inventory vector indices
@@ -223,9 +228,6 @@ public class EvaluationHeuristic {
         /** @return the average total stockout quantity across scenarios (kg) */
         public double getAvgTotalStockoutKg() { return avgTotalStockoutKg; }
 
-        /**
-         * String representation of an EvaluationSummary
-         */
         @Override
         public String toString() {
             return String.format(
@@ -299,6 +301,19 @@ public class EvaluationHeuristic {
         return evaluateSingleScenario(data, M, K, scenarioSeed, cfg, correlations, 1.0, 1.0);
     }
 
+    /**
+     * Run a single scenario simulation with explicit demand distribution multipliers.
+     *
+     * @param data         the problem instance
+     * @param M            number of trucks at the MSC
+     * @param K            number of trucks at each FSC
+     * @param scenarioSeed seed for demand sampling (baseSeed + s)
+     * @param cfg          target / urgency weight configuration
+     * @param correlations list of four correlation parameters [rhoDays, rhoFWFUEL, rhoFWAMMO, rhoFUELAMMO]
+     * @param meanMult     multiplier applied to the mean of every demand distribution
+     * @param stdMult      multiplier applied to the spread of every demand distribution
+     * @return a single ScenarioResult
+     */
     public static ScenarioResult evaluateSingleScenario(Instance data, int M, Map<String, Integer> K, long scenarioSeed,
             WeightConfig cfg, List<Double> correlations, double meanMult, double stdMult) {
         Random rng = new Random(scenarioSeed);
@@ -990,10 +1005,10 @@ public class EvaluationHeuristic {
     /**
      * Add the contents of a CCL type to a scheduled deliveries vector.
      * Looks up the CCL package by type id in the provided list.
-     * 
-     * @param add      scheduled deliveries vector to mutate
+     *
+     * @param add      scheduled deliveries vector to mutate [FW, FUEL, AMMO] in kg
      * @param cclTypes list of available CCL packages
-     * @param cclType  hosen type id
+     * @param cclType  chosen CCL type id
      */
     private static void addCclToScheduledDeliveries(double[] add, List<CCLPackage> cclTypes, int cclType) {
         CCLPackage chosen = null;
@@ -1011,12 +1026,12 @@ public class EvaluationHeuristic {
     }
 
     /**
-     * Compute total CCL cont currently stores at an FSC across all OU types and CCL
-     * types.
-     * 
+     * Compute total CCL count currently stored at an FSC, summing across all OU types
+     * and CCL types.
+     *
      * @param fsc    the FSC to inspect
-     * @param fscInv FSC inventories
-     * @return total number of CCLs at this FSC
+     * @param fscInv current FSC inventories (map FSC name -> OU type -> CCL count array)
+     * @return total number of CCLs currently held at this FSC
      */
     private static int totalCclsAtFsc(FSC fsc, Map<String, Map<String, int[]>> fscInv) {
         Map<String, int[]> byType = fscInv.get(fsc.getName());
@@ -1034,21 +1049,14 @@ public class EvaluationHeuristic {
     }
 
     /**
-     * Selection returned by the MSC -> FSC refill rule:
-     * refill one unit of (fsc, ouType, cclType).
+     * Identifies one MSC-to-FSC refill action: ship one CCL of type {@code cclType}
+     * destined for OU type {@code ouType} to {@code fsc}.
      */
     private static final class RefillChoice {
         final FSC fsc;
         final String ouType;
         final int cclType;
 
-        /**
-         * Constructor.
-         * 
-         * @param fsc     the FSC
-         * @param ouType  the OU type
-         * @param cclType the CCL type
-         */
         RefillChoice(FSC fsc, String ouType, int cclType) {
             this.fsc = fsc;
             this.ouType = ouType;
@@ -1119,12 +1127,34 @@ public class EvaluationHeuristic {
      * Output of a single grid search run (best config + best summary).
      */
     public static final class GridSearchResult {
-        public final WeightConfig bestCfg;
-        public final EvaluationSummary bestSummary;
+        private final WeightConfig bestCfg;
+        private final EvaluationSummary bestSummary;
 
+        /**
+         * @param bestCfg     the best weight configuration found by the grid search
+         * @param bestSummary the evaluation summary achieved by that configuration
+         */
         public GridSearchResult(WeightConfig bestCfg, EvaluationSummary bestSummary) {
             this.bestCfg = bestCfg;
             this.bestSummary = bestSummary;
+        }
+
+        /**
+         * Returns the best weight configuration found by the grid search.
+         *
+         * @return best WeightConfig
+         */
+        public WeightConfig getBestCfg() {
+            return bestCfg;
+        }
+
+        /**
+         * Returns the evaluation summary for the best configuration.
+         *
+         * @return best EvaluationSummary
+         */
+        public EvaluationSummary getBestSummary() {
+            return bestSummary;
         }
     }
 
@@ -1231,17 +1261,49 @@ public class EvaluationHeuristic {
     }
 
     /**
-     * Result of a two-pase tuning procedure: first OU weights, then VUST weights.
+     * Result of a two-phase tuning procedure: first OU weights, then VUST weights.
      */
     public static final class TuningResult {
-        public final WeightConfig bestCfg;
-        public final EvaluationSummary bestOuSummary;
-        public final EvaluationSummary bestVustSummary;
+        private final WeightConfig bestCfg;
+        private final EvaluationSummary bestOuSummary;
+        private final EvaluationSummary bestVustSummary;
 
+        /**
+         * @param bestCfg         the best combined weight configuration from both tuning phases
+         * @param bestOuSummary   the best evaluation summary from phase 1 (OU weight tuning)
+         * @param bestVustSummary the best evaluation summary from phase 2 (VUST weight tuning)
+         */
         public TuningResult(WeightConfig bestCfg, EvaluationSummary bestOuSummary, EvaluationSummary bestVustSummary) {
             this.bestCfg = bestCfg;
             this.bestOuSummary = bestOuSummary;
             this.bestVustSummary = bestVustSummary;
+        }
+
+        /**
+         * Returns the best combined weight configuration.
+         *
+         * @return best WeightConfig
+         */
+        public WeightConfig getBestCfg() {
+            return bestCfg;
+        }
+
+        /**
+         * Returns the best evaluation summary from the OU tuning phase.
+         *
+         * @return best OU EvaluationSummary
+         */
+        public EvaluationSummary getBestOuSummary() {
+            return bestOuSummary;
+        }
+
+        /**
+         * Returns the best evaluation summary from the VUST tuning phase.
+         *
+         * @return best VUST EvaluationSummary
+         */
+        public EvaluationSummary getBestVustSummary() {
+            return bestVustSummary;
         }
     }
 
@@ -1429,12 +1491,34 @@ public class EvaluationHeuristic {
      * Output for a grid search over a new CCL composition.
      */
     public static final class CCLGridSearchResult {
-        public final NewCclComposition bestComp;
-        public final EvaluationSummary bestSummary;
+        private final NewCclComposition bestComp;
+        private final EvaluationSummary bestSummary;
 
+        /**
+         * @param bestComp    the best CCL composition found by the grid search
+         * @param bestSummary the evaluation summary achieved by that composition
+         */
         public CCLGridSearchResult(NewCclComposition bestComp, EvaluationSummary bestSummary) {
             this.bestComp = bestComp;
             this.bestSummary = bestSummary;
+        }
+
+        /**
+         * Returns the best CCL composition found by the grid search.
+         *
+         * @return best NewCclComposition
+         */
+        public NewCclComposition getBestComp() {
+            return bestComp;
+        }
+
+        /**
+         * Returns the evaluation summary for the best composition.
+         *
+         * @return best EvaluationSummary
+         */
+        public EvaluationSummary getBestSummary() {
+            return bestSummary;
         }
     }
 

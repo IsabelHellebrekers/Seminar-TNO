@@ -1,4 +1,4 @@
-package Visualisation.model;
+﻿package Visualisation.model;
 
 import Objects.Result;
 
@@ -7,6 +7,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Phase 2 delivery event: MSC supplies FSCs and VUST.
+ * Highlights MSC to FSC and MSC to VUST arcs, and updates inventories
+ * to their start-of-next-day values.
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
+ */
 public class DeliveryEvent implements Event {
     private final int time;
     private final Map<String, Integer> arcTrucks;
@@ -14,6 +24,15 @@ public class DeliveryEvent implements Event {
     private final List<String> fscNames;
     private final Result result;
 
+    /**
+     * Construct a DeliveryEvent for day t representing MSC resupply.
+     *
+     * @param time      simulation day on which the delivery occurs
+     * @param arcTrucks map of arc key (e.g. "MSC->FSC_1") to truck count
+     * @param ouNames   names of all operating units in the network
+     * @param fscNames  names of all FSCs in the network
+     * @param result    the solved result containing inventory variable values
+     */
     public DeliveryEvent(int time,
                          Map<String, Integer> arcTrucks,
                          List<String> ouNames,

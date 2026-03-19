@@ -1,4 +1,4 @@
-package Visualisation.ui;
+﻿package Visualisation.ui;
 
 import Visualisation.model.SimState;
 import javafx.geometry.Insets;
@@ -8,6 +8,16 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+/**
+ * JavaFX node pane for an Operating Unit.
+ * Displays inventory progress bars for food/water, fuel, and ammunition,
+ * with optional debug labels showing the exact kg values.
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
+ */
 public class OperatingUnitPane extends VBox {
     private static final double BAR_WIDTH   = 75.0;
     private static final String FW_COLOR    = "#1F77B4";
@@ -26,6 +36,11 @@ public class OperatingUnitPane extends VBox {
     private final Label       fuelLabel = new Label();
     private final Label       ammoLabel = new Label();
 
+    /**
+     * Construct an OperatingUnitPane for the given OU name.
+     *
+     * @param ouName the name of the operating unit to display
+     */
     public OperatingUnitPane(String ouName) {
         this.ouName = ouName;
 
@@ -64,6 +79,11 @@ public class OperatingUnitPane extends VBox {
         }
     }
 
+    /**
+     * Refresh inventory bars to reflect the current simulation state.
+     *
+     * @param state the current simulation state
+     */
     public void refresh(SimState state) {
         double fwMax   = state.getInventoryOUMax(this.ouName, "FW");
         double fuelMax = state.getInventoryOUMax(this.ouName, "FUEL");

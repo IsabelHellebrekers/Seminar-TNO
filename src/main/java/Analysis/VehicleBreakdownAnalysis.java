@@ -1,4 +1,4 @@
-package Analysis;
+﻿package Analysis;
 
 import Stochastic.EvaluationHeuristic;
 import Stochastic.EvaluationHeuristic.EvaluationSummary;
@@ -9,6 +9,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Sensitivity analysis for vehicle breakdowns: evaluates service level when
+ * truck fleet sizes are reduced by fixed percentage rates.
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
+ */
 public final class VehicleBreakdownAnalysis {
 
     private VehicleBreakdownAnalysis() {
@@ -27,6 +36,11 @@ public final class VehicleBreakdownAnalysis {
 
     private static final double[] BREAKDOWN_RATES = {0.00, 0.01, 0.05, 0.10, 0.15, 0.20, 0.25};
 
+    /**
+     * Run the vehicle breakdown analysis for all provided instance configurations.
+     *
+     * @param configs list of instance configurations to evaluate
+     */
     public static void run(List<InstanceConfig> configs) {
         System.out.println();
         System.out.println("============================================================");

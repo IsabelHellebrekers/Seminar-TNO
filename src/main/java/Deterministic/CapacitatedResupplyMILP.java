@@ -1,4 +1,4 @@
-package Deterministic;
+﻿package Deterministic;
 
 import com.gurobi.gurobi.*;
 import Objects.*;
@@ -6,7 +6,13 @@ import Objects.*;
 import java.util.*;
 
 /**
- * MILP for the Capacitated Resupply Problem
+ * MILP for the Capacitated Resupply Problem.
+ * Builds and solves the deterministic integer programming model using Gurobi.
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
  */
 public class CapacitatedResupplyMILP {
     private static final double EPS = 1e-9;
@@ -22,7 +28,7 @@ public class CapacitatedResupplyMILP {
     private final List<CCLPackage> cclTypes;
     private final List<String> ouTypes;
 
-    // Hashmaps to easy access the GRBVariables
+    // Maps from solution-variable keys to the corresponding Gurobi decision variables
     private final Map<Result.XKey, GRBVar> x = new HashMap<>();
     private final Map<Result.YKey, GRBVar> y = new HashMap<>();
     private final Map<Result.ZKey, GRBVar> z = new HashMap<>();
@@ -34,13 +40,17 @@ public class CapacitatedResupplyMILP {
     // Number of trucks stationed at FSC w
     private final Map<String, GRBVar> fscTruckVars = new HashMap<>();
 
-    // Record keys for map indexing
+    // Lightweight key type for the arc (FSC, OU) used in the x-variable map
     private record Arc(String w, String i) {
     }
 
     /**
-     * Build the MILP model (derive sets, create variables, add constraints and set
-     * objective)
+     * Build the MILP model (derive sets, create variables, add constraints and set objective).
+     *
+     * @param data    the problem instance
+     * @param env     the Gurobi environment to use
+     * @param verbose true to enable Gurobi logging, false to suppress it
+     * @throws GRBException if Gurobi fails to build the model
      */
     public CapacitatedResupplyMILP(Instance data, GRBEnv env, boolean verbose) throws GRBException {
         this.data = data;
@@ -63,7 +73,7 @@ public class CapacitatedResupplyMILP {
     }
 
     /**
-     * Build FSC -> OU arcs
+     * Populate the arc list: one arc (FSC, OU) for every non-VUST OU based on its assigned source.
      */
     private void buildArcs() {
         for (OperatingUnit ou : ous) {
@@ -255,7 +265,7 @@ public class CapacitatedResupplyMILP {
             for (int t = 1; t <= this.data.getTimeHorizon(); t++) {
                 GRBLinExpr lhs = new GRBLinExpr();
 
-                // Sum LHS
+                // Count total CCLs dispatched from FSC w on day t across all OUs and CCL types
                 for (Arc a : arcs) {
                     if (!a.w().equals(w.getName())) {
                         continue;
@@ -349,7 +359,9 @@ public class CapacitatedResupplyMILP {
 
     /**
      * OU inventory balance constraints.
-     * MADE SOME ADJUSTMENTS FOR PERFECT HINDSIGHT EVALUATION
+     * Uses {@code demandAt()} to look up realized demand, so the same method serves
+     * both deterministic (fixed daily demand) and stochastic/perfect-hindsight
+     * (pre-sampled per-day demand arrays) instances.
      *
      * @throws GRBException if an error occurs
      */
@@ -498,7 +510,7 @@ public class CapacitatedResupplyMILP {
     }
 
     /**
-     * Gets the Gurobi model.
+     * Exposes the underlying Gurobi model, e.g. to set solver parameters or fix variables.
      *
      * @return the Gurobi model
      */
@@ -507,9 +519,12 @@ public class CapacitatedResupplyMILP {
     }
 
     /**
-     * Solves 1 or more instances and returns a Result per instance.
+     * Solves one or more instances and returns a Result per instance.
      * One shared GRBEnv is used for efficiency.
-     * @throws GRBException 
+     *
+     * @param instances list of problem instances to solve
+     * @return list of Result objects, one per successfully solved instance
+     * @throws RuntimeException if Gurobi fails during solving
      */
     public static List<Result> solveInstances(List<Instance> instances) {
         if (instances == null || instances.isEmpty()) {
@@ -614,7 +629,6 @@ public class CapacitatedResupplyMILP {
                 try {
                     env.dispose();
                 } catch (GRBException e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
             }
@@ -671,7 +685,7 @@ public class CapacitatedResupplyMILP {
         Map<Result.IKey, Double> iValue = new HashMap<>();
         for (Map.Entry<Result.IKey, GRBVar> e : milp.I.entrySet()) {
             double v = e.getValue().get(GRB.DoubleAttr.X);
-            // keep all or filter tiny:
+            // Filter out near-zero inventory values (numerical noise from Gurobi)
             if (Math.abs(v) > EPS) {
                 iValue.put(e.getKey(), v);
             }
@@ -696,11 +710,11 @@ public class CapacitatedResupplyMILP {
      * holds at the START of that day, before the MSC replenishment (y) arrives.
      *
      * Without this constraint the MILP balance equation
-     *   S[w,c,o,t+1] = S[w,c,o,t] − x[w,i,c,t] + y[w,c,o,t]
+     *   S[w,c,o,t+1] = S[w,c,o,t] âˆ’ x[w,i,c,t] + y[w,c,o,t]
      * allows x > S[w,c,o,t] (a negative intermediate inventory) as long as the
      * same-day y delivery covers the shortfall.  That is physically infeasible.
      *
-     * Constraint added: S[w,c,o,t] >= Σ_{i: source=w, ouType=o} x[w,i,c,t]
+     * Constraint added: S[w,c,o,t] >= Î£_{i: source=w, ouType=o} x[w,i,c,t]
      *
      * @throws GRBException if an error occurs
      */
@@ -731,11 +745,13 @@ public class CapacitatedResupplyMILP {
     }
 
     /**
-     * Helper method that maked demand time dependent (for perfect hindsight evaluation)
+     * Returns the demand of product p at operating unit ou on day t.
+     * If the OU carries a stochastic demand array, the pre-sampled value for day t is used;
+     * otherwise the deterministic daily rate is returned.
      * @param ou    the operating unit
-     * @param p     the product type
-     * @param t     the day
-     * @return demand of product p (kg), at day t, at operating unit ou
+     * @param p     the product type (FW, FUEL, or AMMO)
+     * @param t     the day (1-based)
+     * @return demand in kg
      */
     private double demandAt(OperatingUnit ou, String p, int t) {
         int idx = t - 1;

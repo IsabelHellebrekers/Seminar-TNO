@@ -1,10 +1,20 @@
-package Analysis;
+﻿package Analysis;
 
 import Stochastic.EvaluationHeuristic;
 import Stochastic.EvaluationHeuristic.EvaluationSummary;
 
 import java.util.List;
 
+/**
+ * Sensitivity analysis for demand correlation: sweeps day-to-day and
+ * product-pair correlations and reports the impact on the no-stockout
+ * service level.
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
+ */
 public final class CorrelationAnalysis {
 
     private CorrelationAnalysis() {}
@@ -20,6 +30,11 @@ public final class CorrelationAnalysis {
     private static final double[] RHO_VALUES_DAYS = {0.0, 0.05, 0.10, 0.15};
     private static final double[] RHO_VALUES_PRODUCTS = {0.0, 0.25, 0.5, 0.75, 1.0};
 
+    /**
+     * Run the full correlation sensitivity analysis for all provided instance configurations.
+     *
+     * @param configs list of instance configurations to evaluate
+     */
     public static void run(List<InstanceConfig> configs) {
         System.out.println();
         System.out.println("============================================================");

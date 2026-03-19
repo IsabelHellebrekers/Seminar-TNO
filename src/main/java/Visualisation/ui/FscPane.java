@@ -1,4 +1,4 @@
-package Visualisation.ui;
+﻿package Visualisation.ui;
 
 import Visualisation.model.SimState;
 import javafx.geometry.Insets;
@@ -8,6 +8,16 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+/**
+ * JavaFX node pane for a Forward Supply Centre.
+ * Displays a CCL inventory progress bar with an optional debug label
+ * showing the exact current and maximum CCL counts.
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
+ */
 public class FscPane extends VBox {
     private static final double BAR_WIDTH   = 75.0;
     private static final String CCL_COLOR  = "#FF7F0E";
@@ -20,6 +30,11 @@ public class FscPane extends VBox {
     private final ProgressBar ccl      = new ProgressBar(0.0);
     private final Label       cclLabel = new Label();
 
+    /**
+     * Construct a FscPane for the given FSC name.
+     *
+     * @param fscName the name of the forward supply centre to display
+     */
     public FscPane(String fscName) {
         this.fscName = fscName;
 
@@ -46,6 +61,11 @@ public class FscPane extends VBox {
         cclLabel.setVisible(debug);
     }
 
+    /**
+     * Refresh the CCL inventory bar to reflect the current simulation state.
+     *
+     * @param state the current simulation state
+     */
     public void refresh(SimState state) {
         int current = state.getInventoryFSC(this.fscName);
         int max     = state.getInventoryFSCMax(this.fscName);

@@ -1,14 +1,36 @@
-package Stochastic;
+﻿package Stochastic;
 
 import Objects.*;
 import java.util.*;
 import java.lang.reflect.Field;
 
+/**
+ * Diagnostic reporter for stockout analysis.
+ * Simulates many scenarios and prints detailed statistics about stockout
+ * frequency, severity, and distribution across products, days, and OUs.
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
+ */
 public class EvaluationReporter {
 
     private record StockoutRow(String ou, String product, double kg, int day) {
     }
 
+    /**
+     * Simulate nScenarios and print detailed stockout diagnostics to standard output.
+     * Reports include per-product totals, percentiles, co-occurrence patterns,
+     * and top OU/day breakdowns.
+     *
+     * @param data       the problem instance
+     * @param M          number of trucks at the MSC
+     * @param K          number of trucks at each FSC, keyed by FSC name
+     * @param nScenarios number of scenarios to simulate
+     * @param baseSeed   base seed; scenario s uses (baseSeed + s)
+     * @param cfg        target / urgency weight configuration
+     */
     public static void reportStockouts(
             Instance data,
             int M,

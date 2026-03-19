@@ -1,10 +1,20 @@
-package Analysis;
+﻿package Analysis;
 
 import Stochastic.EvaluationHeuristic;
 import Stochastic.EvaluationHeuristic.EvaluationSummary;
 
 import java.util.List;
 
+/**
+ * Sensitivity analysis for demand distribution parameters: sweeps mean and
+ * standard-deviation multipliers and reports the impact on the no-stockout
+ * service level.
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
+ */
 public final class DemandDistributionAnalysis {
 
     private DemandDistributionAnalysis() {}
@@ -20,6 +30,11 @@ public final class DemandDistributionAnalysis {
 
     private static final List<Double> DEMAND_MULTIPLIERS = List.of(0.85, 0.9, 0.95, 1.0, 1.05, 1.1, 1.15);
 
+    /**
+     * Run the full demand distribution sensitivity analysis for all provided instance configurations.
+     *
+     * @param configs list of instance configurations to evaluate
+     */
     public static void run(List<InstanceConfig> configs) {
         System.out.println();
         System.out.println("============================================================");

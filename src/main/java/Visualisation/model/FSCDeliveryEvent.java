@@ -1,4 +1,4 @@
-package Visualisation.model;
+﻿package Visualisation.model;
 
 import Objects.Result;
 
@@ -12,6 +12,11 @@ import java.util.Map;
  * - Highlights FSC->OU arcs.
  * - Updates non-VUST OU inventories to their t+1 values.
  * - Decreases FSC inventories by the CCLs dispatched to OUs (sum of x[w,i,c,t]).
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
  */
 public class FSCDeliveryEvent implements Event {
     private final int time;
@@ -20,6 +25,15 @@ public class FSCDeliveryEvent implements Event {
     private final List<String> fscNames;
     private final Result result;
 
+    /**
+     * Construct an FSCDeliveryEvent for day t representing FSC-to-OU resupply.
+     *
+     * @param time      simulation day on which the delivery occurs
+     * @param arcTrucks map of arc key (e.g. "FSC_1->GN_CIE_1") to truck count
+     * @param ouNames   names of all operating units in the network
+     * @param fscNames  names of all FSCs in the network
+     * @param result    the solved result containing inventory variable values
+     */
     public FSCDeliveryEvent(int time,
                             Map<String, Integer> arcTrucks,
                             List<String> ouNames,

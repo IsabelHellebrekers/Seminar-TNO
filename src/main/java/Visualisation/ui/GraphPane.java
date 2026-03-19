@@ -1,4 +1,4 @@
-package Visualisation.ui;
+﻿package Visualisation.ui;
 
 import Objects.Instance;
 import Objects.OperatingUnit;
@@ -17,6 +17,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * JavaFX pane that renders the supply network graph.
+ * Displays nodes (MSC, FSCs, OUs) with inventory bars and directed arcs
+ * whose colour intensity reflects the number of trucks in transit.
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
+ */
 public class GraphPane extends Pane {
     private static final double NODE_WIDTH      = 155.0;
     private static final double NODE_HEIGHT     = 50.0;
@@ -42,6 +52,11 @@ public class GraphPane extends Pane {
 
     private boolean debugMode = false;
 
+    /**
+     * Construct a GraphPane for the given instance with no initial state.
+     *
+     * @param inst the problem instance defining the network topology
+     */
     public GraphPane(Instance inst) {
         setPrefSize(900, 700);
         setStyle("-fx-background-color: #151515;");
@@ -49,6 +64,12 @@ public class GraphPane extends Pane {
         rebuild(getPrefWidth(), getPrefHeight());
     }
 
+    /**
+     * Construct a GraphPane and immediately apply the given simulation state.
+     *
+     * @param inst  the problem instance defining the network topology
+     * @param state the initial simulation state to display, or null for defaults
+     */
     public GraphPane(Instance inst, SimState state) {
         this(inst);
         if (state != null) {
@@ -67,6 +88,13 @@ public class GraphPane extends Pane {
         }
     }
 
+    /**
+     * Rebuild all visual elements at a new size.
+     * Clears and recreates nodes, edges, and labels to fit the given dimensions.
+     *
+     * @param width  the new pane width in pixels
+     * @param height the new pane height in pixels
+     */
     public void rebuild(double width, double height) {
         if (width <= 0 || height <= 0) { return; }
         setPrefSize(width, height);
@@ -185,6 +213,11 @@ public class GraphPane extends Pane {
         this.edges.put(from + "->" + to, new Edge(l, arrow, truckLabel));
     }
 
+    /**
+     * Refresh all node and arc visuals to reflect the current simulation state.
+     *
+     * @param state the current simulation state
+     */
     public void refresh(SimState state) {
         int maxTrucks = 0;
         for (var e : this.edges.entrySet()) {
@@ -226,7 +259,7 @@ public class GraphPane extends Pane {
                 edge.glow.setColor(Color.color(1.0, 0.2, 0.2, 0.05 + 0.95 * intensity));
             }
 
-            // Arc truck label — only visible in debug mode
+            // Arc truck label â€” only visible in debug mode
             if (this.debugMode) {
                 edge.truckLabel.setVisible(true);
                 if (trucks > 0) {

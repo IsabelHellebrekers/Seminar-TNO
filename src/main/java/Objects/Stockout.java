@@ -1,5 +1,13 @@
-package Objects;
+﻿package Objects;
 
+/**
+ * Represents a stockout event: a shortage of a product at an operating unit on a given day.
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
+ */
 public class Stockout {
     private final String ou;
     private final String product;
@@ -7,11 +15,10 @@ public class Stockout {
     private final int day;
 
     /**
-     * Presents a Stockout event presenting a shortage of a product at an operating unit.
-     * @param ou        the operating unit
-     * @param product   the product
-     * @param amount    the shortage amount (kg)        
-     * @param day       the day on which the stockout occurred
+     * @param ou        the name of the operating unit where the stockout occurred
+     * @param product   the product that ran short (FW, FUEL, or AMMO)
+     * @param amount    the unmet demand quantity (kg)
+     * @param day       the simulation day on which the stockout occurred
      */
     public Stockout(String ou, String product, double amount, int day) {
         this.ou = ou;

@@ -1,4 +1,4 @@
-package DataUtils;
+﻿package DataUtils;
 
 import Objects.Result;
 
@@ -10,7 +10,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Class that writes the results of solved instances to a CSV file.
+ * Writes the results of solved instances to a CSV file.
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
  */
 public class OutputCreator {
 

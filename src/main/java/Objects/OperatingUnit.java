@@ -1,8 +1,16 @@
-package Objects;
+﻿package Objects;
 
 /**
- * Presents an Operating Unit (OU).
+ * Represents a military Operating Unit (OU) that consumes supplies and must be
+ * resupplied by an FSC or the MSC. Stores daily demand rates and maximum storage
+ * capacities for Food &amp; Water, Fuel, and Ammunition. The stochastic variant
+ * holds a pre-sampled demand array (one value per day) instead of a fixed rate.
  * Quantities (except for time values) are expressed in kg.
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
  */
 public class OperatingUnit {
     private final String operatingUnitName;
@@ -129,8 +137,9 @@ public class OperatingUnit {
     public String getSource() { return source; }
 
     /**
-     * Method that changes the source of the operating unit.
-     * @param newSourceName the new source of the OU
+     * Reassigns the resupply source of this operating unit.
+     * Used when generating partition instances where OU-to-FSC assignments vary.
+     * @param newSourceName the name of the new resupply source (FSC name or "MSC")
      */
     public void changeSource(String newSourceName) {
         this.source = newSourceName;

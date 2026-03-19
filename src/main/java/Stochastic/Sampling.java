@@ -1,4 +1,4 @@
-package Stochastic;
+﻿package Stochastic;
 
 import java.util.Random;
 
@@ -10,6 +10,11 @@ import java.util.Random;
  * - Food & Water (FW): Uniform[minUni, maxUni]
  * - Fuel (FUEL): Binomial(n, p) approximated via Bernoulli trials (scaled)
  * - Ammunition (AMMO): Triangular(minTri, modeTri, maxTri) via inverse CDF
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
  */
 public final class Sampling {
 
@@ -90,7 +95,6 @@ public final class Sampling {
     public double uniform() {
         double raw = minUni + rng.nextDouble() * (maxUni - minUni);
         return applyMultipliers(raw);
-        // return raw;
     }
 
     /**
@@ -111,8 +115,8 @@ public final class Sampling {
     }
 
     /**
-     * Draw a Binomial(n, p) based multiplier (implemetned via n Bernoulli trials),
-     * then scaled to math the fuel modeling convention used in this project.
+     * Draw a Binomial(n, p) based multiplier (implemented via n Bernoulli trials),
+     * then scaled to match the fuel modelling convention used in this project.
      */
     public double binomial() {
         int successes = 0;
@@ -122,8 +126,6 @@ public final class Sampling {
             }
         }
         return applyMultipliers(successes * 1.0 / 10);
-        // return successes * 1.0 / 10;
-
     }
 
     /**
@@ -158,7 +160,6 @@ public final class Sampling {
             raw = maxTri - Math.sqrt((1.0 - u) * (maxTri - minTri) * (maxTri - modeTri));
         }
         return applyMultipliers(raw);
-        // return raw;
     }
 
     /**

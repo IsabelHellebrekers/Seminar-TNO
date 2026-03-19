@@ -1,4 +1,4 @@
-import DataUtils.InstanceCreator;
+﻿import DataUtils.InstanceCreator;
 import DataUtils.OutputCreator;
 import Deterministic.CapacitatedResupplyMILP;
 import Stochastic.*;
@@ -10,33 +10,50 @@ import java.io.*;
 
 import com.gurobi.gurobi.GRBException;
 
+/**
+ * Entry point for the Capacitated Resupply Problem experiments.
+ * Runs deterministic MILP, stochastic fleet sizing, perfect hindsight
+ * benchmarks, and sensitivity analyses.
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
+ */
 public class Main {
 
     private static final int OOS_SEED = 10042;
     private static final int N_OOS = 10000;
     private static final int DISPERSED_INSTANCE_INDEX = 41;
 
+    /**
+     * Main entry point. Runs all experiments sequentially.
+     *
+     * @param args command-line arguments (unused)
+     * @throws IOException  if a log file cannot be written
+     * @throws GRBException if a Gurobi model error occurs
+     */
     public static void main(String[] args) throws IOException, GRBException {
         Instance fdInstance = InstanceCreator.createFDInstance(10).get(0);
         Instance dispersedInstance = InstanceCreator.contiguousPartitions().get(DISPERSED_INSTANCE_INDEX);
         List<Instance> allInstances = List.of(fdInstance, dispersedInstance);
 
-        // MILP (uncomment to run)
+        // MILP
         List<Result> result = CapacitatedResupplyMILP.solveInstances(allInstances);
         for (Result res : result) {
             System.out.println(res.getTruckVector());
         }
 
-        // DISPERSED EXPERIMENTS (uncomment to run)
+        // DISPERSED EXPERIMENTS
         runDispersedExperiments();
 
-        // STOCHASTIC EXPERIMENTS (uncomment to run)
+        // STOCHASTIC EXPERIMENTS
         runStochasticExperiments(fdInstance);
 
-        // PERFECT HINDSIGHT EXPERIMENTS (uncomment to run)
+        // PERFECT HINDSIGHT EXPERIMENTS
         runPerfectHindsightExperiments();
 
-        // SENSITIVITY ANALYSIS (uncomment to run)
+        // SENSITIVITY ANALYSIS
         List<InstanceConfig> sensitivityConfigs = buildExtendedHorizonConfigs();
         runCorrelationAnalysis(sensitivityConfigs);
         runDemandDistributionAnalysis(sensitivityConfigs);
@@ -47,7 +64,7 @@ public class Main {
         List<InstanceConfig> vehicleBreakdownConfigs = buildExtendedHorizonConfigs();
         runVehicleBreakdownAnalysis(vehicleBreakdownConfigs);
 
-        // Extended time horizon fleet size heuristic
+        // Stochastic fleet sizing on the base FD instance
         runFleetSizing(fdInstance);
 
         Instance dispInstance = InstanceCreator.createDispersedInstanceExtraType(2000, 7000, 1000, 10).get(0);
@@ -78,11 +95,11 @@ public class Main {
             long timeSeconds = (t1 - t0) / 1000;
 
             System.out.println("Runtime (s) : " + timeSeconds);
-            System.out.println("Total trucks = " + fleetResult.totalTrucks);
-            int mscTrucks = fleetResult.trucksMSCtoFSC + fleetResult.trucksMSCtoVUST;
+            System.out.println("Total trucks = " + fleetResult.getTotalTrucks());
+            int mscTrucks = fleetResult.getTrucksMSCtoFSC() + fleetResult.getTrucksMSCtoVUST();
             System.out.println("MSC =" + mscTrucks);
-            for (String w : new TreeSet<>(fleetResult.trucksAtFSC.keySet())) {
-                System.out.println("  " + w + " = " + fleetResult.trucksAtFSC.get(w));
+            for (String w : new TreeSet<>(fleetResult.getTrucksAtFSC().keySet())) {
+                System.out.println("  " + w + " = " + fleetResult.getTrucksAtFSC().get(w));
             }
         } catch (GRBException e) {
             throw new RuntimeException();
@@ -112,21 +129,21 @@ public class Main {
                 long timeSeconds = (t1 - t0) / 1000;
 
                 log(writer, "Runtime (s) : " + timeSeconds);
-                log(writer, "Total trucks = " + fleet.totalTrucks);
+                log(writer, "Total trucks = " + fleet.getTotalTrucks());
 
-                int totalMscTrucks = fleet.trucksMSCtoFSC + fleet.trucksMSCtoVUST;
+                int totalMscTrucks = fleet.getTrucksMSCtoFSC() + fleet.getTrucksMSCtoVUST();
                 log(writer, "MSC = " + totalMscTrucks);
 
-                for (String w : new TreeSet<>(fleet.trucksAtFSC.keySet())) {
-                    log(writer, "  " + w + " = " + fleet.trucksAtFSC.get(w));
+                for (String w : new TreeSet<>(fleet.getTrucksAtFSC().keySet())) {
+                    log(writer, "  " + w + " = " + fleet.getTrucksAtFSC().get(w));
                 }
             } catch (GRBException e) {
                 log(writer, "ERROR in STEP 1: " + e.getMessage());
                 throw new RuntimeException(e);
             }
 
-            final int mscTrucks = fleet.trucksMSCtoFSC + fleet.trucksMSCtoVUST;
-            final Map<String, Integer> trucksPerFsc = new HashMap<>(fleet.trucksAtFSC);
+            final int mscTrucks = fleet.getTrucksMSCtoFSC() + fleet.getTrucksMSCtoVUST();
+            final Map<String, Integer> trucksPerFsc = new HashMap<>(fleet.getTrucksAtFSC());
 
             log(writer, "");
             log(writer, "STEP 2 : WEIGHT TUNING (train)");
@@ -138,10 +155,10 @@ public class Main {
                     base, mscTrucks, trucksPerFsc, nScenarios, (int) seedTuningTrain,
                     lb, ub, step, defaultVust);
 
-            log(writer, "BEST CONFIG : OU = " + tuning.bestCfg.ou() +
-                    " | VUST = " + tuning.bestCfg.vust());
+            log(writer, "BEST CONFIG : OU = " + tuning.getBestCfg().ou() +
+                    " | VUST = " + tuning.getBestCfg().vust());
 
-            EvaluationHeuristic.WeightConfig bestCfg = tuning.bestCfg;
+            EvaluationHeuristic.WeightConfig bestCfg = tuning.getBestCfg();
 
             log(writer, "");
             log(writer, "STEP 3 : OOS EVALUATION 3 CCLs (test)");
@@ -181,15 +198,15 @@ public class Main {
                 Instance inst = InstanceCreator.createFDInstanceExtraType(
                         comp[0], comp[1], comp[2]).get(0);
 
-                // Same seeds for every instance, exactly as requested
+                // Reuse the same train seed for all CCL variants so results are comparable
                 var tuning4 = EvaluationHeuristic.tuneWeights(
                         inst, mscTrucks, trucksPerFsc, nScenarios, (int) seedTuningTrain,
                         lb, ub, step, defaultVust);
 
-                log(writer, "BEST CONFIG : OU = " + tuning4.bestCfg.ou() +
-                        " | VUST = " + tuning4.bestCfg.vust());
+                log(writer, "BEST CONFIG : OU = " + tuning4.getBestCfg().ou() +
+                        " | VUST = " + tuning4.getBestCfg().vust());
 
-                EvaluationHeuristic.WeightConfig bestCfg4 = tuning4.bestCfg;
+                EvaluationHeuristic.WeightConfig bestCfg4 = tuning4.getBestCfg();
 
                 EvaluationSummary oos4 = EvaluationHeuristic.evaluate(
                         inst, mscTrucks, trucksPerFsc, N_OOS, OOS_SEED, bestCfg4,

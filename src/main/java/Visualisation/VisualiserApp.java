@@ -1,4 +1,4 @@
-package Visualisation;
+﻿package Visualisation;
 
 import DataUtils.InstanceCreator;
 import Deterministic.CapacitatedResupplyMILP;
@@ -30,18 +30,39 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * JavaFX application entry point for the resupply simulation visualiser.
+ * Solves the FD and dispersed instances, builds the simulation schedule, and
+ * renders the animated supply network.
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
+ */
 public class VisualiserApp extends Application {
+
+    /**
+     * JavaFX application launch entry point.
+     *
+     * @param args command-line arguments (unused)
+     */
     public static void main(String[] args) {
         launch(args);
     }
 
+    /**
+     * Initialise and display the visualiser window.
+     *
+     * @param stage the primary JavaFX stage
+     */
     @Override
     public void start(Stage stage) {
         Label status = new Label("Ready.");
         status.setStyle("-fx-text-fill: #E6E6E6; -fx-padding: 6 8 8 8;");
         ControlsPane controls = new ControlsPane();
 
-        // Make instance and result object
+        // Solve the FD and a representative dispersed instance to populate the visualiser
         Instance fdInst = InstanceCreator.createFDInstance().get(0);
         Instance dispersedInst = InstanceCreator.contiguousPartitions().get(224);
         Result fdResult = solveInstance(fdInst);
@@ -57,7 +78,7 @@ public class VisualiserApp extends Application {
             System.err.println("[SimExporter] Export failed: " + e.getMessage());
         }
 
-        // Make initial state and upcoming events
+        // Build simulation state and event schedule from the FD solution
         SimState state = SimState.from(fdInst, fdResult);
         List<ScheduledEvent> schedule = buildSchedule(fdInst, fdResult);
 

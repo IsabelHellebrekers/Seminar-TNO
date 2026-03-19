@@ -1,9 +1,15 @@
-package Objects;
+﻿package Objects;
 
 /**
- * Presents a CCL package.
- * A truck can carry at most one CCL.
- * A CCL contains Food&Water, Fuel, and Ammunition (in kg).
+ * Represents a CCL (Combat Consumables Load) package type.
+ * Each CCL specifies the kg content of Food &amp; Water, Fuel, and Ammunition.
+ * A single truck carries at most one CCL per trip, so the CCL type determines
+ * what product mix is delivered in one truck movement.
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
  */
 public class CCLPackage {
     private final int type;
@@ -12,11 +18,11 @@ public class CCLPackage {
     private final long ammoKg;
 
     /**
-     * Constructor.
-     * @param type          CCL type
-     * @param foodWaterKg   amount of FW in CCL (kg)
-     * @param fuelKg        amount of FUEL in CCL (kg)
-     * @param ammoKg        amount of AMMO in CCL (kg)
+     * Create a CCL package type with the given product contents.
+     * @param type          CCL type number (used as identifier)
+     * @param foodWaterKg   food/water content of this CCL type (kg)
+     * @param fuelKg        fuel content of this CCL type (kg)
+     * @param ammoKg        ammunition content of this CCL type (kg)
      */
     public CCLPackage(int type, long foodWaterKg, long fuelKg, long ammoKg) {
         this.type = type;

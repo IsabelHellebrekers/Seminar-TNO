@@ -1,4 +1,4 @@
-package Stochastic;
+﻿package Stochastic;
 
 import Deterministic.*;
 import Objects.*;
@@ -25,20 +25,37 @@ import java.util.*;
  * infeasibility;
  * if even perfect hindsight is infeasible, then no heuristic can avoid
  * stockouts.
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
  */
 public class PerfectHindsight {
 
+    /**
+     * Run the perfect-hindsight feasibility check for a given base instance.
+     *
+     * @param baseInstance the base deterministic instance
+     * @param numScenarios number of stochastic scenarios to evaluate
+     * @param baseSeed     base seed for reproducible scenario generation
+     * @param mscTrucks    fixed MSC fleet size for the fixed-fleet benchmark
+     * @param fscTrucks    fixed FSC fleet sizes keyed by FSC name
+     * @throws GRBException if Gurobi fails during scenario solving
+     */
     public static void run(Instance baseInstance, int numScenarios, int baseSeed, int mscTrucks, Map<String, Integer> fscTrucks) throws GRBException {
         List<Scenario> scenarios = generateScenarios(baseInstance, numScenarios, baseSeed);
         runPerfectHindsightBenchmarks(scenarios, mscTrucks, fscTrucks, baseSeed);
     }
 
     /**
-     * Running the perfect-hingsight feasibility check:
-     * (1) Build the base deterministic instance
-     * (2) Generate N stochastic demand scenarios using (baseseed + s)
-     * (3) Run feasibility benchmarks for unlimited vs fixed fleet size.
-     * @throws GRBException 
+     * Standalone entry point for the perfect-hindsight feasibility check.
+     * (1) Builds the base deterministic instance.
+     * (2) Generates N stochastic demand scenarios using (baseSeed + s).
+     * (3) Runs feasibility benchmarks for unlimited vs fixed fleet size.
+     *
+     * @param args command-line arguments (unused)
+     * @throws GRBException if Gurobi fails during scenario solving
      */
     public static void main(String[] args) throws GRBException {
         final int numScenarios = 1000;
@@ -59,16 +76,14 @@ public class PerfectHindsight {
     }
 
     /**
-     * Solve a perfect hindsight MILP for seach scenario and count feasibility
-     * outcomes.
-     * We treat a scenario as 'feasible' if the solver finds at least one feasible
-     * solution.
-     * 
+     * Solve a perfect-hindsight MILP for each scenario and count feasibility outcomes.
+     * A scenario is treated as feasible if the solver finds at least one integer solution
+     * within the time limit.
+     *
      * @param scenarios sampled scenario list
-     * @param M         fixed MSC fleet size
-     * @param K         fixed FSC fleet size, keyed by FSC name
-     * @param baseSeed  base seed used for scenario generation
-     * @throws GRBException 
+     * @param M         fixed MSC fleet size for the fixed-fleet benchmark
+     * @param K         fixed FSC fleet sizes, keyed by FSC name
+     * @param baseSeed  seed used for scenario generation (printed in the summary)
      */
     private static void runPerfectHindsightBenchmarks(
             List<Scenario> scenarios,
@@ -207,12 +222,12 @@ public class PerfectHindsight {
 
     /**
      * Generate N stochastic scenarios from a deterministic base instance.
-     * Scenario s used seed (baseseed + s).
-     * 
-     * @param base     deterministic base instance
-     * @param N        number of scenarios to generate
-     * @param baseseed base seed for reproducible scenario generation
-     * @return list of Scenario objects containing
+     * Scenario s uses seed (baseSeed + s), ensuring reproducibility.
+     *
+     * @param base         deterministic base instance
+     * @param numScenarios number of scenarios to generate
+     * @param baseSeed     base seed for reproducible scenario generation
+     * @return list of Scenario objects, each holding a stochastic demand instance
      */
     private static List<Scenario> generateScenarios(Instance base, int numScenarios, int baseSeed) {
         List<Scenario> scenarios = new ArrayList<>(numScenarios);
@@ -286,14 +301,14 @@ public class PerfectHindsight {
     }
 
     /**
-     * Fix fleet size decision variables in an existing Gurobi model by setting
-     * variable bounds.
-     * 
-     * @param model Gurobi model containing fleet variables
-     * @param inst  instance used to enumerate FSCs and build variable names
-     * @param M     fixed MSC fleet size
-     * @param K     fixed FSC fleet size keyed by FSC name
-     * @throws GRBException if variable lookup of attribute updates fail
+     * Fix fleet-size decision variables in an existing Gurobi model by pinning
+     * both bounds of M and each K variable to the provided values.
+     *
+     * @param model     Gurobi model containing fleet variables named "M" and "K_<FSCname>"
+     * @param inst      instance used to enumerate FSCs
+     * @param mscTrucks fixed MSC fleet size
+     * @param fscTrucks fixed FSC fleet sizes keyed by FSC name
+     * @throws GRBException if variable lookup or attribute updates fail
      */
     private static void fixFleetSize(GRBModel model, Instance inst, int mscTrucks, Map<String, Integer> fscTrucks) throws GRBException {
         GRBVar mVar = model.getVarByName("M");

@@ -1,11 +1,17 @@
-package Objects;
+﻿package Objects;
 
 import java.util.Map;
 
 /**
- * Presents a Forward Supply Centre.
- * An FSC has an initial inventory (amount of CCLs; CCL type and OU type specific),
- * and an max storage capacity (amount of CCLs).
+ * Represents a Forward Supply Centre (FSC) in the supply network.
+ * An FSC acts as an intermediate depot between the MSC and operating units.
+ * It holds an initial inventory of CCLs broken down by OU type and CCL type,
+ * and is subject to a maximum total storage capacity (expressed in CCL count).
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
  */
 public class FSC {
     private final String name;
@@ -13,10 +19,11 @@ public class FSC {
     private final Map<String, int[]> initialStorageLevels;
 
     /**
-     * Constructor.
+     * Create an FSC with the given name, storage limit, and initial CCL inventory.
      * @param name                  the name of the FSC
-     * @param maxStorageCapCcls     the maximum capacity (#CCLs)
-     * @param initialStorageLevels  the initial storage (#CCLs for each CCL type and OU type)
+     * @param maxStorageCapCcls     the maximum total storage capacity in CCL units
+     * @param initialStorageLevels  initial CCL counts keyed by OU type, each entry
+     *                              being an array indexed by CCL type (0-based)
      */
     public FSC(String name, Integer maxStorageCapCcls, Map<String, int[]> initialStorageLevels) {
         this.name = name;

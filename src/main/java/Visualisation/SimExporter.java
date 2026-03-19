@@ -1,4 +1,4 @@
-package Visualisation;
+﻿package Visualisation;
 
 import Objects.Instance;
 import Objects.OperatingUnit;
@@ -22,10 +22,15 @@ import java.util.*;
  *   SimExporter.export(inst1, res1, "docs/sim_fd.json",        "FD Concept");
  *   SimExporter.export(inst2, res2, "docs/sim_dispersed.json", "Dispersed Concept");
  *   SimExporter.writeManifest("docs/scenarios.json");
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
  */
 public class SimExporter {
 
-    /** Accumulated manifest entries — populated by each export() call. */
+    /** Accumulated manifest entries â€” populated by each export() call. */
     private static final List<String> manifestEntries = new ArrayList<>();
 
     /**
@@ -49,7 +54,7 @@ public class SimExporter {
         StringBuilder json = new StringBuilder();
         json.append("{\n");
 
-        // ── nodes ──────────────────────────────────────────────────────────────
+        // â”€â”€ nodes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         json.append("  \"nodes\": [\n");
         List<String> nodeParts = new ArrayList<>();
         nodeParts.add("    {\"name\": \"MSC\", \"type\": \"MSC\"}");
@@ -62,7 +67,7 @@ public class SimExporter {
         }
         json.append(String.join(",\n", nodeParts)).append("\n  ],\n");
 
-        // ── edges ──────────────────────────────────────────────────────────────
+        // â”€â”€ edges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         json.append("  \"edges\": [\n");
         List<String> edgeParts = new ArrayList<>();
         for (var fsc : inst.getFSCs()) {
@@ -75,7 +80,7 @@ public class SimExporter {
         }
         json.append(String.join(",\n", edgeParts)).append("\n  ],\n");
 
-        // ── frames ─────────────────────────────────────────────────────────────
+        // â”€â”€ frames â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         json.append("  \"frames\": [\n");
         List<String> frames = new ArrayList<>();
 
@@ -83,7 +88,7 @@ public class SimExporter {
         frames.add(snapshot(state, inst, "Initial state (full inventories)", "Day 1 09:00"));
 
         for (int t = 1; t <= inst.getTimeHorizon(); t++) {
-            // 10:00 — demand
+            // 10:00 â€” demand
             Map<String, DemandEvent.Demand> demands = new HashMap<>();
             for (OperatingUnit ou : inst.getOperatingUnits()) {
                 demands.put(ou.getName(), new DemandEvent.Demand(
@@ -94,7 +99,7 @@ public class SimExporter {
 
             if (res == null) { continue; }
 
-            // 14:00 — FSC → OU delivery
+            // 14:00 â€” FSC â†’ OU delivery
             Map<String, Integer> fscArcs = new HashMap<>();
             for (var e : res.getXValue().entrySet()) {
                 var key = e.getKey();
@@ -106,7 +111,7 @@ public class SimExporter {
             new FSCDeliveryEvent(t, fscArcs, ouNames, fscNames, res).apply(state);
             frames.add(snapshot(state, inst, "t=" + t + " FSC \u2192 OU supply", "Day " + t + " 14:00"));
 
-            // 20:00 — MSC → FSC / VUST delivery
+            // 20:00 â€” MSC â†’ FSC / VUST delivery
             Map<String, Integer> mscArcs = new HashMap<>();
             for (var e : res.getYValue().entrySet()) {
                 var key = e.getKey();
@@ -129,7 +134,7 @@ public class SimExporter {
         Path out = Paths.get(outputPath);
         Files.createDirectories(out.getParent());
         Files.writeString(out, json.toString());
-        System.out.println("[SimExporter] Written " + frames.size() + " frames → " + out.toAbsolutePath());
+        System.out.println("[SimExporter] Written " + frames.size() + " frames â†’ " + out.toAbsolutePath());
 
         // Register in manifest (filename only, relative to docs/)
         manifestEntries.add("  {\"name\": " + q(displayName) + ", \"file\": " + q(out.getFileName().toString()) + "}");
@@ -144,11 +149,11 @@ public class SimExporter {
         Path out = Paths.get(manifestPath);
         Files.createDirectories(out.getParent());
         Files.writeString(out, content);
-        System.out.println("[SimExporter] Manifest → " + out.toAbsolutePath());
+        System.out.println("[SimExporter] Manifest â†’ " + out.toAbsolutePath());
         manifestEntries.clear();   // reset for next run
     }
 
-    // ── helpers ────────────────────────────────────────────────────────────────
+    // â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private static String snapshot(SimState state, Instance inst, String label, String time) {
         StringBuilder sb = new StringBuilder();

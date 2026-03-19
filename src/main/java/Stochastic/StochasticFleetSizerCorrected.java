@@ -1,4 +1,4 @@
-package Stochastic;
+﻿package Stochastic;
 
 import Objects.CCLPackage;
 import Objects.FSC;
@@ -30,6 +30,11 @@ import java.util.*;
  *     that reduces the pooled MSC->FSC fleet estimate.
  *
  *  Aggregate daily workloads for: MSC -> VUST, FSC -> OUs (per FSC), MSC -> FSC (pooled estimate based on total FSC outbound workload)
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
  */
 public final class StochasticFleetSizerCorrected {
 
@@ -184,10 +189,10 @@ public final class StochasticFleetSizerCorrected {
     }
 
     /**
-     * Computes “credit per day” (≈ 1/T) for:
+     * Computes a "credit per day" (approximately 1/T of starting inventory) for:
      *  - VUST initial max inventory (in kg) converted to CCLs
      *  - OUs initial max inventories aggregated per FSC
-     *  - FSC initial storage already in CCLs
+     *  - FSC initial storage already expressed in CCL units
      */
     private static InventoryCredits computeInventoryCredits(Instance instance,
                                                             PerOuDayCclIlpSolver ilp) throws GRBException {
@@ -279,22 +284,31 @@ public final class StochasticFleetSizerCorrected {
     }
 
     /**
-     * Result container
+     * Holds the corrected fleet-sizing estimates returned by
+     * {@link StochasticFleetSizerCorrected#estimateFleetSizes}.
      */
     public static final class FleetSizingResult {
 
         // Corrected total objective = MSC->VUST + MSC->FSC + sum_w FSC_w.
-        public final int totalTrucks;
+        private final int totalTrucks;
 
         // Corrected trucks needed per day for MSC -> VUST.
-        public final int trucksMSCtoVUST;
+        private final int trucksMSCtoVUST;
 
         // Corrected pooled trucks needed per day for MSC -> FSC.
-        public final int trucksMSCtoFSC;
+        private final int trucksMSCtoFSC;
 
         // Corrected trucks per day for each FSC -> its OUs (map FSC name -> trucks).
-        public final Map<String, Integer> trucksAtFSC;
+        private final Map<String, Integer> trucksAtFSC;
 
+        /**
+         * Stores the corrected fleet-sizing estimates.
+         *
+         * @param totalTrucks     total fleet size across all routes after inventory corrections
+         * @param trucksMSCtoVUST corrected daily truck requirement for the MSC-to-VUST route
+         * @param trucksMSCtoFSC  corrected pooled daily truck requirement for MSC-to-FSC resupply
+         * @param trucksAtFSC     corrected daily truck requirement per FSC for FSC-to-OU deliveries
+         */
         public FleetSizingResult(int totalTrucks,
                                  int trucksMSCtoVUST,
                                  int trucksMSCtoFSC,
@@ -303,6 +317,42 @@ public final class StochasticFleetSizerCorrected {
             this.trucksMSCtoVUST = trucksMSCtoVUST;
             this.trucksMSCtoFSC = trucksMSCtoFSC;
             this.trucksAtFSC = Collections.unmodifiableMap(new HashMap<>(trucksAtFSC));
+        }
+
+        /**
+         * Returns the corrected total number of trucks.
+         *
+         * @return total truck count
+         */
+        public int getTotalTrucks() {
+            return totalTrucks;
+        }
+
+        /**
+         * Returns the corrected number of trucks for the MSC to VUST route.
+         *
+         * @return MSC-to-VUST truck count
+         */
+        public int getTrucksMSCtoVUST() {
+            return trucksMSCtoVUST;
+        }
+
+        /**
+         * Returns the corrected pooled number of trucks for MSC to FSC routes.
+         *
+         * @return MSC-to-FSC pooled truck count
+         */
+        public int getTrucksMSCtoFSC() {
+            return trucksMSCtoFSC;
+        }
+
+        /**
+         * Returns the corrected truck counts per FSC, keyed by FSC name.
+         *
+         * @return unmodifiable map of FSC name to truck count
+         */
+        public Map<String, Integer> getTrucksAtFSC() {
+            return trucksAtFSC;
         }
     }
 
@@ -328,6 +378,13 @@ public final class StochasticFleetSizerCorrected {
         private final GRBConstr fuelConstr;
         private final GRBConstr ammoConstr;
 
+        /**
+         * Builds and initialises the per-OU/day CCL covering ILP.
+         *
+         * @param ccls    list of available CCL package types
+         * @param verbose true to enable Gurobi logging, false to suppress it
+         * @throws GRBException if the Gurobi model cannot be built
+         */
         public PerOuDayCclIlpSolver(List<CCLPackage> ccls, boolean verbose) throws GRBException {
             this.env = new GRBEnv(true);
             env.set(GRB.IntParam.OutputFlag, verbose ? 1 : 0);
@@ -368,6 +425,16 @@ public final class StochasticFleetSizerCorrected {
             model.set(GRB.IntParam.Method, 0);
         }
 
+        /**
+         * Solves the covering ILP for the given demand triple and returns the minimum
+         * number of CCL packages needed.
+         *
+         * @param fwDemand   food/water demand to cover (kg)
+         * @param fuelDemand fuel demand to cover (kg)
+         * @param ammoDemand ammunition demand to cover (kg)
+         * @return minimum number of CCL packages needed to cover the demand
+         * @throws GRBException if the ILP is not optimal
+         */
         public int minCclsToCover(double fwDemand, double fuelDemand, double ammoDemand) throws GRBException {
             fwConstr.set(GRB.DoubleAttr.RHS, Math.max(0.0, fwDemand));
             fuelConstr.set(GRB.DoubleAttr.RHS, Math.max(0.0, fuelDemand));

@@ -1,4 +1,4 @@
-package DataUtils;
+﻿package DataUtils;
 
 import Objects.CCLPackage;
 import Objects.FSC;
@@ -11,24 +11,32 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Class that creates instances for the capacitated resupply problem.
+ * Factory for problem instances used in experiments.
+ * Provides the baseline FD (Forced Deployment) instance, variants with an extra
+ * fourth CCL type, a dispersed-concept instance with four FSCs, and the full set
+ * of contiguous OU-to-FSC partition instances used in the dispersed analysis.
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
  */
 public class InstanceCreator {
 
     /**
-     * Creates FD instance with a default time horizon of 10 days.
-     * 
-     * @return FD instance
+     * Creates the baseline FD instance with two FSCs and a 10-day planning horizon.
+     *
+     * @return single-element list containing the FD instance
      */
     public static List<Instance> createFDInstance() {
         return createFDInstance(10);
     }
 
     /**
-     * Creates FD instance with a custom time horizon.
-     * 
-     * @param timeHorizon time horizon in days
-     * @return FD instance with custom time horizon
+     * Creates the baseline FD instance with two FSCs and the specified planning horizon.
+     *
+     * @param timeHorizon planning horizon in days
+     * @return single-element list containing the FD instance
      */
     public static List<Instance> createFDInstance(int timeHorizon) {
         List<OperatingUnit> operatingUnits = new ArrayList<>();
@@ -51,14 +59,14 @@ public class InstanceCreator {
 
         List<FSC> fscs = new ArrayList<>();
 
-        // Make FSC1
+        // FSC_1 initial inventory: 7 CCLs of each type per GN_CIE, 29 per PAINF_CIE, 6 per AT_CIE
         Map<String, int[]> initialStorageLevelsFSC1 = new HashMap<>();
         initialStorageLevelsFSC1.put("GN_CIE", new int[] { 7, 7, 7 });
         initialStorageLevelsFSC1.put("PAINF_CIE", new int[] { 29, 29, 29 });
         initialStorageLevelsFSC1.put("AT_CIE", new int[] { 6, 6, 6 });
         fscs.add(new FSC("FSC_1", 126, initialStorageLevelsFSC1));
 
-        // Make FSC2
+        // FSC_2 initial inventory: 7 CCLs of each type per GN_CIE, 19 per PAINF_CIE, 3 per AT_CIE
         Map<String, int[]> initialStorageLevelsFSC2 = new HashMap<>();
         initialStorageLevelsFSC2.put("GN_CIE", new int[] { 7, 7, 7 });
         initialStorageLevelsFSC2.put("PAINF_CIE", new int[] { 19, 19, 19 });
@@ -73,11 +81,11 @@ public class InstanceCreator {
     /**
      * Creates FD instance with a fourth CCL type and a default time horizon of 10
      * days.
-     * 
-     * @param fw4   amount of FW (kg)
-     * @param fuel4 amount of FUEL (kg)
-     * @param ammo4 amount of AMMO (kg)
-     * @return
+     *
+     * @param fw4   food/water content of the fourth CCL type (kg)
+     * @param fuel4 fuel content of the fourth CCL type (kg)
+     * @param ammo4 ammunition content of the fourth CCL type (kg)
+     * @return list containing the FD instance with the additional CCL type
      */
     public static List<Instance> createFDInstanceExtraType(int fw4, int fuel4, int ammo4) {
         return createFDInstanceExtraType(fw4, fuel4, ammo4, 10);
@@ -85,12 +93,12 @@ public class InstanceCreator {
 
     /**
      * Creates FD instance with a fourth CCL type and a custom time horizon.
-     * 
-     * @param fw4         amount of FW (kg)
-     * @param fuel4       amount of FUEL (kg)
-     * @param ammo4       amount of AMMO (kg)
+     *
+     * @param fw4         food/water content of the fourth CCL type (kg)
+     * @param fuel4       fuel content of the fourth CCL type (kg)
+     * @param ammo4       ammunition content of the fourth CCL type (kg)
      * @param timeHorizon time horizon in days
-     * @return
+     * @return list containing the FD instance with the additional CCL type and custom horizon
      */
     public static List<Instance> createFDInstanceExtraType(int fw4, int fuel4, int ammo4, int timeHorizon) {
         List<OperatingUnit> operatingUnits = new ArrayList<>();
@@ -136,6 +144,15 @@ public class InstanceCreator {
         return instanceList;
     }
 
+    /**
+     * Creates a dispersed instance with four FSCs, a fourth CCL type, and a custom time horizon.
+     *
+     * @param fw4         food/water content of the fourth CCL type (kg)
+     * @param fuel4       fuel content of the fourth CCL type (kg)
+     * @param ammo4       ammunition content of the fourth CCL type (kg)
+     * @param timeHorizon time horizon in days
+     * @return list containing the dispersed instance with the additional CCL type and custom horizon
+     */
     public static List<Instance> createDispersedInstanceExtraType(int fw4, int fuel4, int ammo4, int timeHorizon) {
         List<OperatingUnit> operatingUnits = new ArrayList<>();
         operatingUnits.add(new OperatingUnit("VUST", "VUST", 13018, 42842, 67140, 39054, 128526, 201420, "MSC"));
@@ -212,7 +229,7 @@ public class InstanceCreator {
 
         OperatingUnit vust = null;
 
-        // Make list of OUs based on base
+        // Separate VUST (supplied by MSC) from the remaining OUs that can be partitioned
         List<OperatingUnit> remainingOUs = new ArrayList<>();
 
         for (OperatingUnit ou : base.getOperatingUnits()) {
@@ -246,13 +263,12 @@ public class InstanceCreator {
 
     /**
      * Recursively generates all contiguous partitions of operating units into FSCs.
-     * At each recursion level, the first batch of OUs is assigned to an FSC, and
-     * the
-     * remaining OUs are partitione recursively at the next FSC level.
-     * 
+     * At each recursion level, the first batch of OUs is assigned to an FSC, and the
+     * remaining OUs are partitioned recursively at the next FSC level.
+     *
      * @param remainingOUs list of OUs not yet assigned to any FSC
      * @param depth        the FSC level (FSC_1, FSC_2, etc.)
-     * @return list of all valid instanced that can be constructed from the
+     * @return list of all valid instances that can be constructed from the
      *         remaining OUs
      */
     public static ArrayList<Instance> makePartition(List<OperatingUnit> remainingOUs, int depth) {
@@ -262,23 +278,18 @@ public class InstanceCreator {
             return base;
         }
 
-        // Instantiate final list
+        // Collect all instances produced at this FSC level
         ArrayList<Instance> instancesAtNode = new ArrayList<>();
 
-        // Make splits and call recursion
+        // Try every split point: assign the first i OUs to FSC_depth, recurse on the rest
         for (int i = 1; i <= remainingOUs.size(); i++) {
-            // Add Operating units to Instance
             ArrayList<Instance> currentList = makePartition(remainingOUs.subList(i, remainingOUs.size()), depth + 1);
 
             for (Instance inst : currentList) {
-                // Add FSC
                 addFSCToNode(inst, depth, remainingOUs.subList(0, i));
-
-                // Add operating Units
                 addOperatingUnitsToNode(inst, remainingOUs.subList(0, i), "FSC_" + depth);
             }
 
-            // merge Instance lists
             instancesAtNode.addAll(currentList);
         }
         return instancesAtNode;
@@ -299,9 +310,6 @@ public class InstanceCreator {
         }
     }
 
-    // Helper function for makePartition to add an FSC to an instance with the
-    // correct capacity and initial storage levels based on the OUs in the sublist.
-
     /**
      * Adds an FSC to an instance with automatically calculated capacity and initial
      * inventory levels.
@@ -313,7 +321,7 @@ public class InstanceCreator {
      * @param subList the list of OUs that this FSC will supply
      */
     public static void addFSCToNode(Instance inst, int depth, List<OperatingUnit> subList) {
-        // Calculate initialStorageLevels
+        // Compute per-OU-type initial stock: 7 CCLs per GN_CIE, alternating 10/9 per PAINF_CIE, 3 per AT_CIE
         Map<String, int[]> initialStorageLevelsFSC = new HashMap<String, int[]>();
 
         int amountGN = 0;
@@ -342,10 +350,9 @@ public class InstanceCreator {
         initialStorageLevelsFSC.put("PAINF_CIE", new int[] { totalPAINF, totalPAINF, totalPAINF });
         initialStorageLevelsFSC.put("AT_CIE", new int[] { totalAT, totalAT, totalAT });
 
-        // Calculate maxStorageCapCcls
+        // Capacity = 3 periods x total initial stock (one period buffer per CCL type)
         int maxStorageCapCcls = 3 * (totalGN + totalPAINF + totalAT);
 
-        // Add FSC
         inst.addFSC("FSC_" + depth, maxStorageCapCcls, initialStorageLevelsFSC);
     }
 

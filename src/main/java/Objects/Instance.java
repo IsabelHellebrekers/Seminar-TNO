@@ -1,11 +1,19 @@
-package Objects;
+﻿package Objects;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Presents an Instance for the Capacitated Resupply Problem (CRP).
+ * Holds all input data for one instance of the Capacitated Resupply Problem (CRP):
+ * the set of operating units, FSCs, product types, CCL package types, OU types,
+ * and the planning horizon. Mutable so that OUs and FSCs can be added incrementally
+ * (used when building partition instances in {@link DataUtils.InstanceCreator}).
+ *
+ * @author 621349it Ies Timmerarends
+ * @author 612348ih Isabel Hellebrekers
+ * @author 631426ls Lena Stiebing
+ * @author 661267eb Eeke Bavelaar
  */
 public class Instance {
     private final List<OperatingUnit> operatingUnits;
@@ -87,7 +95,7 @@ public class Instance {
     public int getTimeHorizon() { return timeHorizon; }
 
     /**
-     * Method that adds an operating unit (OU) to the instance
+     * Adds an operating unit with deterministic daily demands to this instance.
      * @param operatingUnitName     name of the operating unit
      * @param ouType                type of the operating unit
      * @param dailyFoodWaterKg      daily FW demand (kg)
@@ -130,7 +138,7 @@ public class Instance {
     }
 
     /**
-     * Method that adds a forward supply centre (FSC) to the instance
+     * Adds a forward supply centre with the given name, capacity, and initial inventory.
      * @param name                  name of the forward supply centre
      * @param maxStorageCapCcls     maximum capacity (#CCLs)
      * @param initialStorageLevels  initial storage (#CCLs for each CCL type and OU type)
